@@ -39,6 +39,23 @@ def mostrar_barberos():
     conn.close()
     return jsonify([dict(b) for b in barberos])
 
+
+@clientes_bp.route('/barberos/<int:id_barbero>/horarios', methods=['GET'])
+def mostrar_horarios_barbero(id_barbero):
+    conn = get_db_connection()
+    # Aquí podrías traer los horarios disponibles de una tabla 'horarios' 
+    # o simplemente los turnos que ya tiene ocupados para bloquearlos en el front
+    query = '''
+        SELECT fecha_hora 
+        FROM turnos 
+        WHERE id_barbero = ? AND fecha_hora >= datetime('now')
+    '''
+    horarios_ocupados = conn.execute(query, (id_barbero,)).fetchall()
+    conn.close()
+    
+    return jsonify([dict(h) for h in horarios_ocupados])
+
+
 # CANCELAR TURNO (DELETE)
 @clientes_bp.route('/turnos/<int:id_turno>', methods=['DELETE'])
 def cancelar_turno(id_turno):
@@ -59,6 +76,39 @@ def cancelar_turno(id_turno):
         return jsonify({"error": "Turno no encontrado o no pertenece al cliente"}), 404
         
     return jsonify({"mensaje": "Turno cancelado correctamente"}), 200
+
+
+@clientes_bp.route('/turnos/<int:id_turno>/reprogramar', methods=['PATCH'])
+def reprogramar_turno(id_turno):
+    data = request.get_json()
+    nueva_fecha = data.get('nueva_fecha') # Ejemplo: "2024-10-25 15:00"
+    id_cliente = data.get('id_cliente')   # Por seguridad, verificamos que sea su turno
+
+    if not nueva_fecha:
+        return jsonify({"error": "Falta la nueva fecha"}), 400
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    try:
+        # Actualizamos solo la fecha_hora
+        cursor.execute('''
+            UPDATE turnos 
+            SET fecha_hora = ? 
+            WHERE id = ? AND id_cliente = ?
+        ''', (nueva_fecha, id_turno, id_cliente))
+        
+        conn.commit()
+        
+        if cursor.rowcount == 0:
+            return jsonify({"error": "Turno no encontrado o no pertenece al cliente"}), 404
+            
+        return jsonify({"mensaje": "Turno reprogramado con éxito"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+    finally:
+        conn.close()
+        
 
 # HISTORIAL DE TURNOS (GET)
 @clientes_bp.route('/<int:id_cliente>/historial', methods=['GET'])
