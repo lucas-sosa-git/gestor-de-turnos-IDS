@@ -5,8 +5,8 @@ profesionales_bp = Blueprint("profesionales", __name__)
 
 
 # GET /profesionales/1/turnos?desde=2026-05-01&hasta=2026-05-31
-@profesionales_bp.route("/profesionales/<int:id_peluquero>/turnos", methods=["GET"])
-def ver_turnos_periodo(id_peluquero):
+@profesionales_bp.route("/profesionales/<int:id_barbero>/turnos", methods=["GET"])
+def ver_turnos_periodo(id_barbero):
     desde = request.args.get("desde")
     hasta = request.args.get("hasta")
 
@@ -20,12 +20,12 @@ def ver_turnos_periodo(id_peluquero):
     turnos = conn.execute(
         """
         SELECT *
-        FROM turnos
-        WHERE id_peluquero = ?
-        AND date(fecha_hora) BETWEEN date(?) AND date(?)
-        ORDER BY fecha_hora ASC
+        FROM citas
+        WHERE id_barbero = ?
+        AND date(fecha) BETWEEN date(?) AND date(?)
+        ORDER BY fecha ASC, hora ASC
         """,
-        (id_peluquero, desde, hasta)
+        (id_barbero, desde, hasta)
     ).fetchall()
 
     conn.close()
@@ -34,23 +34,23 @@ def ver_turnos_periodo(id_peluquero):
 
 
 # GET /profesionales/1/turnos/5/cliente
-@profesionales_bp.route("/profesionales/<int:id_peluquero>/turnos/<int:id_turno>/cliente", methods=["GET"])
-def ver_cliente(id_peluquero, id_turno):
+@profesionales_bp.route("/profesionales/<int:id_barbero>/turnos/<int:id_cita>/cliente", methods=["GET"])
+def ver_cliente(id_barbero, id_cita):
     conn = get_db_connection()
 
     cliente = conn.execute(
         """
         SELECT 
-            c.id,
-            c.nombre,
-            c.email,
-            c.telefono
-        FROM turnos t
-        JOIN clientes c ON t.id_cliente = c.id
-        WHERE t.id = ?
-        AND t.id_peluquero = ?
+            u.id_usuarios,
+            u.nombre,
+            u.email,
+            u.telefono
+        FROM citas c
+        JOIN usuarios u ON c.id_cliente = u.id_usuario
+        WHERE c.id_cita = ?
+        AND c.id_barbero = ?
         """,
-        (id_turno, id_peluquero)
+        (id_cita, id_barbero)
     ).fetchone()
 
     conn.close()

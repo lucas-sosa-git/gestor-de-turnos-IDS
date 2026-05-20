@@ -9,11 +9,11 @@ def registrar_cliente():
     nuevo_cliente = request.get_json()
     nombre = nuevo_cliente.get('nombre')
     email = nuevo_cliente.get('email')
-
+    contraseña = nuevo_cliente.get('contraseña')
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
-        cursor.execute('INSERT INTO clientes (nombre, email) VALUES (?, ?)', (nombre, email))
+        cursor.execute('INSERT INTO clientes (nombre, email, contraseña, rol) VALUES (?, ?, ?, ?)', (nombre, email, contraseña, "cliente"))
         conn.commit()
         return jsonify({"mensaje": "Cliente creado"}), 201
     except Exception as e:
@@ -35,7 +35,7 @@ def mostrar_servicios():
 @clientes_bp.route('/barberos', methods=['GET'])
 def mostrar_barberos():
     conn = get_db_connection()
-    barberos = conn.execute('SELECT * FROM barberos').fetchall()
+    barberos = conn.execute('SELECT b.id_barbero, u.nombre, u.email, b.activo FROM barberos b JOIN usuarios u on b.id_usuario=u.id_usuario').fetchall()
     conn.close()
     return jsonify([dict(b) for b in barberos])
 
@@ -46,9 +46,9 @@ def mostrar_horarios_barbero(id_barbero):
     # Aquí podrías traer los horarios disponibles de una tabla 'horarios' 
     # o simplemente los turnos que ya tiene ocupados para bloquearlos en el front
     query = '''
-        SELECT fecha_hora 
-        FROM turnos 
-        WHERE id_barbero = ? AND fecha_hora >= datetime('now')
+        SELECT fecha, hora 
+        FROM citas 
+        WHERE id_barbero = ?
     '''
     horarios_ocupados = conn.execute(query, (id_barbero,)).fetchall()
     conn.close()
@@ -57,17 +57,17 @@ def mostrar_horarios_barbero(id_barbero):
 
 
 # CANCELAR TURNO (DELETE)
-@clientes_bp.route('/turnos/<int:id_turno>', methods=['DELETE'])
-def cancelar_turno(id_turno):
-    # En REST, el id_cliente suele venir del token de seguridad, 
+@clientes_bp.route('/turnos/<int:id_cita>', methods=['DELETE'])
+def cancelar_turno(id_cita):
+    # En REST, el id_usuario suele venir del token de seguridad, 
     # pero por ahora podemos recibirlo en el JSON para probar
-    id_cliente = request.json.get('id_cliente')
+    id_usuario = request.json.get('id_usuario')
     
     conn = get_db_connection()
     cursor = conn.cursor()
     
     # Borramos el turno solo si pertenece a ese cliente
-    cursor.execute('DELETE FROM turnos WHERE id = ? AND id_cliente = ?', (id_turno, id_cliente))
+    cursor.execute('DELETE FROM turnos WHERE id_cita = ? AND id_usuario = ?', (id_cita, id_usuario))
     conn.commit()
     filas_afectadas = cursor.rowcount
     conn.close()
@@ -78,11 +78,12 @@ def cancelar_turno(id_turno):
     return jsonify({"mensaje": "Turno cancelado correctamente"}), 200
 
 
-@clientes_bp.route('/turnos/<int:id_turno>/reprogramar', methods=['PATCH'])
-def reprogramar_turno(id_turno):
+@clientes_bp.route('/turnos/<int:id_cita>/reprogramar', methods=['PATCH'])
+def reprogramar_turno(id_cita):
     data = request.get_json()
-    nueva_fecha = data.get('nueva_fecha') # Ejemplo: "2024-10-25 15:00"
-    id_cliente = data.get('id_cliente')   # Por seguridad, verificamos que sea su turno
+    nueva_fecha = data.get('nueva_fecha') # Ejemplo: "2024-10-25"
+    nueva_hora = data.get('nueva_hora') # Ejemplo: "15:00"
+    id_usario = data.get('id_usuario')   # Por seguridad, verificamos que sea su turno
 
     if not nueva_fecha:
         return jsonify({"error": "Falta la nueva fecha"}), 400
@@ -93,10 +94,10 @@ def reprogramar_turno(id_turno):
     try:
         # Actualizamos solo la fecha_hora
         cursor.execute('''
-            UPDATE turnos 
-            SET fecha_hora = ? 
-            WHERE id = ? AND id_cliente = ?
-        ''', (nueva_fecha, id_turno, id_cliente))
+            UPDATE citas 
+            SET fecha = ?, hora = ? 
+            WHERE id_cita = ? AND id_usario = ?
+        ''', (nueva_fecha, nueva_hora, id_cita, id_usario))
         
         conn.commit()
         
@@ -111,19 +112,27 @@ def reprogramar_turno(id_turno):
         
 
 # HISTORIAL DE TURNOS (GET)
-@clientes_bp.route('/<int:id_cliente>/historial', methods=['GET'])
-def historial_turnos(id_cliente):
+@clientes_bp.route('/<int:id_usuario>/historial', methods=['GET'])
+def historial_turnos(id_usuario):
     conn = get_db_connection()
     # Traemos los turnos uniendo tablas para que el cliente vea el nombre del barbero y servicio
     query = '''
-        SELECT t.id, t.fecha_hora, b.nombre as barbero, s.nombre as servicio
-        FROM turnos t
-        JOIN barberos b ON t.id_barbero = b.id
-        JOIN servicios s ON t.id_servicio = s.id
-        WHERE t.id_cliente = ?
-        ORDER BY t.fecha_hora DESC
+        SELECT 
+            c.id_cita,
+            c.fecha,
+            c.hora,
+            ub.nombre AS barbero,
+            s.nombre AS servicio,
+            c.estado
+        FROM citas c
+        JOIN barberos b ON c.id_barbero = b.id_barbero
+        JOIN usuarios ub ON b.id_usuario = ub.id_usuario
+        JOIN servicios s ON c.id_servicio = s.id_servicio
+        WHERE c.id_usuario = ?
+        ORDER BY c.fecha DESC, c.hora DESC
     '''
-    turnos = conn.execute(query, (id_cliente,)).fetchall()
+
+    turnos = conn.execute(query,(id_usuario,)).fetchall()
     conn.close()
     
     return jsonify([dict(t) for t in turnos])
