@@ -40,7 +40,8 @@ CREATE TABLE citas (
     id_barbero INT NOT NULL,
     id_servicio INT NOT NULL,
     fecha DATE NOT NULL,
-    hora TIME NOT NULL,
+    hora_inicio TIME NOT NULL,
+    hora_fin TIME NOT NULL,
     estado ENUM('pendiente', 'confirmada', 'cancelada') NOT NULL DEFAULT 'pendiente',
     ausencia BOOLEAN NOT NULL DEFAULT 0,
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -49,6 +50,16 @@ CREATE TABLE citas (
     FOREIGN KEY (id_servicio) REFERENCES servicios(id_servicio)
 );
 
+CREATE TABLE resenias (
+    id_resenia INT AUTO_INCREMENT PRIMARY KEY,
+    id_cita INT NOT NULL UNIQUE,
+    id_barbero INT NOT NULL,
+    calificacion INT NOT NULL CHECK (calificacion >= 1 AND calificacion <= 5),
+    comentario TEXT,
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_cita) REFERENCES citas(id_cita),
+    FOREIGN KEY (id_barbero) REFERENCES barberos(id_barbero)
+);
 
 #PRUEBAS 
 
@@ -70,6 +81,227 @@ INSERT INTO disponibilidad_barberos (id_barbero, dia_semana, hora_inicio, hora_f
 (1, '4', '09:00:00', '17:00:00'),
 (1, '5', '09:00:00', '17:00:00');
 
-INSERT INTO citas (id_usuario, id_barbero, id_servicio, fecha, hora, estado, ausencia, fecha_creacion) VALUES 
-(1, 1, 1, '2024-07-01', '10:00:00', 'confirmada', 0, CURRENT_TIMESTAMP),
-(1, 1, 2, '2024-07-02', '11:00:00', 'pendiente', 0, CURRENT_TIMESTAMP);
+INSERT INTO citas (id_usuario, id_barbero, id_servicio, fecha, hora_inicio, hora_fin, estado) VALUES 
+(1, 1, 1, '2024-07-01', '10:00:00', '10:30:00', 'confirmada'),
+(1, 1, 2, '2024-07-02', '11:00:00', '11:20:00', 'pendiente');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
