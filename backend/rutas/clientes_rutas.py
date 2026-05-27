@@ -10,16 +10,40 @@ def registrar_cliente():
     nombre = nuevo_cliente.get('nombre')
     email = nuevo_cliente.get('email')
     contraseña = nuevo_cliente.get('contraseña')
+
+    if not nombre or not email or not contraseña:
+        return jsonify({"error": "nombre, email y contraseña son obligatorios"}), 400
+    
     conn = get_db_connection()
     cursor = conn.cursor()
+
+    # validar email 
+    existe = cursor.execute(
+        'SELECT id_usuario FROM usuarios WHERE email = ?', (email,)
+    ).fetchone()
+    if existe:
+        conn.close()
+        return jsonify({"error": "Ya existe un usuario con ese email"}), 409
+    
     try:
-        cursor.execute('INSERT INTO clientes (nombre, email, contraseña, rol) VALUES (?, ?, ?, ?)', (nombre, email, contraseña, "cliente"))
+        cursor.execute(
+            'INSERT INTO usuarios (nombre, email, contraseña, rol) VALUES (?, ?, ?, ?)',
+            (nombre, email, contraseña, "cliente")
+        )
+        id_usuario = cursor.lastrowid
         conn.commit()
-        return jsonify({"mensaje": "Cliente creado"}), 201
+
+        # Devolver el recurso creado
+        cliente = cursor.execute(
+            'SELECT id_usuario, nombre, email, rol FROM usuarios WHERE id_usuario = ?',
+            (id_usuario,)
+        ).fetchone()
+        return jsonify(dict(cliente)), 201
     except Exception as e:
         return jsonify({"error": str(e)}), 400
     finally:
         conn.close()
+
 
 # 2. MOSTRAR SERVICIOS
 @clientes_bp.route('/servicios', methods=['GET'])
@@ -30,6 +54,7 @@ def mostrar_servicios():
     
     # Convertimos los objetos Row a una lista de diccionarios para JSON
     return jsonify([dict(s) for s in servicios])
+
 
 # 3. MOSTRAR BARBEROS
 @clientes_bp.route('/barberos', methods=['GET'])
@@ -42,18 +67,36 @@ def mostrar_barberos():
 
 @clientes_bp.route('/barberos/<int:id_barbero>/horarios', methods=['GET'])
 def mostrar_horarios_barbero(id_barbero):
-    conn = get_db_connection()
-    # Aquí podrías traer los horarios disponibles de una tabla 'horarios' 
-    # o simplemente los turnos que ya tiene ocupados para bloquearlos en el front
-    query = '''
-        SELECT fecha, hora 
-        FROM citas 
+    conn   = get_db_connection()
+    cursor = conn.cursor()
+
+    # Validar que el barbero exista
+    barbero = cursor.execute(
+        'SELECT id_barbero FROM barberos WHERE id_barbero = ? AND activo = 1', (id_barbero,)
+    ).fetchone()
+    if not barbero:
+        conn.close()
+        return jsonify({"error": "Barbero no encontrado"}), 404
+
+    # Devuelve disponibilidad configurada + citas ocupadas
+    disponibilidad = cursor.execute(
+        'SELECT * FROM disponibilidad_barberos WHERE id_barbero = ?', (id_barbero,)
+    ).fetchall()
+
+    citas_ocupadas = cursor.execute('''
+        SELECT fecha, hora, estado
+        FROM citas
         WHERE id_barbero = ?
-    '''
-    horarios_ocupados = conn.execute(query, (id_barbero,)).fetchall()
+          AND fecha >= DATE('now')
+          AND estado != 'cancelada'
+        ORDER BY fecha, hora
+    ''', (id_barbero,)).fetchall()
+
     conn.close()
-    
-    return jsonify([dict(h) for h in horarios_ocupados])
+    return jsonify({
+        "disponibilidad": [dict(d) for d in disponibilidad],
+        "citas_ocupadas": [dict(c) for c in citas_ocupadas]
+    }), 200
 
 
 # CANCELAR TURNO (DELETE)
@@ -67,7 +110,7 @@ def cancelar_turno(id_cita):
     cursor = conn.cursor()
     
     # Borramos el turno solo si pertenece a ese cliente
-    cursor.execute('DELETE FROM turnos WHERE id_cita = ? AND id_usuario = ?', (id_cita, id_usuario))
+    cursor.execute('DELETE FROM citas WHERE id_cita = ? AND id_usuario = ?', (id_cita, id_usuario))
     conn.commit()
     filas_afectadas = cursor.rowcount
     conn.close()
@@ -78,12 +121,12 @@ def cancelar_turno(id_cita):
     return jsonify({"mensaje": "Turno cancelado correctamente"}), 200
 
 
-@clientes_bp.route('/turnos/<int:id_cita>/reprogramar', methods=['PATCH'])
+@clientes_bp.route('/turnos/<int:id_cita>/', methods=['PATCH'])
 def reprogramar_turno(id_cita):
     data = request.get_json()
     nueva_fecha = data.get('nueva_fecha') # Ejemplo: "2024-10-25"
     nueva_hora = data.get('nueva_hora') # Ejemplo: "15:00"
-    id_usario = data.get('id_usuario')   # Por seguridad, verificamos que sea su turno
+    id_usuario = data.get('id_usuario')   # Por seguridad, verificamos que sea su turno
 
     if not nueva_fecha:
         return jsonify({"error": "Falta la nueva fecha"}), 400
@@ -91,24 +134,46 @@ def reprogramar_turno(id_cita):
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    try:
-        # Actualizamos solo la fecha_hora
-        cursor.execute('''
-            UPDATE citas 
-            SET fecha = ?, hora = ? 
-            WHERE id_cita = ? AND id_usario = ?
-        ''', (nueva_fecha, nueva_hora, id_cita, id_usario))
-        
-        conn.commit()
-        
-        if cursor.rowcount == 0:
-            return jsonify({"error": "Turno no encontrado o no pertenece al cliente"}), 404
-            
-        return jsonify({"mensaje": "Turno reprogramado con éxito"}), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 400
-    finally:
+    cita = cursor.execute(
+        'SELECT * FROM citas WHERE id_cita = ?', (id_cita,)
+    ).fetchone()
+
+    if not cita:
         conn.close()
+        return jsonify({"error": "Turno no encontrado"}), 404
+
+    if cita['id_usuario'] != id_usuario:
+        conn.close()
+        return jsonify({"error": "Este turno no pertenece al cliente"}), 403
+
+    if cita['estado'] == 'cancelada':
+        conn.close()
+        return jsonify({"error": "No se puede reprogramar un turno cancelado"}), 409
+
+    # Validar que el nuevo horario no esté ocupado por ese barbero
+    conflicto = cursor.execute('''
+        SELECT id_cita FROM citas
+        WHERE id_barbero = ?
+          AND fecha = ?
+          AND hora = ?
+          AND estado != 'cancelada'
+          AND id_cita != ?
+    ''', (cita['id_barbero'], nueva_fecha, nueva_hora, id_cita)).fetchone()
+
+    if conflicto:
+        conn.close()
+        return jsonify({"error": "Ese horario ya está ocupado para el barbero"}), 409
+
+    cursor.execute(
+        'UPDATE citas SET fecha = ?, hora = ? WHERE id_cita = ?',
+        (nueva_fecha, nueva_hora, id_cita)
+    )
+    conn.commit()
+
+    actualizada = cursor.execute('SELECT * FROM citas WHERE id_cita = ?', (id_cita,)).fetchone()
+    conn.close()
+    return jsonify(dict(actualizada)), 200
+    
         
 
 # HISTORIAL DE TURNOS (GET)
@@ -136,3 +201,87 @@ def historial_turnos(id_usuario):
     conn.close()
     
     return jsonify([dict(t) for t in turnos])
+
+
+@clientes_bp.route('/turnos', methods=['POST'])
+def reservar_turno():
+    data        = request.get_json()
+    id_usuario  = data.get('id_usuario')
+    id_barbero  = data.get('id_barbero')
+    id_servicio = data.get('id_servicio')
+    fecha       = data.get('fecha')
+    hora_inicio = data.get('hora_inicio')
+
+    if not id_usuario or not id_barbero or not id_servicio or not fecha or not hora_inicio:
+        return jsonify({"error": "Faltan campos obligatorios"}), 400
+
+    conn   = get_db_connection()
+    cursor = conn.cursor()
+
+    cliente = cursor.execute(
+        'SELECT id_usuario FROM usuarios WHERE id_usuario = ? AND rol = "cliente"',
+        (id_usuario,)
+    ).fetchone()
+    if not cliente:
+        conn.close()
+        return jsonify({"error": "Cliente no encontrado"}), 404
+
+    barbero = cursor.execute(
+        'SELECT id_barbero FROM barberos WHERE id_barbero = ? AND activo = 1',
+        (id_barbero,)
+    ).fetchone()
+    if not barbero:
+        conn.close()
+        return jsonify({"error": "Barbero no encontrado o inactivo"}), 404
+
+    servicio = cursor.execute(
+        'SELECT id_servicio, duracion FROM servicios WHERE id_servicio = ?',
+        (id_servicio,)
+    ).fetchone()
+    if not servicio:
+        conn.close()
+        return jsonify({"error": "Servicio no encontrado"}), 404
+
+    from datetime import datetime, timedelta
+    hora_fin = (
+        datetime.strptime(hora_inicio, "%H:%M") +
+        timedelta(minutes=servicio['duracion'])
+    ).strftime("%H:%M")
+
+    if fecha < datetime.now().strftime("%Y-%m-%d"):
+        conn.close()
+        return jsonify({"error": "No se puede reservar en una fecha pasada"}), 400
+
+    conflicto = cursor.execute('''
+        SELECT id_cita FROM citas
+        WHERE id_barbero = ?
+          AND fecha = ?
+          AND estado != 'cancelada'
+          AND hora_inicio < ?
+          AND hora_fin > ?
+    ''', (id_barbero, fecha, hora_fin, hora_inicio)).fetchone()
+    if conflicto:
+        conn.close()
+        return jsonify({"error": "Ese horario ya está ocupado para el barbero"}), 409
+
+    cursor.execute('''
+        INSERT INTO citas (id_usuario, id_barbero, id_servicio, fecha, hora_inicio, hora_fin, estado)
+        VALUES (?, ?, ?, ?, ?, ?, 'pendiente')
+    ''', (id_usuario, id_barbero, id_servicio, fecha, hora_inicio, hora_fin))
+    id_cita = cursor.lastrowid
+    conn.commit()
+
+    cita = cursor.execute('''
+        SELECT c.id_cita, c.fecha, c.hora_inicio, c.hora_fin, c.estado,
+               u.nombre  AS cliente,
+               ub.nombre AS barbero,
+               s.nombre  AS servicio
+        FROM citas c
+        JOIN usuarios u  ON c.id_usuario  = u.id_usuario
+        JOIN barberos b  ON c.id_barbero  = b.id_barbero
+        JOIN usuarios ub ON b.id_usuario  = ub.id_usuario
+        JOIN servicios s ON c.id_servicio = s.id_servicio
+        WHERE c.id_cita = ?
+    ''', (id_cita,)).fetchone()
+    conn.close()
+    return jsonify(dict(cita)), 201

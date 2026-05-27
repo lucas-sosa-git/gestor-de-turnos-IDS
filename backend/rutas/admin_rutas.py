@@ -155,4 +155,3 @@ def mostrar_estadisticas():
         "barbero_estrella": dict(top_barbero) if top_barbero else None,
         "servicio_popular": dict(top_servicio) if top_servicio else None
     })
-
