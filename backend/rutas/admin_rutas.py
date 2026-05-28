@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
 from db import get_db_connection
+import hashlib
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -10,9 +11,9 @@ def crear_barbero():
     data = request.get_json()
     nombre = data.get('nombre')
     email = data.get('email')
-    contraseña = data.get('contraseña')
+    clave = data.get('clave')
 
-    if not nombre or not email or not contraseña:
+    if not nombre or not email or not clave:
         return jsonify({"error": "Faltan campos obligatorios"}), 400
     
     conn = get_db_connection()
@@ -24,7 +25,8 @@ def crear_barbero():
         conn.close()
         return jsonify({"error": "Email ya registrado"}), 400
 
-    cursor.execute('INSERT INTO usuarios (nombre, email, contraseña, rol) VALUES (?, ?, ?, ?)', (nombre, email, contraseña, "barbero"))
+    clave_hash = hashlib.sha256(clave.encode()).hexdigest()
+    cursor.execute('INSERT INTO usuarios (nombre, email, clave, rol) VALUES (?, ?, ?, ?)', (nombre, email, clave_hash, "barbero"))
     id_usuario = cursor.lastrowid
     
     #crear barbero asociado
@@ -46,8 +48,19 @@ def crear_barbero():
 def editar_barbero(id_barbero):
     data = request.get_json()
     nuevo_nombre = data.get('nombre')
+
+    if not nuevo_nombre:
+        return jsonify({"error": "El campo nombre es obligatorio"}), 400
+
     conn = get_db_connection()
-    conn.execute('''
+    cursor = conn.cursor()
+
+    barbero = cursor.execute('SELECT id_usuario FROM barberos WHERE id_barbero = ?', (id_barbero,)).fetchone()
+    if not barbero:
+        conn.close()
+        return jsonify({"error": "Barbero no encontrado"}), 404
+
+    cursor.execute('''
         UPDATE usuarios
         SET nombre = ?
         WHERE id_usuario = (
@@ -57,8 +70,16 @@ def editar_barbero(id_barbero):
         )
         ''', (nuevo_nombre, id_barbero))
     conn.commit()
+
+    actualizado = cursor.execute('''
+        SELECT b.id_barbero, u.nombre, u.email, b.activo
+        FROM barberos b
+        JOIN usuarios u ON b.id_usuario = u.id_usuario
+        WHERE b.id_barbero = ?
+    ''', (id_barbero,)).fetchone()
     conn.close()
-    return jsonify({"mensaje": "Barbero actualizado"})
+    return jsonify({"mensaje": "Barbero actualizado", "barbero": dict(actualizado)}), 200
+
 
 @admin_bp.route('/barberos/<int:id_barbero>', methods=['DELETE'])
 def eliminar_barbero(id_barbero):

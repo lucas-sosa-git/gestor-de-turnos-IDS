@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
     id_usuario  INTEGER PRIMARY KEY AUTOINCREMENT,
     nombre      TEXT NOT NULL,
     email       TEXT NOT NULL UNIQUE,
-    contraseña  TEXT NOT NULL,
+    clave   TEXT NOT NULL,
     rol         TEXT NOT NULL CHECK (rol IN ('cliente', 'administrador', 'barbero'))
 );
 
