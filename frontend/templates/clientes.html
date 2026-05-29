@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vista - clientes</title>
+</head>
+<body>
+    <div style="max-width: 1100px; margin: 40px auto; font-family: sans-serif">
+        <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px">
+            <div style="display: flex; align-items: center; gap: 15px">
+                <div style="width: 50px; height: 50px; background-color: #a855f7; color: white; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold;">
+                    <span>L</span> 
+                </div>
+                
+                <div>
+                    <h1 style="margin: 0; font-size: 22px; font-weight: bold; color: #1f2937">Salón Elegance</h1>
+                    <p style="margin: 0; font-size: 14px; color: #6b7280">Bienvenido, aolano</p>
+                </div>
+            </div>
+            <div style="background-color: lightgray;">
+                <button style="background: transparent; border: none; color: #4b5563; font-size: 16px; cursor: pointer; font-weight: 500">Salir</button>
+            </div>
+        </header>
+    </div>
+    <nav style="display: flex; gap: 30px; border-bottom: 2px solid #e5e7eb; margin-bottom: 30px">
+        <a href="#" style="display: flex; align-items: center; gap: 8px; text-decoration: none; color: #6b7280; font-size: 15px;
+    font-weight: 500; padding-bottom: 12px; border-bottom: 2px solid transparent; margin-bottom: -2px">
+            <span>👤</span> Nuestros Estilistas
+        </a>
+        
+        <a href="#" style="display: flex; align-items: center; gap: 8px; text-decoration: none; color: #a855f7; font-size: 15px;
+    font-weight: 500; padding-bottom: 12px; border-bottom: 2px solid #a855f7; margin-bottom: -2px">
+            <span>📅</span> Mis Reservas
+            <span class="indicador-numero">1</span>
+        </a>
+        
+        <a href="#" style="display: flex; align-items: center; gap: 8px; text-decoration: none; color: #6b7280; font-size: 15px;
+    font-weight: 500; padding-bottom: 12px; border-bottom: 2px solid transparent; margin-bottom: -2px">
+            <span>ℹ️</span> Acerca de Nosotros
+        </a>
+    </nav>
+    {% if true %}
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+            <div>
+                <h2 style="font-size: 22px; font-weight: bold; color: #1f2937; margin: 0 0 5px 0;">Mis Reservas Activas</h2>
+                <p style="font-size: 14px; color: #6b7280; margin: 0;">Gestiona tus citas pendientes y deja reseñas de los servicios completados</p>
+            </div>
+            
+            <button style="background-color: transparent; color: #a855f7; border: 1px solid #a855f7; border-radius: 8px; padding: 10px 18px; font-size: 14px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                <span>🕒</span> Ver Historial
+            </button>
+        </div>
+
+        {% for i in [1] %}
+            <div style="background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+                
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+                    <div>
+                        <h3 style="font-size: 18px; font-weight: bold; color: #1f2937; margin: 0;">Carlos Ramírez</h3>
+                        <p style="font-size: 14px; color: #6b7280; margin: 6px 0 0 0; display: flex; align-items: center; gap: 6px;">
+                            <span>✂️</span> Corte de cabello
+                        </p>
+                    </div>
+
+                    <div style="background-color: #e0f2fe; color: #0369a1; padding: 6px 16px; border-radius: 20px; font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 6px;">
+                        <span>ℹ️</span> Pendiente
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 24px; color: #6b7280; font-size: 14px; margin-bottom: 20px;">
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <span>📅</span> sáb, 16 may 2026
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <span>🕒</span> 10:00 hs
+                    </div>
+                </div>
+
+                <hr style="border: 0; border-top: 1px solid #f3f4f6; margin: 0 0 16px 0;">
+
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <p style="font-size: 14px; color: #6b7280; margin: 0;">Te esperamos en tu cita. Recuerda llegar 5 minutos antes.</p>
+                    
+                    <button style="background-color: #fef2f2; color: #dc2626; border: none; padding: 10px 18px; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                        <span>🗑️</span> Cancelar Turno
+                    </button>
+                </div>
+
+            </div>
+        {% endfor %}
+
+    {% else %}
+        <div style="text-align: center; padding: 40px 0; color: #6b7280;">
+            <p>No tienes reservas activas en este momento.</p>
+        </div>
+    {% endif %}
+</body>
+</html>
