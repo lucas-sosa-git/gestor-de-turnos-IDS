@@ -127,9 +127,9 @@ def cancelar_turno(id_cita):
 @clientes_bp.route('/turnos/<int:id_cita>/', methods=['PATCH'])
 def reprogramar_turno(id_cita):
     data = request.get_json()
-    nueva_fecha = data.get('nueva_fecha') # Ejemplo: "2024-10-25"
-    nueva_hora_inicio = data.get('nueva_hora_inicio') # Ejemplo: "15:00"
-    id_usuario = data.get('id_usuario')   # Por seguridad, verificamos que sea su turno
+    nueva_fecha = data.get('nueva_fecha') 
+    nueva_hora_inicio = data.get('nueva_hora_inicio') 
+    id_usuario = data.get('id_usuario')   
 
     if not nueva_fecha or not nueva_hora_inicio:
         return jsonify({"error": "Falta la nueva fecha o hora de inicio"}), 400
@@ -294,3 +294,51 @@ def reservar_turno():
     ''', (id_cita,)).fetchone()
     conn.close()
     return jsonify(dict(cita)), 201
+
+
+@clientes_bp.route('/resenias', methods=['POST'])
+def dejar_resenia():
+    data = request.get_json()
+    id_usuario = data.get('id_usuario')
+    id_barbero = data.get('id_barbero')
+    id_cita    = data.get('id_cita')
+    calificacion = data.get('calificacion')
+    comentario = data.get('comentario')
+
+    if not id_usuario or not id_barbero or not id_cita or not calificacion:
+        return jsonify({"error": "Faltan campos obligatorios"}), 400
+    
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cliente = cursor.execute('SELECT id_usuario FROM usuarios WHERE id_usuario = ? and rol = "cliente"', (id_usuario,)).fetchone()
+    if not cliente:
+        conn.close()
+        return jsonify({"error": "Cliente no encontrado"}), 404
+    
+    barbero = cursor.execute('SELECT id_barbero FROM barberos WHERE id_barbero = ? and activo = 1', (id_barbero,)).fetchone()
+    if not barbero:
+        conn.close()
+        return jsonify({"error": "Barbero no encontrado"}), 404
+    
+    if not isinstance(calificacion, int) or calificacion < 1 or calificacion > 5:
+        conn.close()
+        return jsonify({"error": "La calificación debe ser un número entero entre 1 y 5"}), 400
+    
+    #le podriamos agregarle a la bd un estado de cita completada para que se pueda dejar la resenia cuando se termine el turno.
+    cita = cursor.execute('SELECT id_cita FROM citas WHERE id_cita =? AND id_usuario = ? AND id_barbero = ? AND estado = "confirmada"', (id_cita, id_usuario, id_barbero)).fetchone()
+    if not cita:
+        conn.close()
+        return jsonify({"error": "Cita no encontrada, no pertenece al cliente o no es del barbero"}), 404
+    
+    resenia_existente = cursor.execute('SELECT id_resenia FROM resenias WHERE id_usuario = ? AND id_cita = ?', (id_usuario, id_cita)).fetchone()
+    if resenia_existente:
+        conn.close()
+        return jsonify({"error": "Ya has dejado una reseña para esta cita"}), 409
+
+    cursor.execute('INSERT INTO resenias (id_usuario, id_cita, calificacion, comentario) VALUES (?, ?, ?, ?)', (id_usuario, id_cita, calificacion, comentario))
+    id_resenia = cursor.lastrowid
+    conn.commit()
+    resenia = cursor.execute('SELECT * FROM resenias WHERE id_resenia = ?', (id_resenia,)).fetchone()
+    
+    conn.close()
+    return jsonify({"message": "Reseña subida correctamente", "Reseña": dict(resenia)}), 201
