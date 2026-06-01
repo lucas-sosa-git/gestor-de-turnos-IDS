@@ -1,12 +1,62 @@
-from flask import Flask, render_template
+import json
+import os
+from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
+
+from flask import Flask, redirect, render_template, request, url_for
 
 
 app = Flask(__name__, template_folder="templates", static_folder="statics")
 
 
-@app.route("/")
+def get_backend_url():
+    return os.environ.get("BACKEND_URL", "http://127.0.0.1:5000").rstrip("/")
+
+
+def login_en_backend(email, clave):
+    login_url = f"{get_backend_url()}/api/auth/login"
+    payload = json.dumps({"email": email, "clave": clave}).encode("utf-8")
+
+    login_request = Request(
+        login_url,
+        data=payload,
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+
+    try:
+        with urlopen(login_request, timeout=5) as response:
+            return response.status < 400, None
+    except HTTPError as error:
+        mensaje = "Email o contrasena incorrectos."
+
+        try:
+            data = json.loads(error.read().decode("utf-8"))
+            mensaje = data.get("mensaje") or data.get("error") or mensaje
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            pass
+
+        return False, mensaje
+    except (URLError, TimeoutError):
+        return False, "No se pudo conectar con el backend. Verifica que este levantado."
+
+
+@app.route("/", methods=["GET", "POST"])
 def login():
-    return render_template("login.html")
+    error = None
+
+    if request.method == "POST":
+        email = request.form.get("email", "").strip()
+        clave = request.form.get("clave", "")
+
+        if not email or not clave:
+            error = "Ingresa email y contrasena."
+        else:
+            login_ok, error = login_en_backend(email, clave)
+            if login_ok:
+                return redirect(url_for("admin_panel"))
+
+    return render_template("login.html", error=error)
 
 @app.route("/admin")
 def admin_panel():
