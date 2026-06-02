@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, render_template
 from db import get_db_connection
 from datetime import datetime, timedelta
 import hashlib
@@ -66,6 +66,41 @@ def mostrar_barberos():
     conn.close()
     return jsonify([dict(b) for b in barberos])
 
+# 4. VISTA HTML: PANEL DE RESERVAS DEL CLIENTE
+@clientes_bp.route('/panel/<int:id_usuario>', methods=['GET'])
+def panel_cliente(id_usuario):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # 1. Traer los datos del usuario logueado para personalizar el saludo
+    usuario = cursor.execute(
+        'SELECT nombre FROM usuarios WHERE id_usuario = ?', (id_usuario,)
+    ).fetchone()
+
+    # 2. Buscar solo sus turnos ACTIVOS (no cancelados) uniendo servicios y barberos
+    query = '''
+        SELECT 
+            c.id_cita,
+            c.fecha,
+            c.hora_inicio,
+            c.estado,
+            ub.nombre AS barbero_nombre,
+            s.nombre AS servicio_nombre
+        FROM citas c
+        JOIN barberos b ON c.id_barbero = b.id_barbero
+        JOIN usuarios ub ON b.id_usuario = ub.id_usuario
+        JOIN servicios s ON c.id_servicio = s.id_servicio
+        WHERE c.id_usuario = ? AND c.estado != 'cancelada'
+        ORDER BY c.fecha ASC, c.hora_inicio ASC
+    '''
+    turnos = cursor.execute(query, (id_usuario,)).fetchall()
+    conn.close()
+
+    if not usuario:
+        return "Usuario no encontrado", 404
+
+    # Enviamos las variables 'usuario' y 'turnos' directamente al HTML
+    return render_template('clientes.html', usuario=usuario, turnos=turnos)
 
 @clientes_bp.route('/barberos/<int:id_barbero>/horarios', methods=['GET'])
 def mostrar_horarios_barbero(id_barbero):

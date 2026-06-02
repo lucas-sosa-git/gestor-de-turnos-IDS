@@ -1,5 +1,3 @@
-CREATE DATABASE IF NOT EXISTS barberia;
-USE barberia;
 DROP TABLE IF EXISTS resenias;
 DROP TABLE IF EXISTS citas;
 DROP TABLE IF EXISTS disponibilidad_barberos;
