@@ -51,14 +51,6 @@ def admin_panel():
                          servicios=servicios,
                          servicios_top=servicios)
 
-@app.template_filter('format_miles')
-def format_miles(value):
-    try:
-        
-        num = int(float(value))
-        return f"{num:,}".replace(",", ".")
-    except (ValueError, TypeError):
-        return value
 
 if __name__ == "__main__":
     app.run(debug=True, port=5001)

@@ -1,0 +1,198 @@
+/* ── Variables de tema ── */
+:root {
+  --admin-bg: #0f1117;
+  --card-bg: #1a1d27;
+  --card-border: #2a2d3e;
+  --accent-gold: #f5a623;
+  --accent-green: #22c55e;
+  --accent-blue: #3b82f6;
+  --accent-purple: #8b5cf6;
+  --text-primary: #f0f2f8;
+  --text-muted: #8b90a7;
+  --badge-complete: #16a34a;
+  --badge-pending: #2563eb;
+  --badge-cancel: #dc2626;
+  --radius-card: 14px;
+  --radius-inner: 10px;
+}
+
+/* ── Shell del panel ── */
+.admin-shell {
+  background: var(--admin-bg);
+  min-height: 100vh;
+  color: var(--text-primary);
+  font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+/* ── Header ── */
+.admin-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.4rem 2rem;
+  border-bottom: 1px solid var(--card-border);
+}
+.admin-header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.admin-logo {
+  width: 48px; height: 48px;
+  background: var(--accent-gold);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.4rem;
+}
+.admin-title { font-size: 1.4rem; font-weight: 700; margin: 0; }
+.admin-subtitle { font-size: .8rem; color: var(--text-muted); margin: 0; }
+.btn-salir {
+  background: transparent;
+  border: 1px solid var(--card-border);
+  color: var(--text-muted);
+  border-radius: 8px;
+  padding: .4rem 1rem;
+  font-size: .85rem;
+  text-decoration: none;
+}
+.btn-salir:hover { border-color: var(--accent-gold); color: var(--accent-gold); }
+
+/* ── Tabs ── */
+.admin-tabs {
+  display: flex;
+  gap: 0;
+  padding: 0 2rem;
+  border-bottom: 1px solid var(--card-border);
+}
+.admin-tab {
+  padding: .85rem 1.4rem;
+  font-size: .9rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  display: flex; align-items: center; gap: .4rem;
+}
+.admin-tab.active {
+  color: var(--accent-gold);
+  border-bottom-color: var(--accent-gold);
+}
+.admin-tab:hover:not(.active) { color: var(--text-primary); }
+
+/* ── Contenido de tabs ── */
+.tab-pane-content { display: none; }
+.tab-pane-content.active { display: block; }
+
+/* ── Body ── */
+.admin-body { padding: 2rem; }
+
+/* ── KPI Grid ── */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.kpi-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-card);
+  padding: 1.4rem;
+  transition: transform .2s;
+}
+.kpi-card:hover { transform: translateY(-2px); }
+.kpi-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+.kpi-icon {
+  width: 42px; height: 42px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.2rem;
+}
+.kpi-icon.green { background: rgba(34,197,94,.2); color: var(--accent-green); }
+.kpi-icon.blue { background: rgba(59,130,246,.2); color: var(--accent-blue); }
+.kpi-icon.purple { background: rgba(139,92,246,.2); color: var(--accent-purple); }
+.kpi-icon.gold { background: rgba(245,166,35,.2); color: var(--accent-gold); }
+.kpi-delta {
+  font-size: .78rem;
+  font-weight: 600;
+  padding: .2rem .5rem;
+  border-radius: 20px;
+}
+.kpi-delta.pos { background: rgba(34,197,94,.15); color: var(--accent-green); }
+.kpi-delta.neg { background: rgba(220,38,38,.15); color: #f87171; }
+.kpi-value { font-size: 2rem; font-weight: 800; margin: 0; line-height: 1; }
+.kpi-label { font-size: .8rem; color: var(--text-muted); margin-top: .3rem; }
+
+/* ── Bottom Grid ── */
+.bottom-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+/* ── Panel Card ── */
+.panel-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-card);
+  padding: 1.4rem;
+}
+.panel-card-title {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  display: flex; align-items: center; gap: .5rem;
+}
+
+/* ── Citas ── */
+.cita-row {
+  background: #22253a;
+  border-radius: var(--radius-inner);
+  padding: .85rem 1rem;
+  margin-bottom: .6rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.cita-info-nombre { font-weight: 600; font-size: .9rem; }
+.cita-info-sub { font-size: .78rem; color: var(--text-muted); }
+.cita-right { display: flex; align-items: center; gap: .7rem; }
+.cita-hora { font-size: .82rem; color: var(--text-muted); }
+.badge-estado {
+  font-size: .72rem;
+  font-weight: 600;
+  padding: .25rem .65rem;
+  border-radius: 20px;
+}
+.badge-completada { background: rgba(22,163,74,.2); color: #4ade80; }
+.badge-pendiente { background: rgba(37,99,235,.2); color: #60a5fa; }
+.badge-cancelada { background: rgba(220,38,38,.2); color: #f87171; }
+
+/* ── Semanas ── */
+.semana-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: .4rem;
+  height: 80px;
+  margin-top: 1rem;
+}
+.semana-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: .3rem; }
+.semana-bar-wrap { flex: 1; width: 100%; display: flex; align-items: flex-end; }
+.semana-bar {
+  width: 100%;
+  border-radius: 4px 4px 0 0;
+  background: var(--accent-gold);
+  opacity: .7;
+  min-height: 4px;
+}
+.semana-bar.highlight { opacity: 1; background: var(--accent-green); }
+.semana-label { font-size: .68rem; color: var(--text-muted); }
+
+.mb-3 { margin-bottom: 1rem; }
+.mt-3 { margin-top: 1rem; }

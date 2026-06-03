@@ -1,300 +1,8 @@
-<html><head></head><body>{% extends "admin/base_admin.html" %}
+{% extends "admin/base_admin.html" %}
 
 {% block content %}
 
-<style>
-  /* ── Variables de tema ── */
-  :root {
-    --admin-bg:       #0f1117;
-    --card-bg:        #1a1d27;
-    --card-border:    #2a2d3e;
-    --accent-gold:    #f5a623;
-    --accent-green:   #22c55e;
-    --accent-blue:    #3b82f6;
-    --accent-purple:  #8b5cf6;
-    --text-primary:   #f0f2f8;
-    --text-muted:     #8b90a7;
-    --badge-complete: #16a34a;
-    --badge-pending:  #2563eb;
-    --badge-cancel:   #dc2626;
-    --radius-card:    14px;
-    --radius-inner:   10px;
-  }
-
-  /* ── Shell del panel ── */
-  .admin-shell {
-    background: var(--admin-bg);
-    min-height: 100vh;
-    border-radius: var(--radius-card);
-    padding: 0;
-    margin-top: -1rem;
-    color: var(--text-primary);
-    font-family: 'Segoe UI', system-ui, sans-serif;
-  }
-
-  /* ── Header del panel ── */
-  .admin-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 1.4rem 2rem;
-    border-bottom: 1px solid var(--card-border);
-  }
-  .admin-header-left {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-  }
-  .admin-logo {
-    width: 48px; height: 48px;
-    background: var(--accent-gold);
-    border-radius: 12px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 1.4rem;
-  }
-  .admin-title { font-size: 1.4rem; font-weight: 700; margin: 0; }
-  .admin-subtitle { font-size: .8rem; color: var(--text-muted); margin: 0; }
-  .btn-salir {
-    background: transparent;
-    border: 1px solid var(--card-border);
-    color: var(--text-muted);
-    border-radius: 8px;
-    padding: .4rem 1rem;
-    font-size: .85rem;
-    text-decoration: none;
-    transition: border-color .2s, color .2s;
-  }
-  .btn-salir:hover { border-color: var(--accent-gold); color: var(--accent-gold); }
-
-  /* ── Tabs ── */
-  .admin-tabs {
-    display: flex;
-    gap: 0;
-    padding: 0 2rem;
-    border-bottom: 1px solid var(--card-border);
-  }
-  .admin-tab {
-    padding: .85rem 1.4rem;
-    font-size: .9rem;
-    font-weight: 500;
-    color: var(--text-muted);
-    cursor: pointer;
-    border-bottom: 2px solid transparent;
-    transition: color .2s, border-color .2s;
-    display: flex; align-items: center; gap: .4rem;
-  }
-  .admin-tab.active {
-    color: var(--accent-gold);
-    border-bottom-color: var(--accent-gold);
-  }
-  .admin-tab:hover:not(.active) { color: var(--text-primary); }
-
-  /* ── Contenido de tabs ── */
-  .tab-pane-content { display: none; }
-  .tab-pane-content.active { display: block; }
-
-  /* ── Body del panel ── */
-  .admin-body { padding: 2rem; }
-
-  /* ── Tarjetas de KPI ── */
-  .kpi-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-  }
-  .kpi-card {
-    background: var(--card-bg);
-    border: 1px solid var(--card-border);
-    border-radius: var(--radius-card);
-    padding: 1.4rem;
-    position: relative;
-    overflow: hidden;
-    transition: transform .2s, box-shadow .2s;
-  }
-  .kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.4); }
-
-  .kpi-top {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    margin-bottom: 1rem;
-  }
-  .kpi-icon {
-    width: 42px; height: 42px;
-    border-radius: 10px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 1.2rem;
-  }
-  .kpi-icon.green  { background: rgba(34,197,94,.2);  color: var(--accent-green); }
-  .kpi-icon.blue   { background: rgba(59,130,246,.2); color: var(--accent-blue);  }
-  .kpi-icon.purple { background: rgba(139,92,246,.2); color: var(--accent-purple);}
-  .kpi-icon.gold   { background: rgba(245,166,35,.2); color: var(--accent-gold);  }
-
-  .kpi-delta {
-    font-size: .78rem;
-    font-weight: 600;
-    padding: .2rem .5rem;
-    border-radius: 20px;
-  }
-  .kpi-delta.pos { background: rgba(34,197,94,.15); color: var(--accent-green); }
-  .kpi-delta.neg { background: rgba(220,38,38,.15);  color: #f87171; }
-
-  .kpi-value { font-size: 2rem; font-weight: 800; margin: 0; line-height: 1; }
-  .kpi-label { font-size: .8rem; color: var(--text-muted); margin-top: .3rem; }
-
-  /* ── Grid inferior ── */
-  .bottom-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-  }
-
-  /* ── Tarjeta genérica ── */
-  .panel-card {
-    background: var(--card-bg);
-    border: 1px solid var(--card-border);
-    border-radius: var(--radius-card);
-    padding: 1.4rem;
-  }
-  .panel-card-title {
-    font-size: 1rem;
-    font-weight: 700;
-    margin-bottom: 1rem;
-    display: flex; align-items: center; gap: .5rem;
-  }
-
-  /* ── Filas de citas ── */
-  .cita-row {
-    background: #22253a;
-    border-radius: var(--radius-inner);
-    padding: .85rem 1rem;
-    margin-bottom: .6rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-  }
-  .cita-info-nombre { font-weight: 600; font-size: .9rem; }
-  .cita-info-sub    { font-size: .78rem; color: var(--text-muted); margin-top: .1rem; }
-  .cita-right       { display: flex; align-items: center; gap: .7rem; flex-shrink: 0; }
-  .cita-hora        { font-size: .82rem; color: var(--text-muted); white-space: nowrap; }
-
-  .badge-estado {
-    font-size: .72rem;
-    font-weight: 600;
-    padding: .25rem .65rem;
-    border-radius: 20px;
-  }
-  .badge-completada { background: rgba(22,163,74,.2);  color: #4ade80; }
-  .badge-pendiente  { background: rgba(37,99,235,.2);  color: #60a5fa; }
-  .badge-cancelada  { background: rgba(220,38,38,.2);  color: #f87171; }
-
-  /* ── Filas de barberos ── */
-  .barbero-row {
-    background: #22253a;
-    border-radius: var(--radius-inner);
-    padding: .85rem 1rem;
-    margin-bottom: .6rem;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-  }
-  .barbero-num {
-    width: 32px; height: 32px;
-    background: var(--accent-gold);
-    color: #000;
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-weight: 800; font-size: .85rem; flex-shrink: 0;
-  }
-  .barbero-info { flex: 1; }
-  .barbero-nombre { font-weight: 600; font-size: .9rem; }
-  .barbero-sub    { font-size: .78rem; color: var(--text-muted); }
-  .barbero-ingresos { font-weight: 700; color: var(--accent-green); font-size: .95rem; }
-
-  /* ── Mini barra de progreso ── */
-  .mini-bar-wrap { margin-top: .4rem; }
-  .mini-bar-bg   { background: #2a2d3e; border-radius: 4px; height: 4px; }
-  .mini-bar-fill { height: 4px; border-radius: 4px; background: var(--accent-gold); }
-
-  /* ── Tabla de servicios ── */
-  .servicio-row {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: .7rem .5rem;
-    border-bottom: 1px solid var(--card-border);
-    font-size: .88rem;
-  }
-  .servicio-row:last-child { border-bottom: none; }
-  .servicio-nombre { font-weight: 500; }
-  .servicio-dato   { color: var(--text-muted); font-size: .82rem; }
-  .servicio-precio { font-weight: 700; color: var(--accent-green); }
-
-  /* ── Resumen de ingresos por semana ── */
-  .semana-bars {
-    display: flex; align-items: flex-end; gap: .4rem; height: 80px; margin-top: 1rem;
-  }
-  .semana-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: .3rem; }
-  .semana-bar-wrap { flex: 1; width: 100%; display: flex; align-items: flex-end; }
-  .semana-bar {
-    width: 100%; border-radius: 4px 4px 0 0;
-    background: var(--accent-gold);
-    opacity: .7;
-    transition: opacity .2s;
-    min-height: 4px;
-  }
-  .semana-bar.highlight { opacity: 1; background: var(--accent-green); }
-  .semana-bar:hover { opacity: 1; }
-  .semana-label { font-size: .68rem; color: var(--text-muted); }
-
-  /* ── Vista Barberos ── */
-  .barbero-card-full {
-    background: var(--card-bg);
-    border: 1px solid var(--card-border);
-    border-radius: var(--radius-card);
-    padding: 1.2rem 1.4rem;
-    margin-bottom: 1rem;
-    display: flex; align-items: center; gap: 1.2rem;
-    transition: transform .2s;
-  }
-  .barbero-card-full:hover { transform: translateX(4px); }
-  .barbero-avatar {
-    width: 52px; height: 52px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 1.3rem; font-weight: 800; flex-shrink: 0;
-  }
-  .barbero-card-info { flex: 1; }
-  .barbero-card-nombre { font-weight: 700; font-size: 1rem; }
-  .barbero-card-stats { font-size: .8rem; color: var(--text-muted); }
-  .barbero-card-badge {
-    font-size: .72rem; padding: .2rem .6rem;
-    border-radius: 20px; font-weight: 600;
-  }
-  .bc-activo   { background: rgba(34,197,94,.15); color: var(--accent-green); }
-  .bc-inactivo { background: rgba(139,92,246,.15); color: #a78bfa; }
-
-  /* ── Vista Servicios ── */
-  .servicio-card {
-    background: var(--card-bg);
-    border: 1px solid var(--card-border);
-    border-radius: var(--radius-card);
-    padding: 1.2rem 1.4rem;
-    margin-bottom: 1rem;
-    display: flex; align-items: center; justify-content: space-between;
-    gap: 1rem;
-    transition: transform .2s;
-  }
-  .servicio-card:hover { transform: translateX(4px); }
-  .servicio-card-icon {
-    width: 40px; height: 40px; border-radius: 10px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 1.1rem; flex-shrink: 0;
-  }
-  .servicio-card-nombre { font-weight: 700; }
-  .servicio-card-dur    { font-size: .8rem; color: var(--text-muted); }
-  .servicio-card-precio { font-size: 1.2rem; font-weight: 800; color: var(--accent-green); }
-  .servicio-card-veces  { font-size: .78rem; color: var(--text-muted); text-align: right; }
-</style>
+<link rel="stylesheet" href="{{ url_for('static', filename='styles.css', external=True) }}">
 
 <div class="admin-shell">
 
@@ -329,16 +37,21 @@
         <div class="kpi-card">
           <div class="kpi-top">
             <div class="kpi-icon green">💰</div>
-            <span class="kpi-delta pos">+{{ stats.delta_ingresos }}%</span>
+            <span class="kpi-delta {% if stats.delta_ingresos | float < 0 %}neg{% else %}pos{% endif %}">
+              {% if stats.delta_ingresos | float > 0 %}+{% endif %}{{ stats.delta_ingresos }}%
+            </span>
           </div>
-          <p class="kpi-value">${{ stats.ingresos_mes | int | format_miles }}</p>
+          <p class="kpi-value">${{ "{:,.0f}".format(stats.ingresos_mes) }}</p>
           <p class="kpi-label">Ingresos del Mes</p>
         </div>
+        
 
         <div class="kpi-card">
           <div class="kpi-top">
             <div class="kpi-icon blue">📅</div>
-            <span class="kpi-delta pos">+{{ stats.delta_citas }}%</span>
+            <span class="kpi-delta {% if stats.delta_citas | float < 0 %}neg{% else %}pos{% endif %}">
+              {% if stats.delta_citas | float > 0 %}+{% endif %}{{ stats.delta_citas }}%
+            </span>
           </div>
           <p class="kpi-value">{{ stats.citas_completadas }}</p>
           <p class="kpi-label">Citas Completadas</p>
@@ -347,7 +60,9 @@
         <div class="kpi-card">
           <div class="kpi-top">
             <div class="kpi-icon purple">👤</div>
-            <span class="kpi-delta pos">+{{ stats.delta_clientes }}%</span>
+            <span class="kpi-delta {% if stats.delta_clientes | float < 0 %}neg{% else %}pos{% endif %}">
+              {% if stats.delta_clientes | float > 0 %}+{% endif %}{{ stats.delta_clientes }}%
+            </span>
           </div>
           <p class="kpi-value">{{ stats.clientes_activos }}</p>
           <p class="kpi-label">Clientes Activos</p>
@@ -356,7 +71,9 @@
         <div class="kpi-card">
           <div class="kpi-top">
             <div class="kpi-icon gold">⭐</div>
-            <span class="kpi-delta pos">+{{ stats.delta_rating }}</span>
+            <span class="kpi-delta {% if stats.delta_rating | float < 0 %}neg{% else %}pos{% endif %}">
+              {% if stats.delta_rating | float > 0 %}+{% endif %}{{ stats.delta_rating }}
+            </span>
           </div>
           <p class="kpi-value">{{ stats.calificacion_promedio }}</p>
           <p class="kpi-label">Calificación Promedio</p>
@@ -364,23 +81,27 @@
 
       </div>
 
+
       <!-- Mini gráfico de ingresos semanales -->
       <div class="panel-card mb-3">
         <div class="panel-card-title">📊 Ingresos por Semana (mes actual)</div>
         <div class="semana-bars">
-          {% set max_sem = stats.semanas | map(attribute='monto') | max %}
+          {% set max_sem = namespace(val=1) %}
           {% for semana in stats.semanas %}
-          {% set pct = (semana.monto / max_sem * 100) | int %}
-          <div class="semana-col">
-            <div class="semana-bar-wrap">
-              <div class="semana-bar {% if loop.last %}highlight{% endif %}" style="height: {{ pct }}%" title="${{ semana.monto }}">
-              </div>
-            </div>
-            <span class="semana-label">{{ semana.label }}</span>
-          </div>
+            {% if semana.monto > max_sem.val %}{% set max_sem.val = semana.monto %}{% endif %}
           {% endfor %}
+          {% for semana in stats.semanas %}
+          {% set pct = ((semana.monto / max_sem.val) * 100) | int if max_sem.val > 0 else 0 %}
+          <div class="semana-col">
+           <div class="semana-bar-wrap">
+             <div class="semana-bar {% if loop.last %}highlight{% endif %}" style="height: {{ pct if pct > 0 else 4 }}%" title="${{ semana.monto }}">
+              </div>
+          </div>
+          <span class="semana-label">{{ semana.label }}</span>
         </div>
+        {% endfor %}
       </div>
+    </div>
 
       <!-- Grid: Citas recientes + Barberos destacados -->
       <div class="bottom-grid">
@@ -405,6 +126,9 @@
             </div>
           </div>
           {% endfor %}
+          {% if not citas %}
+          <p style="color: var(--text-muted); font-size: .85rem;">Sin citas registradas.</p>
+          {% endif %}
         </div>
 
         <!-- Barberos destacados -->
@@ -422,9 +146,12 @@
                 </div>
               </div>
             </div>
-            <div class="barbero-ingresos">${{ b.ingresos | format_miles }}</div>
+            <div class="barbero-ingresos">${{ "{:,.0f}".format(b.ingresos) }}</div>
           </div>
           {% endfor %}
+          {% if not barberos_top %}
+          <p style="color: var(--text-muted); font-size: .85rem;">Sin datos de barberos.</p>
+          {% endif %}
         </div>
 
       </div>
@@ -441,9 +168,12 @@
         <div class="servicio-row">
           <span class="servicio-nombre">{{ s.nombre }}</span>
           <span class="servicio-dato">{{ s.veces }} pedidos</span>
-          <span class="servicio-precio">${{ s.precio }}</span>
+          <span class="servicio-precio">${{ "{:,.0f}".format(s.precio) }}</span>
         </div>
         {% endfor %}
+        {% if not servicios_top %}
+        <p style="color: var(--text-muted); font-size: .85rem; padding: .5rem;">Sin servicios solicitados este mes.</p>
+        {% endif %}
       </div>
 
     </div><!-- /tab estadisticas -->
@@ -470,7 +200,7 @@
           <div class="barbero-card-nombre">{{ b.nombre }}</div>
           <div class="barbero-card-stats">
             {{ b.citas }} citas este mes &nbsp;•&nbsp; ⭐ {{ b.rating }} &nbsp;•&nbsp;
-            ${{ b.ingresos }} ingresos
+            ${{ "{:,.0f}".format(b.ingresos) }} ingresos
           </div>
         </div>
         <span class="barbero-card-badge {{ 'bc-activo' if b.activo else 'bc-inactivo' }}">
@@ -499,7 +229,7 @@
           <div class="servicio-card-dur">⏱ {{ s.duracion_min }} min</div>
         </div>
         <div style="text-align:right">
-          <div class="servicio-card-precio">${{ s.precio }}</div>
+          <div class="servicio-card-precio">${{ "{:,.0f}".format(s.precio) }}</div>
           <div class="servicio-card-veces">{{ s.veces_solicitado }} pedidos/mes</div>
         </div>
       </div>
