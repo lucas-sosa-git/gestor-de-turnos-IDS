@@ -41,7 +41,7 @@ def login_en_backend(email, clave):
         return False, "No se pudo conectar con el backend. Verifica que este levantado."
 
 def registrar_en_backend(nombre, email, clave):
-    register_url = f"{get_backend_url()}/api/auth/register"
+    register_url = f"{get_backend_url()}/clientes/"
 
     payload = json.dumps({
         "nombre": nombre,
@@ -109,7 +109,6 @@ def register():
                 return redirect(url_for("login"))
 
     return render_template("register.html", error=error)
-    
 
 @app.route("/admin")
 def admin_panel():
