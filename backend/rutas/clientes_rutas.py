@@ -64,7 +64,7 @@ def mostrar_barberos():
     conn = get_db_connection()
     barberos = conn.execute('SELECT b.id_barbero, u.nombre, u.email, b.activo FROM barberos b JOIN usuarios u on b.id_usuario=u.id_usuario').fetchall()
     conn.close()
-    return jsonify([dict(b) for b in barberos])
+    return render_template('feature_clientes/barberos.html', barberos=barberos)
 
 # 4. VISTA HTML: PANEL DE RESERVAS DEL CLIENTE
 @clientes_bp.route('/panel/<int:id_usuario>', methods=['GET'])
@@ -100,7 +100,7 @@ def panel_cliente(id_usuario):
         return "Usuario no encontrado", 404
 
     # Enviamos las variables 'usuario' y 'turnos' directamente al HTML
-    return render_template('clientes.html', usuario=usuario, turnos=turnos)
+    return render_template('feature_clientes/clientes.html', usuario=usuario, turnos=turnos)
 
 @clientes_bp.route('/barberos/<int:id_barbero>/horarios', methods=['GET'])
 def mostrar_horarios_barbero(id_barbero):

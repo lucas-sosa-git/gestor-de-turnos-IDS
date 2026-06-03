@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <title>nuestros Barberos</title>
+</head>
+<body>
+    <div class="app-container">    
+        <header class="main-header">
+            <div class="user-profile">
+                <div class="avatar">
+                    <span>L</span> 
+                </div>
+                <div>
+                    <h1 class="salon-title">Salón Elegance</h1>
+                    <p class="welcome-text"></p>
+                </div>
+            </div>
+            <div class="logout-container">
+                <button class="logout-btn">Salir</button>
+            </div>
+        </header>
+        <nav class="nav-bar">
+            <a href="{{ url_for('clientes.mostrar_barberos') }}" class="nav-link active">
+                <span>👤</span> Nuestros Estilistas
+            </a>
+            <a href="{{ url_for('clientes.panel_cliente', id_usuario=1) }}" class="nav-link">
+                <span>📅</span> Mis Reservas
+                <span class="indicador-numero">1</span>
+            </a>
+            <a href="#" class="nav-link">
+                <span>ℹ</span> Acerca de Nosotros
+            </a>
+        </nav>
+        <div class="contenedor-principal">
+            <div class="section-header">
+                <div>
+                    <h2 class="section-title">Nuestros Estilistas</h2>
+                    <p class="section-subtitle">Conoce a los expertos que transformarán tu estilo</p>
+                </div>
+            </div>
+            <div class="estilistas-grid">
+                {% for barbero in barberos %}
+                    <div class="estilista-card">
+                        <div class="avatar-placeholder">
+                            <span style="font-size: 40px;">🧔🏻‍♂️</span>
+                        </div>
+                        <h3 class="card-title">{{ barbero['nombre'] }}</h3>
+                        <p class="card-role">Barbero Profesional</p>
+                        <div class="estrellas">⭐⭐⭐⭐⭐</div>
+                        <button class="btn-reservar">
+                            Reservar Turno
+                        </button>
+                    </div>
+                {% else %}
+                    <div class="estado-vacio">
+                        <p>No hay estilistas disponibles en este momento.</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</body>
+</html>

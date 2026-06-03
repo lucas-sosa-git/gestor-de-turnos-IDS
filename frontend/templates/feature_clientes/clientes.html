@@ -24,13 +24,17 @@
         </header>
 
         <nav class="nav-bar">
-            <a href="#" class="nav-link">
+            <a href="{{ url_for('clientes.mostrar_barberos') }}" class="nav-link">
                 <span>👤</span> Nuestros Estilistas
             </a>
             
             <a href="#" class="nav-link active">
                 <span>📅</span> Mis Reservas
-                <span class="indicador-numero">1</span>
+                {% if turnos | length > 0 %}
+                    <span class="indicador-numero">{{ turnos|length }}</span>
+                {% else %}
+                    <span class="indicador-numero"></span>
+                {% endif %}
             </a>
             
             <a href="#" class="nav-link">

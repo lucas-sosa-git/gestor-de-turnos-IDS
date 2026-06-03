@@ -52,6 +52,7 @@ VALUES
 INSERT INTO citas (id_usuario, id_barbero, id_servicio, fecha, hora_inicio, hora_fin, estado)
 VALUES
 (1,1,1,'2026-05-20','10:00:00','10:30:00','pendiente'),
+(1,1,5, '2026-05-22', '10:00:00','11:30:00', 'confirmada'),
 (2,2,2,'2026-05-20','11:00:00','11:45:00','pendiente'),
 (3,1,3,'2026-05-21','12:00:00','12:25:00','confirmada'),
 (4,2,4,'2026-05-21','12:30:00','12:45:00','pendiente'),
