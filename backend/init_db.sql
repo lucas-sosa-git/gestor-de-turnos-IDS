@@ -49,7 +49,7 @@ CREATE TABLE IF NOT EXISTS citas (
     ausencia          INTEGER NOT NULL DEFAULT 0,
     fecha_creacion    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     fecha_cancelacion TIMESTAMP NULL DEFAULT NULL,
-    qr_code          TEXT NULL UNIQUE,
+    qr_token          TEXT NULL UNIQUE,
     FOREIGN KEY (id_usuario)  REFERENCES usuarios(id_usuario),
     FOREIGN KEY (id_barbero)  REFERENCES barberos(id_barbero),
     FOREIGN KEY (id_servicio) REFERENCES servicios(id_servicio)

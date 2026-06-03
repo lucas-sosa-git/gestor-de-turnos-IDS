@@ -101,9 +101,9 @@ def check_in():
         conn.close()
         return jsonify({"error": "Este turno fue cancelado"}), 400
     
-    if cita["estado"] == "confirmada":
+    if cita["estado"] == "completada":
         conn.close()
-        return jsonify({"error": "Este turno ya fue confirmado"}), 400
+        return jsonify({"error": "Este turno ya fue completado"}), 400
     
     cursor.execute('UPDATE citas SET estado = "completada" WHERE qr_token = ?', (qr_token,))
     conn.commit()

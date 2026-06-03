@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from db import get_db_connection
 import hashlib
-from fpdf import FPDF
+
 
 admin_bp = Blueprint('admin', __name__)
 

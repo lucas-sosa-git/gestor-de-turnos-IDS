@@ -115,17 +115,22 @@ def cancelar_turno(id_cita):
     
     conn = get_db_connection()
     cursor = conn.cursor()
-    
+
+    cita = cursor.execute('SELECT estado FROM citas WHERE id_cita = ? AND id_usuario = ?', (id_cita, id_usuario)).fetchone()
+    if not cita:
+        conn.close()
+        return jsonify({"error": "Turno no encontrado o no pertenece al cliente"}), 404
+    if cita['estado'] in ('cancelada', 'completada'):
+        conn.close()
+        return jsonify({"error": "Este turno no se puede cancelar"}), 409
+
     # Borramos el turno solo si pertenece a ese cliente
     # en vez de borrarlo podriamos cambiar el estado a cancelada
-    cursor.execute('DELETE FROM citas WHERE id_cita = ? AND id_usuario = ?', (id_cita, id_usuario))
+    cursor.execute('UPDATE citas SET estado = "cancelada", fecha_cancelacion = CURRENT_TIMESTAMP WHERE id_cita = ? AND id_usuario = ?', (id_cita, id_usuario))
     conn.commit()
-    filas_afectadas = cursor.rowcount
+
     conn.close()
 
-    if filas_afectadas == 0:
-        return jsonify({"error": "Turno no encontrado o no pertenece al cliente"}), 404
-        
     return jsonify({"mensaje": "Turno cancelado correctamente"}), 200
 
 
@@ -154,9 +159,9 @@ def reprogramar_turno(id_cita):
         conn.close()
         return jsonify({"error": "Este turno no pertenece al cliente"}), 403
 
-    if cita['estado'] == 'cancelada':
+    if cita['estado'] in ('cancelada', 'completada'):
         conn.close()
-        return jsonify({"error": "No se puede reprogramar un turno cancelado"}), 409
+        return jsonify({"error": "No se puede reprogramar un turno cancelado o completado"}), 409
 
     # Validar que el nuevo horario no esté ocupado por ese barbero
     
@@ -281,7 +286,7 @@ def reservar_turno():
 
     cursor.execute('''
         INSERT INTO citas (id_usuario, id_barbero, id_servicio, fecha, hora_inicio, hora_fin, estado, qr_token)
-        VALUES (?, ?, ?, ?, ?, ?, 'pendiente', ?)
+        VALUES (?, ?, ?, ?, ?, ?, 'confirmada', ?)
     ''', (id_usuario, id_barbero, id_servicio, fecha, hora_inicio, hora_fin, qr_token))
     id_cita = cursor.lastrowid
     conn.commit()
@@ -345,7 +350,7 @@ def dejar_resenia():
         return jsonify({"error": "La calificación debe ser un número entero entre 1 y 5"}), 400
     
     #le podriamos agregarle a la bd un estado de cita completada para que se pueda dejar la resenia cuando se termine el turno.
-    cita = cursor.execute('SELECT id_cita FROM citas WHERE id_cita =? AND id_usuario = ? AND id_barbero = ? AND estado = "confirmada"', (id_cita, id_usuario, id_barbero)).fetchone()
+    cita = cursor.execute('SELECT id_cita FROM citas WHERE id_cita =? AND id_usuario = ? AND id_barbero = ? AND estado = "completada"', (id_cita, id_usuario, id_barbero)).fetchone()
     if not cita:
         conn.close()
         return jsonify({"error": "Cita no encontrada, no pertenece al cliente o no es del barbero"}), 404
