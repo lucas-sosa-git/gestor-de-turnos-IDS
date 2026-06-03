@@ -40,6 +40,39 @@ def login_en_backend(email, clave):
     except (URLError, TimeoutError):
         return False, "No se pudo conectar con el backend. Verifica que este levantado."
 
+def registrar_en_backend(nombre, email, clave):
+    register_url = f"{get_backend_url()}/api/auth/register"
+
+    payload = json.dumps({
+        "nombre": nombre,
+        "email": email,
+        "clave": clave
+    }).encode("utf-8")
+
+    register_request = Request(
+        register_url,
+        data=payload,
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+
+    try:
+        with urlopen(register_request, timeout=5) as response:
+            return response.status < 400, None
+
+    except HTTPError as error:
+        mensaje = "No se pudo crear la cuenta."
+
+        try:
+            data = json.loads(error.read().decode("utf-8"))
+            mensaje = data.get("mensaje") or data.get("error") or mensaje
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            pass
+
+        return False, mensaje
+
+    except (URLError, TimeoutError):
+        return False, "No se pudo conectar con el backend. Verifica que este levantado."
 
 @app.route("/", methods=["GET", "POST"])
 def login():
@@ -57,6 +90,26 @@ def login():
                 return redirect(url_for("admin_panel"))
 
     return render_template("login.html", error=error)
+
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    error = None
+
+    if request.method == "POST":
+        nombre = request.form.get("nombre", "").strip()
+        email = request.form.get("email", "").strip()
+        clave = request.form.get("clave", "")
+
+        if not nombre or not email or not clave:
+            error = "Completá todos los campos."
+        else:
+            registro_ok, error = registrar_en_backend(nombre, email, clave)
+
+            if registro_ok:
+                return redirect(url_for("login"))
+
+    return render_template("register.html", error=error)
+    
 
 @app.route("/admin")
 def admin_panel():
