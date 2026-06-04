@@ -11,7 +11,7 @@ app = Flask(__name__)
 app.register_blueprint(admin_bp, url_prefix='/admin')
 app.register_blueprint(clientes_bp, url_prefix='/clientes')
 app.register_blueprint(profesionales_bp, url_prefix='/profesionales')
-app.register_blueprint(auth_bp, url_prefix='/api/auth')
+app.register_blueprint(auth_bp, url_prefix='/auth')
 
 @app.route('/')
 def index():

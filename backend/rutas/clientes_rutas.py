@@ -2,6 +2,11 @@ from flask import Blueprint, request, jsonify
 from db import get_db_connection
 from datetime import datetime, timedelta
 import hashlib
+import time
+import qrcode
+import io
+from flask import send_file
+from mail_service import enviar_mail
 
 clientes_bp = Blueprint('clientes', __name__)
 
@@ -110,26 +115,31 @@ def cancelar_turno(id_cita):
     
     conn = get_db_connection()
     cursor = conn.cursor()
-    
+
+    cita = cursor.execute('SELECT estado FROM citas WHERE id_cita = ? AND id_usuario = ?', (id_cita, id_usuario)).fetchone()
+    if not cita:
+        conn.close()
+        return jsonify({"error": "Turno no encontrado o no pertenece al cliente"}), 404
+    if cita['estado'] in ('cancelada', 'completada'):
+        conn.close()
+        return jsonify({"error": "Este turno no se puede cancelar"}), 409
+
     # Borramos el turno solo si pertenece a ese cliente
     # en vez de borrarlo podriamos cambiar el estado a cancelada
-    cursor.execute('DELETE FROM citas WHERE id_cita = ? AND id_usuario = ?', (id_cita, id_usuario))
+    cursor.execute('UPDATE citas SET estado = "cancelada", fecha_cancelacion = CURRENT_TIMESTAMP WHERE id_cita = ? AND id_usuario = ?', (id_cita, id_usuario))
     conn.commit()
-    filas_afectadas = cursor.rowcount
+
     conn.close()
 
-    if filas_afectadas == 0:
-        return jsonify({"error": "Turno no encontrado o no pertenece al cliente"}), 404
-        
     return jsonify({"mensaje": "Turno cancelado correctamente"}), 200
 
 
 @clientes_bp.route('/turnos/<int:id_cita>/', methods=['PATCH'])
 def reprogramar_turno(id_cita):
     data = request.get_json()
-    nueva_fecha = data.get('nueva_fecha') # Ejemplo: "2024-10-25"
-    nueva_hora_inicio = data.get('nueva_hora_inicio') # Ejemplo: "15:00"
-    id_usuario = data.get('id_usuario')   # Por seguridad, verificamos que sea su turno
+    nueva_fecha = data.get('nueva_fecha') 
+    nueva_hora_inicio = data.get('nueva_hora_inicio') 
+    id_usuario = data.get('id_usuario')   
 
     if not nueva_fecha or not nueva_hora_inicio:
         return jsonify({"error": "Falta la nueva fecha o hora de inicio"}), 400
@@ -149,9 +159,9 @@ def reprogramar_turno(id_cita):
         conn.close()
         return jsonify({"error": "Este turno no pertenece al cliente"}), 403
 
-    if cita['estado'] == 'cancelada':
+    if cita['estado'] in ('cancelada', 'completada'):
         conn.close()
-        return jsonify({"error": "No se puede reprogramar un turno cancelado"}), 409
+        return jsonify({"error": "No se puede reprogramar un turno cancelado o completado"}), 409
 
     # Validar que el nuevo horario no esté ocupado por ese barbero
     
@@ -251,7 +261,6 @@ def reservar_turno():
         conn.close()
         return jsonify({"error": "Servicio no encontrado"}), 404
 
-    from datetime import datetime, timedelta
     hora_fin = (
         datetime.strptime(hora_inicio, "%H:%M") +
         timedelta(minutes=servicio['duracion'])
@@ -273,16 +282,19 @@ def reservar_turno():
         conn.close()
         return jsonify({"error": "Ese horario ya está ocupado para el barbero"}), 409
 
+    qr_token = hashlib.sha256(f"{id_usuario}{id_barbero}{fecha}{hora_inicio}{time.time()}".encode()).hexdigest()
+
     cursor.execute('''
-        INSERT INTO citas (id_usuario, id_barbero, id_servicio, fecha, hora_inicio, hora_fin, estado)
-        VALUES (?, ?, ?, ?, ?, ?, 'pendiente')
-    ''', (id_usuario, id_barbero, id_servicio, fecha, hora_inicio, hora_fin))
+        INSERT INTO citas (id_usuario, id_barbero, id_servicio, fecha, hora_inicio, hora_fin, estado, qr_token)
+        VALUES (?, ?, ?, ?, ?, ?, 'confirmada', ?)
+    ''', (id_usuario, id_barbero, id_servicio, fecha, hora_inicio, hora_fin, qr_token))
     id_cita = cursor.lastrowid
     conn.commit()
 
     cita = cursor.execute('''
         SELECT c.id_cita, c.fecha, c.hora_inicio, c.hora_fin, c.estado,
                u.nombre  AS cliente,
+               u.email   AS cliente_email,
                ub.nombre AS barbero,
                s.nombre  AS servicio
         FROM citas c
@@ -292,5 +304,90 @@ def reservar_turno():
         JOIN servicios s ON c.id_servicio = s.id_servicio
         WHERE c.id_cita = ?
     ''', (id_cita,)).fetchone()
+
     conn.close()
+
+    enviar_mail(
+    destinatario=cita['cliente_email'],
+    nombre=cita['cliente'],
+    fecha=cita['fecha'],
+    hora=cita['hora_inicio'],
+    barbero=cita['barbero'],
+    servicio=cita['servicio'],
+    qr_token=qr_token
+    )
+
+    
     return jsonify(dict(cita)), 201
+
+
+@clientes_bp.route('/resenias', methods=['POST'])
+def dejar_resenia():
+    data = request.get_json()
+    id_usuario = data.get('id_usuario')
+    id_barbero = data.get('id_barbero')
+    id_cita    = data.get('id_cita')
+    calificacion = data.get('calificacion')
+    comentario = data.get('comentario')
+
+    if not id_usuario or not id_barbero or not id_cita or not calificacion:
+        return jsonify({"error": "Faltan campos obligatorios"}), 400
+    
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cliente = cursor.execute('SELECT id_usuario FROM usuarios WHERE id_usuario = ? and rol = "cliente"', (id_usuario,)).fetchone()
+    if not cliente:
+        conn.close()
+        return jsonify({"error": "Cliente no encontrado"}), 404
+    
+    barbero = cursor.execute('SELECT id_barbero FROM barberos WHERE id_barbero = ? and activo = 1', (id_barbero,)).fetchone()
+    if not barbero:
+        conn.close()
+        return jsonify({"error": "Barbero no encontrado"}), 404
+    
+    if not isinstance(calificacion, int) or calificacion < 1 or calificacion > 5:
+        conn.close()
+        return jsonify({"error": "La calificación debe ser un número entero entre 1 y 5"}), 400
+    
+    #le podriamos agregarle a la bd un estado de cita completada para que se pueda dejar la resenia cuando se termine el turno.
+    cita = cursor.execute('SELECT id_cita FROM citas WHERE id_cita =? AND id_usuario = ? AND id_barbero = ? AND estado = "completada"', (id_cita, id_usuario, id_barbero)).fetchone()
+    if not cita:
+        conn.close()
+        return jsonify({"error": "Cita no encontrada, no pertenece al cliente o no es del barbero"}), 404
+    
+    resenia_existente = cursor.execute('SELECT id_resenia FROM resenias WHERE id_usuario = ? AND id_cita = ?', (id_usuario, id_cita)).fetchone()
+    if resenia_existente:
+        conn.close()
+        return jsonify({"error": "Ya has dejado una reseña para esta cita"}), 409
+
+    cursor.execute('INSERT INTO resenias (id_usuario, id_cita, calificacion, comentario) VALUES (?, ?, ?, ?)', (id_usuario, id_cita, calificacion, comentario))
+    id_resenia = cursor.lastrowid
+    conn.commit()
+    resenia = cursor.execute('SELECT * FROM resenias WHERE id_resenia = ?', (id_resenia,)).fetchone()
+    
+    conn.close()
+    return jsonify({"message": "Reseña subida correctamente", "Reseña": dict(resenia)}), 201
+
+
+@clientes_bp.route('/turnos/<int:id_cita>/qr', methods=['GET'])
+def generar_qr_turno(id_cita):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cita = cursor.execute('SELECT qr_token FROM citas WHERE id_cita = ?', (id_cita,)).fetchone()
+    conn.close()
+
+    if not cita:
+        return jsonify({"error": "Turno no encontrado"}), 404
+    
+    if not cita['qr_token']:
+        return jsonify({"error": "No se pudo generar el QR para este turno"}), 500
+    
+    #la imagen del qr tambien se puede generar en el front, lo podemos cambiar si quieren
+
+    img = qrcode.make(cita['qr_token'])
+    buffer = io.BytesIO()
+    img.save(buffer, format='PNG')
+    buffer.seek(0)
+
+    return send_file(buffer, mimetype='image/png')

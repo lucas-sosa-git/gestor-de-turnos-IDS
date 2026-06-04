@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify
 from db import get_db_connection
 import hashlib
 
+
 admin_bp = Blueprint('admin', __name__)
 
 # --- CRUD BARBEROS ---
@@ -159,20 +160,79 @@ def configurar_horario(id_barbero):
     conn.close()
     return jsonify({"mensaje": "Horario actualizado", "horario": dict(horario)})
 
-# MOSTRAR ESTADÍSTICAS (El cerebro del negocio)
-@admin_bp.route('/estadisticas', methods=['GET'])
-def mostrar_estadisticas():
+
+
+@admin_bp.route('/dashboard', methods=['GET'])
+def estadisticas():
     conn = get_db_connection()
     cursor = conn.cursor()
-    # Barbero con más citas
-    top_barbero = cursor.execute('''SELECT u.nombre,COUNT(c.id_cita) AS total FROM citas c JOIN barberos b ON c.id_barbero = b.id_barbero JOIN usuarios u ON b.id_usuario = u.id_usuario GROUP BY c.id_barbero ORDER BY total DESC LIMIT 1''').fetchone()
+    desde = request.args.get("desde")
+    hasta = request.args.get("hasta")
 
-    # Servicio más pedido
-    top_servicio = cursor.execute('''SELECT s.nombre, COUNT(c.id_cita) AS total FROM citas c JOIN servicios s ON c.id_servicio = s.id_servicio GROUP BY c.id_servicio ORDER BY total DESC LIMIT 1 ''').fetchone()
+    #esto podria ser mas flexible si no se pone hasta sea hasta la fecha actual por ejemplo
+    if not desde or not hasta: 
+        return jsonify({"error": "Faltan los parametros de fecha"}) , 400
+    
+    citas = cursor.execute('''
+    SELECT c.id_cita, c.fecha, c.hora_inicio, c.hora_fin, c.estado,
+           u.nombre AS cliente,
+           s.nombre AS servicio,
+           b.id_barbero
+    FROM citas c
+    JOIN usuarios u  ON c.id_usuario  = u.id_usuario
+    JOIN servicios s ON c.id_servicio = s.id_servicio
+    JOIN barberos b  ON c.id_barbero  = b.id_barbero
+    WHERE DATE(c.fecha) BETWEEN DATE(?) AND DATE(?)
+    ORDER BY c.fecha ASC, c.hora_inicio ASC
+''', (desde, hasta)).fetchall()
+    
+    confirmadas = cursor.execute('''
+    SELECT COUNT(*) AS total FROM citas
+    WHERE estado = 'confirmada'
+    AND fecha BETWEEN ? AND ?''', (desde, hasta)).fetchone()
+
+    canceladas = cursor.execute('''
+    SELECT COUNT(*) AS total FROM citas
+    WHERE estado = 'cancelada'
+    AND fecha BETWEEN ? AND ?''', (desde, hasta)).fetchone()
+
+    tops_servicios = cursor.execute('''
+    SELECT s.nombre, COUNT(c.id_cita) AS total FROM citas c
+    JOIN servicios s ON c.id_servicio = s.id_servicio
+    WHERE c.fecha BETWEEN ? AND ?
+    GROUP BY c.id_servicio
+    ORDER BY total DESC
+    ''', (desde, hasta)).fetchall()
+
+    top_cancelados = cursor.execute('''
+    SELECT s.nombre, COUNT(c.id_cita) AS total FROM citas c
+    JOIN servicios s ON c.id_servicio = s.id_servicio
+    WHERE c.fecha BETWEEN ? AND ?
+    AND c.estado = 'cancelada'
+    GROUP BY c.id_servicio
+    ORDER BY total DESC
+    ''', (desde, hasta)).fetchall()
+
+    estadisticas_barbero = cursor.execute('''
+    SELECT u.nombre, COUNT(c.id_cita) AS turnos, SUM(s.precio) AS ingresos, AVG(r.calificacion) AS calif_promedio
+    FROM barberos b
+    JOIN usuarios u ON b.id_usuario = u.id_usuario
+    LEFT JOIN citas c ON b.id_barbero = c.id_barbero AND c.fecha BETWEEN ? AND ? AND c.estado = 'confirmada'
+    LEFT JOIN servicios s ON c.id_servicio = s.id_servicio
+    LEFT JOIN resenias r ON c.id_cita = r.id_cita
+    GROUP BY b.id_barbero
+    ORDER BY ingresos DESC
+    ''', (desde, hasta)).fetchall()
 
     conn.close()
     
+
     return jsonify({
-        "barbero_estrella": dict(top_barbero) if top_barbero else None,
-        "servicio_popular": dict(top_servicio) if top_servicio else None
-    })
+        "citas": [dict(cita) for cita in citas],
+        "total_confirmadas": confirmadas['total'] if confirmadas else 0,
+        "total_canceladas": canceladas['total'] if canceladas else 0,
+        "top_servicios": [dict(serv) for serv in tops_servicios],
+        "top_cancelados": [dict(serv) for serv in top_cancelados],
+        "estadisticas_barbero": [dict(est) for est in estadisticas_barbero]})
+
+    
