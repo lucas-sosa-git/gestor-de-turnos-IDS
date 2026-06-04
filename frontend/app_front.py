@@ -15,7 +15,11 @@ def get_backend_url():
 
 def login_en_backend(email, clave):
     login_url = f"{get_backend_url()}/api/auth/login"
-    payload = json.dumps({"email": email, "clave": clave}).encode("utf-8")
+
+    payload = json.dumps({
+        "email": email,
+        "clave": clave
+    }).encode("utf-8")
 
     login_request = Request(
         login_url,
@@ -26,19 +30,27 @@ def login_en_backend(email, clave):
 
     try:
         with urlopen(login_request, timeout=5) as response:
-            return response.status < 400, None
+            data = json.loads(response.read().decode("utf-8"))
+            usuario = data.get("usuario")
+
+            if not usuario:
+                return False, None, "El backend no devolvió datos del usuario."
+
+            return True, usuario, None
+
     except HTTPError as error:
-        mensaje = "Email o contrasena incorrectos."
+        mensaje = "Email o contraseña incorrectos."
 
         try:
             data = json.loads(error.read().decode("utf-8"))
-            mensaje = data.get("mensaje") or data.get("error") or mensaje
+            mensaje = data.get("error") or data.get("mensaje") or mensaje
         except (json.JSONDecodeError, UnicodeDecodeError):
             pass
 
-        return False, mensaje
+        return False, None, mensaje
+
     except (URLError, TimeoutError):
-        return False, "No se pudo conectar con el backend. Verifica que este levantado."
+        return False, None, "No se pudo conectar con el backend. Verificá que esté levantado en el puerto 5000."
 
 def registrar_en_backend(nombre, email, clave):
     register_url = f"{get_backend_url()}/clientes/"
@@ -75,21 +87,45 @@ def registrar_en_backend(nombre, email, clave):
         return False, "No se pudo conectar con el backend. Verifica que este levantado."
 
 @app.route("/", methods=["GET", "POST"])
+@app.route("/login", methods=["GET", "POST"])
 def login():
-    error = None
+    if request.method == "GET":
+        exito = None
 
-    if request.method == "POST":
-        email = request.form.get("email", "").strip()
-        clave = request.form.get("clave", "")
+        if request.args.get("registro") == "ok":
+            exito = "Cuenta creada correctamente. Ya podés iniciar sesión."
 
-        if not email or not clave:
-            error = "Ingresa email y contrasena."
-        else:
-            login_ok, error = login_en_backend(email, clave)
-            if login_ok:
-                return redirect(url_for("admin_panel"))
+        return render_template("login.html", exito=exito)
 
-    return render_template("login.html", error=error)
+    email = request.form.get("email", "").strip()
+    clave = request.form.get("clave", "").strip()
+
+    if not email or not clave:
+        return render_template(
+            "login.html",
+            error="Completá email y contraseña."
+        )
+
+    ok, usuario, error = login_en_backend(email, clave)
+
+    if not ok:
+        return render_template("login.html",error=error,email=email)
+
+    rol = usuario.get("rol", "").lower()
+
+    if rol == "admin":
+        return redirect(url_for("admin_panel"))
+
+    if rol == "cliente":
+        return redirect(url_for("detalle"))
+
+    if rol in ["barbero", "peluquero", "profesional"]:
+        return redirect(url_for("panel_peluquero"))
+
+    return render_template(
+        "login.html",
+        error=f"Rol no reconocido: {rol}"
+    )
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
@@ -106,7 +142,7 @@ def register():
             registro_ok, error = registrar_en_backend(nombre, email, clave)
 
             if registro_ok:
-                return redirect(url_for("login"))
+                return redirect(url_for("login", registro="ok"))
 
     return render_template("register.html", error=error)
 

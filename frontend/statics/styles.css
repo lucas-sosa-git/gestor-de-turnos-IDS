@@ -9,6 +9,8 @@
     --accent: #d9468f;
     --error-bg: #fff1f4;
     --error-text: #a3133f;
+    --success-bg: #edfdf4;
+    --success-text: #11613a;
     --shadow: 0 18px 45px rgba(70, 43, 92, 0.14);
 }
 
@@ -95,6 +97,17 @@ h1 {
     line-height: 1.4;
 }
 
+.success {
+    margin: 0 0 18px;
+    padding: 12px 14px;
+    color: var(--success-text);
+    background: var(--success-bg);
+    border: 1px solid #b9efcf;
+    border-radius: 8px;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
 .login-form {
     display: grid;
     gap: 16px;
@@ -143,6 +156,23 @@ button {
 
 button:hover {
     background: var(--primary-dark);
+}
+
+.form-link {
+    margin: 18px 0 0;
+    color: var(--muted);
+    font-size: 14px;
+    text-align: center;
+}
+
+.form-link a {
+    color: var(--primary);
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.form-link a:hover {
+    text-decoration: underline;
 }
 
 @media (max-width: 420px) {
