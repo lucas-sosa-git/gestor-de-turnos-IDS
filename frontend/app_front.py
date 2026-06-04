@@ -1,12 +1,150 @@
-from flask import Flask, render_template
+import json
+import os
+from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
+
+from flask import Flask, redirect, render_template, request, url_for
 
 
 app = Flask(__name__, template_folder="templates", static_folder="statics")
 
 
-@app.route("/")
+def get_backend_url():
+    return os.environ.get("BACKEND_URL", "http://127.0.0.1:5000").rstrip("/")
+
+
+def login_en_backend(email, clave):
+    login_url = f"{get_backend_url()}/api/auth/login"
+
+    payload = json.dumps({
+        "email": email,
+        "clave": clave
+    }).encode("utf-8")
+
+    login_request = Request(
+        login_url,
+        data=payload,
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+
+    try:
+        with urlopen(login_request, timeout=5) as response:
+            data = json.loads(response.read().decode("utf-8"))
+            usuario = data.get("usuario")
+
+            if not usuario:
+                return False, None, "El backend no devolvió datos del usuario."
+
+            return True, usuario, None
+
+    except HTTPError as error:
+        mensaje = "Email o contraseña incorrectos."
+
+        try:
+            data = json.loads(error.read().decode("utf-8"))
+            mensaje = data.get("error") or data.get("mensaje") or mensaje
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            pass
+
+        return False, None, mensaje
+
+    except (URLError, TimeoutError):
+        return False, None, "No se pudo conectar con el backend. Verificá que esté levantado en el puerto 5000."
+
+def registrar_en_backend(nombre, email, clave):
+    register_url = f"{get_backend_url()}/clientes/"
+
+    payload = json.dumps({
+        "nombre": nombre,
+        "email": email,
+        "clave": clave
+    }).encode("utf-8")
+
+    register_request = Request(
+        register_url,
+        data=payload,
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+
+    try:
+        with urlopen(register_request, timeout=5) as response:
+            return response.status < 400, None
+
+    except HTTPError as error:
+        mensaje = "No se pudo crear la cuenta."
+
+        try:
+            data = json.loads(error.read().decode("utf-8"))
+            mensaje = data.get("mensaje") or data.get("error") or mensaje
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            pass
+
+        return False, mensaje
+
+    except (URLError, TimeoutError):
+        return False, "No se pudo conectar con el backend. Verifica que este levantado."
+
+@app.route("/", methods=["GET", "POST"])
+@app.route("/login", methods=["GET", "POST"])
 def login():
-    return render_template("login.html")
+    if request.method == "GET":
+        exito = None
+
+        if request.args.get("registro") == "ok":
+            exito = "Cuenta creada correctamente. Ya podés iniciar sesión."
+
+        return render_template("login.html", exito=exito)
+
+    email = request.form.get("email", "").strip()
+    clave = request.form.get("clave", "").strip()
+
+    if not email or not clave:
+        return render_template(
+            "login.html",
+            error="Completá email y contraseña."
+        )
+
+    ok, usuario, error = login_en_backend(email, clave)
+
+    if not ok:
+        return render_template("login.html",error=error,email=email)
+
+    rol = usuario.get("rol", "").lower()
+
+    if rol == "admin":
+        return redirect(url_for("admin_panel"))
+
+    if rol == "cliente":
+        return redirect(url_for("detalle"))
+
+    if rol in ["barbero", "peluquero", "profesional"]:
+        return redirect(url_for("panel_peluquero"))
+
+    return render_template(
+        "login.html",
+        error=f"Rol no reconocido: {rol}"
+    )
+
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    error = None
+
+    if request.method == "POST":
+        nombre = request.form.get("nombre", "").strip()
+        email = request.form.get("email", "").strip()
+        clave = request.form.get("clave", "")
+
+        if not nombre or not email or not clave:
+            error = "Completá todos los campos."
+        else:
+            registro_ok, error = registrar_en_backend(nombre, email, clave)
+
+            if registro_ok:
+                return redirect(url_for("login", registro="ok"))
+
+    return render_template("register.html", error=error)
 
 @app.route("/admin")
 def admin_panel():
