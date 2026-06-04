@@ -16,7 +16,7 @@
 
     <!-- CSS propio -->
     <link rel="stylesheet"
-        href="{{ url_for('static', filename='css/style.css') }}">
+        href="styles.css">
 
 </head>
 
@@ -81,6 +81,21 @@
         {% block content %}
         {% endblock %}
     </main>
+
+    <form>
+        <h2>
+            Reservas
+        </h2>
+        <div class="form_input">
+            <input type="text" placeholder="Nombre completo">
+        </div>
+        <div class="form_input">
+            <input type="email" placeholder="Email">
+        </div>
+        <div class="form_input">
+            <input type="text" placeholder="Deja aquí tu mensaje...">
+        </div>
+    </form>
 
     <!-- FOOTER -->
     <footer class="bg-dark text-light text-center p-4 mt-5">
