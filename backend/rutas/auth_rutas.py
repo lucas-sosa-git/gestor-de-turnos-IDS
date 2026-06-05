@@ -1,15 +1,33 @@
-from flask import Blueprint, request, jsonify
-from db import get_db_connection
+from datetime import datetime, timedelta
 import hashlib
 
+import jwt
+from flask import Blueprint, jsonify, request
+
+from db import get_db_connection
+
+
 auth_bp = Blueprint('auth', __name__)
+
+JWT_SECRET = "clave_secreta_tp_barberia"
+JWT_ALGORITHM = "HS256"
+
+
+def generar_token(usuario_id, rol):
+    payload = {
+        "usuario_id": usuario_id,
+        "rol": rol,
+        "exp": datetime.utcnow() + timedelta(hours=2)
+    }
+    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+
 
 @auth_bp.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
 
     if not data:
-        return jsonify({"error": "Tenés que enviar datos en formato JSON"}), 400
+        return jsonify({"error": "Tenes que enviar datos en formato JSON"}), 400
 
     email = data.get('email')
     clave = data.get('clave')
@@ -20,24 +38,33 @@ def login():
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    clave_hash = hashlib.sha256(clave.encode()).hexdigest()
-
     usuario = cursor.execute(
         '''
-        SELECT id_usuario, nombre, email, rol
+        SELECT id_usuario, nombre, email, clave, rol
         FROM usuarios
-        WHERE email = ? AND clave = ?
+        WHERE email = ?
         ''',
-        (email, clave_hash)
+        (email,)
     ).fetchone()
 
     conn.close()
 
-    if not usuario:
-        return jsonify({"error": "Credenciales inválidas"}), 401
+    clave_hash = hashlib.sha256(clave.encode()).hexdigest()
+
+    if not usuario or usuario['clave'] != clave_hash:
+        return jsonify({"error": "Credenciales invalidas"}), 401
+
+    usuario_dto = {
+        "id_usuario": usuario["id_usuario"],
+        "nombre": usuario["nombre"],
+        "email": usuario["email"],
+        "rol": usuario["rol"]
+    }
+
+    token = generar_token(usuario["id_usuario"], usuario["rol"])
 
     return jsonify({
         "message": "Login exitoso",
-        "usuario": dict(usuario)
+        "token": token,
+        "usuario": usuario_dto
     }), 200
-
