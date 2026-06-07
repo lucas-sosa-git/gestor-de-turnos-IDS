@@ -1,2 +1,4 @@
 backend/entorno_virtual
 *.db
+__pycache__/
+venv/
