@@ -5,7 +5,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.image import MIMEImage
 
-EMAIL_REMITENTE = "barberia.fiuba@gmail.com"
+EMAIL_REMITENTE = "PeluqueriaElegance@gmail.com"
 CLAVE_APP = "ydxh pvav yktv lnoy"
 
 def enviar_mail(destinatario, nombre, fecha, hora, barbero, servicio, qr_token):
