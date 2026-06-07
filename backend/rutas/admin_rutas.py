@@ -1,6 +1,8 @@
 from flask import Blueprint, request, jsonify
 from db import get_db_connection
 import hashlib
+from datetime import date, timedelta
+import calendar
 
 
 admin_bp = Blueprint('admin', __name__)
@@ -169,70 +171,199 @@ def estadisticas():
     desde = request.args.get("desde")
     hasta = request.args.get("hasta")
 
-    #esto podria ser mas flexible si no se pone hasta sea hasta la fecha actual por ejemplo
-    if not desde or not hasta: 
-        return jsonify({"error": "Faltan los parametros de fecha"}) , 400
-    
-    citas = cursor.execute('''
-    SELECT c.id_cita, c.fecha, c.hora_inicio, c.hora_fin, c.estado,
-           u.nombre AS cliente,
-           s.nombre AS servicio,
-           b.id_barbero
-    FROM citas c
-    JOIN usuarios u  ON c.id_usuario  = u.id_usuario
-    JOIN servicios s ON c.id_servicio = s.id_servicio
-    JOIN barberos b  ON c.id_barbero  = b.id_barbero
-    WHERE DATE(c.fecha) BETWEEN DATE(?) AND DATE(?)
-    ORDER BY c.fecha ASC, c.hora_inicio ASC
-''', (desde, hasta)).fetchall()
-    
-    confirmadas = cursor.execute('''
-    SELECT COUNT(*) AS total FROM citas
-    WHERE estado = 'confirmada'
-    AND fecha BETWEEN ? AND ?''', (desde, hasta)).fetchone()
+    try:
+        if desde and hasta:
+            desde_fecha = date.fromisoformat(desde)
+            hasta_fecha = date.fromisoformat(hasta)
+        else:
+            hoy = date.today()
+            desde_fecha = date(hoy.year, hoy.month, 1)
+            hasta_fecha = date(hoy.year, hoy.month, calendar.monthrange(hoy.year, hoy.month)[1])
+    except ValueError:
+        conn.close()
+        return jsonify({"error": "Formato de fecha invalido. Usar YYYY-MM-DD."}), 400
 
-    canceladas = cursor.execute('''
-    SELECT COUNT(*) AS total FROM citas
-    WHERE estado = 'cancelada'
-    AND fecha BETWEEN ? AND ?''', (desde, hasta)).fetchone()
+    if desde_fecha > hasta_fecha:
+        conn.close()
+        return jsonify({"error": "El parametro desde no puede ser mayor que hasta."}), 400
 
-    tops_servicios = cursor.execute('''
-    SELECT s.nombre, COUNT(c.id_cita) AS total FROM citas c
-    JOIN servicios s ON c.id_servicio = s.id_servicio
-    WHERE c.fecha BETWEEN ? AND ?
-    GROUP BY c.id_servicio
-    ORDER BY total DESC
+    desde = desde_fecha.isoformat()
+    hasta = hasta_fecha.isoformat()
+
+    def mes_anterior(fecha):
+        if fecha.month == 1:
+            return fecha.year - 1, 12
+        return fecha.year, fecha.month - 1
+
+    def rango_mes_anterior(fecha):
+        anio, mes = mes_anterior(fecha)
+        inicio = date(anio, mes, 1)
+        fin = date(anio, mes, calendar.monthrange(anio, mes)[1])
+        return inicio.isoformat(), fin.isoformat()
+
+    def delta_pct(actual, anterior):
+        actual = float(actual or 0)
+        anterior = float(anterior or 0)
+        if anterior == 0:
+            return 0
+        return round((actual - anterior) / anterior * 100, 1)
+
+    def get_kpis(inicio, fin):
+        return cursor.execute('''
+            SELECT
+                COALESCE(SUM(CASE WHEN c.estado = 'confirmada' THEN s.precio ELSE 0 END), 0) AS ingresos,
+                COUNT(CASE WHEN c.estado = 'confirmada' THEN 1 END) AS citas,
+                COUNT(DISTINCT c.id_usuario) AS clientes,
+                ROUND(COALESCE(AVG(r.calificacion), 0), 1) AS rating
+            FROM citas c
+            JOIN servicios s ON c.id_servicio = s.id_servicio
+            LEFT JOIN resenias r ON c.id_cita = r.id_cita
+            WHERE DATE(c.fecha) BETWEEN DATE(?) AND DATE(?)
+        ''', (inicio, fin)).fetchone()
+
+    def get_semanas_mes(anio, mes):
+        primer_dia = date(anio, mes, 1)
+        ultimo_dia = date(anio, mes, calendar.monthrange(anio, mes)[1])
+        semanas = []
+        cursor_dia = primer_dia
+        semana_num = 1
+
+        while cursor_dia <= ultimo_dia:
+            fin_semana = min(cursor_dia + timedelta(days=6), ultimo_dia)
+            row = cursor.execute('''
+                SELECT COALESCE(SUM(s.precio), 0) AS monto
+                FROM citas c
+                JOIN servicios s ON c.id_servicio = s.id_servicio
+                WHERE c.estado = 'confirmada'
+                  AND DATE(c.fecha) BETWEEN DATE(?) AND DATE(?)
+            ''', (cursor_dia.isoformat(), fin_semana.isoformat())).fetchone()
+            semanas.append({
+                "label": f"Sem {semana_num}",
+                "monto": row["monto"] or 0,
+            })
+            cursor_dia = fin_semana + timedelta(days=1)
+            semana_num += 1
+
+        return semanas
+
+    kpis = get_kpis(desde, hasta)
+    desde_ant, hasta_ant = rango_mes_anterior(desde_fecha)
+    kpis_ant = get_kpis(desde_ant, hasta_ant)
+
+    ingresos_mes = kpis["ingresos"] or 0
+    citas_completadas = kpis["citas"] or 0
+    clientes_activos = kpis["clientes"] or 0
+    calificacion_promedio = kpis["rating"] or 0
+
+    stats = {
+        "ingresos_mes": ingresos_mes,
+        "citas_completadas": citas_completadas,
+        "clientes_activos": clientes_activos,
+        "calificacion_promedio": calificacion_promedio,
+        "delta_ingresos": delta_pct(ingresos_mes, kpis_ant["ingresos"]),
+        "delta_citas": delta_pct(citas_completadas, kpis_ant["citas"]),
+        "delta_clientes": delta_pct(clientes_activos, kpis_ant["clientes"]),
+        "delta_rating": delta_pct(calificacion_promedio, kpis_ant["rating"]),
+        "semanas": get_semanas_mes(desde_fecha.year, desde_fecha.month),
+    }
+
+    filas_citas = cursor.execute('''
+        SELECT c.fecha, c.hora_inicio, c.estado,
+               uc.nombre AS cliente,
+               ub.nombre AS barbero,
+               s.nombre AS servicio
+        FROM citas c
+        JOIN usuarios uc ON c.id_usuario = uc.id_usuario
+        JOIN barberos b ON c.id_barbero = b.id_barbero
+        JOIN usuarios ub ON b.id_usuario = ub.id_usuario
+        JOIN servicios s ON c.id_servicio = s.id_servicio
+        WHERE DATE(c.fecha) BETWEEN DATE(?) AND DATE(?)
+        ORDER BY DATE(c.fecha) DESC, c.hora_inicio DESC
+        LIMIT 8
     ''', (desde, hasta)).fetchall()
 
-    top_cancelados = cursor.execute('''
-    SELECT s.nombre, COUNT(c.id_cita) AS total FROM citas c
-    JOIN servicios s ON c.id_servicio = s.id_servicio
-    WHERE c.fecha BETWEEN ? AND ?
-    AND c.estado = 'cancelada'
-    GROUP BY c.id_servicio
-    ORDER BY total DESC
+    estado_map = {
+        "confirmada": "Completada",
+        "pendiente": "Pendiente",
+        "cancelada": "Cancelada",
+    }
+    citas = [{
+        "cliente": fila["cliente"],
+        "barbero": fila["barbero"],
+        "servicio": fila["servicio"],
+        "hora": fila["hora_inicio"][:5],
+        "estado": estado_map.get(fila["estado"], fila["estado"].capitalize()),
+    } for fila in filas_citas]
+
+    filas_barberos = cursor.execute('''
+        SELECT u.nombre,
+               COUNT(c.id_cita) AS citas,
+               COALESCE(SUM(s.precio), 0) AS ingresos,
+               ROUND(COALESCE(AVG(r.calificacion), 0), 1) AS rating,
+               b.activo
+        FROM barberos b
+        JOIN usuarios u ON b.id_usuario = u.id_usuario
+        LEFT JOIN citas c ON b.id_barbero = c.id_barbero
+                          AND c.estado = 'confirmada'
+                          AND DATE(c.fecha) BETWEEN DATE(?) AND DATE(?)
+        LEFT JOIN servicios s ON c.id_servicio = s.id_servicio
+        LEFT JOIN resenias r ON c.id_cita = r.id_cita
+        GROUP BY b.id_barbero
+        ORDER BY ingresos DESC
     ''', (desde, hasta)).fetchall()
 
-    estadisticas_barbero = cursor.execute('''
-    SELECT u.nombre, COUNT(c.id_cita) AS turnos, SUM(s.precio) AS ingresos, AVG(r.calificacion) AS calif_promedio
-    FROM barberos b
-    JOIN usuarios u ON b.id_usuario = u.id_usuario
-    LEFT JOIN citas c ON b.id_barbero = c.id_barbero AND c.fecha BETWEEN ? AND ? AND c.estado = 'confirmada'
-    LEFT JOIN servicios s ON c.id_servicio = s.id_servicio
-    LEFT JOIN resenias r ON c.id_cita = r.id_cita
-    GROUP BY b.id_barbero
-    ORDER BY ingresos DESC
+    max_ingresos = max((fila["ingresos"] for fila in filas_barberos), default=1) or 1
+    barberos_top = [{
+        "nombre": fila["nombre"],
+        "citas": fila["citas"] or 0,
+        "rating": fila["rating"] or 0,
+        "ingresos": int(fila["ingresos"] or 0),
+        "pct": round((fila["ingresos"] or 0) / max_ingresos * 100),
+        "activo": bool(fila["activo"]),
+    } for fila in filas_barberos]
+
+    barberos = barberos_top
+
+    filas_servicios_top = cursor.execute('''
+        SELECT s.nombre, s.precio, COUNT(c.id_cita) AS veces
+        FROM citas c
+        JOIN servicios s ON c.id_servicio = s.id_servicio
+        WHERE DATE(c.fecha) BETWEEN DATE(?) AND DATE(?)
+        GROUP BY c.id_servicio
+        ORDER BY veces DESC
     ''', (desde, hasta)).fetchall()
+
+    servicios_top = [{
+        "nombre": fila["nombre"],
+        "precio": int(fila["precio"]),
+        "veces": fila["veces"],
+    } for fila in filas_servicios_top]
+
+    filas_servicios = cursor.execute('''
+        SELECT s.nombre, s.descripcion, s.duracion, s.precio,
+               COUNT(c.id_cita) AS veces_solicitado
+        FROM servicios s
+        LEFT JOIN citas c ON s.id_servicio = c.id_servicio
+                          AND DATE(c.fecha) BETWEEN DATE(?) AND DATE(?)
+        GROUP BY s.id_servicio
+        ORDER BY veces_solicitado DESC
+    ''', (desde, hasta)).fetchall()
+
+    servicios = [{
+        "nombre": fila["nombre"],
+        "descripcion": fila["descripcion"],
+        "duracion_min": fila["duracion"],
+        "precio": int(fila["precio"]),
+        "veces_solicitado": fila["veces_solicitado"],
+    } for fila in filas_servicios]
 
     conn.close()
-    
 
     return jsonify({
-        "citas": [dict(cita) for cita in citas],
-        "total_confirmadas": confirmadas['total'] if confirmadas else 0,
-        "total_canceladas": canceladas['total'] if canceladas else 0,
-        "top_servicios": [dict(serv) for serv in tops_servicios],
-        "top_cancelados": [dict(serv) for serv in top_cancelados],
-        "estadisticas_barbero": [dict(est) for est in estadisticas_barbero]})
-
-    
+        "stats": stats,
+        "citas": citas,
+        "barberos_top": barberos_top,
+        "barberos": barberos,
+        "servicios_top": servicios_top,
+        "servicios": servicios
+    })

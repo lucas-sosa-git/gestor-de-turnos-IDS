@@ -156,49 +156,69 @@ def register():
 
     return render_template("register.html", error=error)
 
+def obtener_dashboard_admin():
+    dashboard_url = f"{get_backend_url()}/admin/dashboard"
+
+    dashboard_request = Request(
+        dashboard_url,
+        headers={"Content-Type": "application/json"},
+        method="GET",
+    )
+
+    try:
+        with urlopen(dashboard_request, timeout=5) as response:
+            return json.loads(response.read().decode("utf-8")), None
+
+    except HTTPError as error:
+        try:
+            data = json.loads(error.read().decode("utf-8"))
+            return None, data.get("error") or "Error al obtener estadísticas."
+        except Exception:
+            return None, "Error al obtener estadísticas."
+
+    except (URLError, TimeoutError):
+        return None, "No se pudo conectar con el backend."
+
+
+def stats_admin_vacias():
+    return {
+        "ingresos_mes": 0,
+        "delta_ingresos": 0,
+        "citas_completadas": 0,
+        "delta_citas": 0,
+        "clientes_activos": 0,
+        "delta_clientes": 0,
+        "calificacion_promedio": 0,
+        "delta_rating": 0,
+        "semanas": []
+    }
+
 
 @app.route("/admin")
 def admin_panel():
-    stats = {
-        'ingresos_mes': 15000,
-        'delta_ingresos': 15,
-        'citas_completadas': 45,
-        'delta_citas': 10,
-        'clientes_activos': 120,
-        'delta_clientes': 8,
-        'calificacion_promedio': 4.8,
-        'delta_rating': 0.3,
-        'semanas': [
-            {'label': 'Sem 1', 'monto': 10000},
-            {'label': 'Sem 2', 'monto': 15000},
-            {'label': 'Sem 3', 'monto': 20000},
-            {'label': 'Sem 4', 'monto': 25000},
-        ]
-    }
+    data, error = obtener_dashboard_admin()
 
-    citas = [
-        {'cliente': 'Juan Pérez', 'barbero': 'Carlos', 'servicio': 'Corte', 'hora': '10:00', 'estado': 'Completada'},
-        {'cliente': 'María López', 'barbero': 'Ana', 'servicio': 'Tinte', 'hora': '11:30', 'estado': 'Pendiente'},
-    ]
+    if error:
+        return render_template(
+            "admin/dashboard.html",
+            stats=stats_admin_vacias(),
+            citas=[],
+            barberos=[],
+            barberos_top=[],
+            servicios=[],
+            servicios_top=[],
+            error=error
+        )
 
-    barberos = [
-        {'nombre': 'Carlos', 'citas': 50, 'rating': 4.8, 'ingresos': 50000, 'activo': True},
-        {'nombre': 'Ana', 'citas': 45, 'rating': 4.9, 'ingresos': 48000, 'activo': True},
-    ]
-
-    servicios = [
-        {'nombre': 'Corte', 'duracion_min': 30, 'precio': 10000, 'veces_solicitado': 45},
-        {'nombre': 'Barba', 'duracion_min': 20, 'precio': 5000, 'veces_solicitado': 30},
-    ]
-
-    return render_template("admin/dashboard.html",
-                           stats=stats,
-                           citas=citas,
-                           barberos=barberos,
-                           barberos_top=barberos,
-                           servicios=servicios,
-                           servicios_top=servicios)
-
+    return render_template(
+        "admin/dashboard.html",
+        stats=data.get("stats", stats_admin_vacias()),
+        citas=data.get("citas", []),
+        barberos=data.get("barberos", []),
+        barberos_top=data.get("barberos_top", []),
+        servicios=data.get("servicios", []),
+        servicios_top=data.get("servicios_top", [])
+    )
 
 if __name__ == "__main__":
     app.run(debug=True, port=5001)

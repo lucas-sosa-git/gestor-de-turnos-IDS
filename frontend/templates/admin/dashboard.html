@@ -2,8 +2,6 @@
 
 {% block content %}
 
-<link rel="stylesheet" href="{{ url_for('static', filename='styles.css', external=True) }}">
-
 <div class="admin-shell">
 
   <!-- Header -->
@@ -27,6 +25,11 @@
 
   <!-- Body -->
   <div class="admin-body">
+    {% if error %}
+    <div class="alert-error">
+      {{ error }}
+    </div>
+    {% endif %}
 
     <!-- ═══════════════ TAB: ESTADÍSTICAS ═══════════════ -->
     <div class="tab-pane-content active" id="tab-estadisticas">
@@ -254,4 +257,3 @@
 </script>
 
 {% endblock %}
-</body></html>
