@@ -86,6 +86,15 @@
 /* ── Body ── */
 .admin-body { padding: 2rem; }
 
+.alert-error {
+  background: #fee2e2;
+  color: #991b1b;
+  padding: .75rem 1rem;
+  border-radius: .75rem;
+  margin-bottom: 1rem;
+  border: 1px solid #fecaca;
+}
+
 /* ── KPI Grid ── */
 .kpi-grid {
   display: grid;

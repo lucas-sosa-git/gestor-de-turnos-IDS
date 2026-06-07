@@ -59,3 +59,28 @@ VALUES
 (4, 1, 3, '2026-05-21', '12:00:00', '12:25:00', 'confirmada',   'qr_token_demo_3'),
 (5, 2, 4, '2026-05-21', '15:00:00', '15:15:00', 'confirmada',    'qr_token_demo_4'),
 (6, 3, 5, '2026-05-22', '16:00:00', '17:30:00', 'confirmada',   'qr_token_demo_5');
+
+-- mas datos para el dashboard.html
+INSERT INTO usuarios (nombre, email, clave, rol)
+VALUES
+('Valentina Ruiz', 'valentina@mail.com', '5ac0852e770506dcd80f1a36d20ba7878bf82244b836d9324593bd14bc56dcb5', 'cliente'),
+('Nicolás Herrera', 'nicolas@mail.com', '5ac0852e770506dcd80f1a36d20ba7878bf82244b836d9324593bd14bc56dcb5', 'cliente'),
+('Camila Soto', 'camila@mail.com', '5ac0852e770506dcd80f1a36d20ba7878bf82244b836d9324593bd14bc56dcb5', 'cliente');
+
+-- Datos de prueba para estadísticas de junio
+INSERT INTO citas (id_usuario, id_barbero, id_servicio, fecha, hora_inicio, hora_fin, estado, qr_token)
+VALUES
+(2, 1, 1, '2026-06-03', '10:00:00', '10:30:00', 'confirmada', 'qr_junio_1'),
+(3, 2, 2, '2026-06-04', '11:00:00', '11:45:00', 'confirmada', 'qr_junio_2'),
+(4, 1, 3, '2026-06-05', '12:00:00', '12:25:00', 'cancelada', 'qr_junio_3'),
+(5, 3, 1, '2026-06-10', '15:00:00', '15:30:00', 'confirmada', 'qr_junio_4'),
+(6, 2, 5, '2026-06-12', '16:00:00', '17:30:00', 'pendiente', 'qr_junio_5');
+
+INSERT INTO resenias (id_usuario, id_cita, calificacion, comentario)
+VALUES
+(2, 1, 5, 'Excelente atención'),
+(3, 2, 4, 'Muy buen servicio'),
+(4, 3, 5, 'Todo perfecto'),
+(2, 6, 5, 'Excelente corte'),
+(3, 7, 4, 'Muy buena atención'),
+(5, 9, 5, 'Rapido y prolijo');
