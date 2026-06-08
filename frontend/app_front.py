@@ -3,7 +3,7 @@ import os
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
-from flask import Flask, redirect, render_template, request, session
+from flask import Flask, redirect, render_template, request, session, url_for
 
 
 app = Flask(__name__, template_folder="templates", static_folder="statics")
@@ -87,9 +87,8 @@ def registrar_en_backend(nombre, email, clave):
         return False, mensaje
 
     except (URLError, TimeoutError):
-        return False, "No se pudo conectar con el backend. Verificá que esté levantado."
-
-
+        return False, "No se pudo conectar con el backend. Verifica que este levantado."
+    
 @app.route("/", methods=["GET", "POST"])
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -136,46 +135,16 @@ def login():
         error=f"Rol no reconocido: {rol}"
     )
 
-
 @app.route("/clientes")
 def clientes_panel():
     usuario = session.get("usuario")
 
     if not usuario:
-        return redirect("/login")
+        return redirect(url_for("login"))
 
     return render_template(
         "feature_clientes/clientes.html",
-        usuario=usuario,
-        id_usuario=usuario.get("id_usuario")
-    )
-
-
-@app.route("/clientes/barberos")
-def clientes_barberos():
-    usuario = session.get("usuario")
-
-    if not usuario:
-        return redirect("/login")
-
-    return render_template(
-        "feature_clientes/nuestros_barberos.html",
-        usuario=usuario,
-        id_usuario=usuario.get("id_usuario")
-    )
-
-
-@app.route("/clientes/info")
-def clientes_info():
-    usuario = session.get("usuario")
-
-    if not usuario:
-        return redirect("/login")
-
-    return render_template(
-        "feature_clientes/Info.html",
-        usuario=usuario,
-        id_usuario=usuario.get("id_usuario")
+        usuario=usuario
     )
 
 
@@ -184,13 +153,12 @@ def panel_peluquero():
     usuario = session.get("usuario")
 
     if not usuario:
-        return redirect("/login")
+        return redirect(url_for("login"))
 
     return render_template(
         "panel_barberos.html",
         usuario=usuario
     )
-
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
@@ -207,7 +175,7 @@ def register():
             registro_ok, error = registrar_en_backend(nombre, email, clave)
 
             if registro_ok:
-                return redirect("/login?registro=ok")
+                return redirect(url_for("login", registro="ok"))
 
     return render_template("register.html", error=error)
 
@@ -275,7 +243,6 @@ def admin_panel():
         servicios=data.get("servicios", []),
         servicios_top=data.get("servicios_top", [])
     )
-
 
 if __name__ == "__main__":
     app.run(debug=True, port=5001)

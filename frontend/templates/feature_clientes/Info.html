@@ -24,10 +24,10 @@
         </header>
 
         <nav class="nav-bar">
-            <a href="{{ url_for('clientes_panel') }}" class="nav-link">
+            <a href="{{ url_for('clientes.mostrar_barberos', id_usuario=id_usuario) }}" class="nav-link">
                 <span>👤</span> Nuestros Peluqueros
             </a>
-            <a href="{{ url_for('clientes_panel') }}" class="nav-link">
+            <a href="{{ url_for('clientes.panel_cliente', id_usuario=id_usuario) }}" class="nav-link">
                 <span>📅</span> Mis Reservas
                 {% if turnos and turnos | length > 0%}
                 <span class="indicador-numero">{{turnos | length}}</span>
