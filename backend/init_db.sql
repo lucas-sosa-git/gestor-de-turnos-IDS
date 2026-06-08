@@ -47,7 +47,7 @@ CREATE TABLE IF NOT EXISTS citas (
     fecha             TEXT NOT NULL,
     hora_inicio       TEXT NOT NULL,
     hora_fin          TEXT NOT NULL,
-    estado            TEXT NOT NULL DEFAULT 'confirmada' CHECK (estado IN ('confirmada', 'completada', 'cancelada')),
+    estado            TEXT NOT NULL DEFAULT 'confirmada' CHECK (estado IN ('confirmada', 'completada', 'pendiente', 'cancelada')),
     ausencia          INTEGER NOT NULL DEFAULT 0,
     fecha_creacion    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     fecha_cancelacion TIMESTAMP NULL DEFAULT NULL,

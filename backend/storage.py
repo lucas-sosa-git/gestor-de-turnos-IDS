@@ -4,7 +4,8 @@ import os
 from supabase import create_client
 from dotenv import load_dotenv
 
-load_dotenv()
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+load_dotenv(os.path.join(BASE_DIR, ".env"))
 
 SUPABASE_URL    = os.getenv("SUPABASE_URL")
 SUPABASE_KEY    = os.getenv("SUPABASE_KEY")
@@ -16,11 +17,29 @@ logger = logging.getLogger(__name__)
 
 _supabase = None
 
+
+
+
+def _validar_configuracion():
+    faltantes = []
+    if not SUPABASE_URL:
+        faltantes.append("SUPABASE_URL")
+    if not SUPABASE_KEY:
+        faltantes.append("SUPABASE_KEY")
+    if not SUPABASE_BUCKET:
+        faltantes.append("SUPABASE_BUCKET")
+
+    if faltantes:
+        variables = ", ".join(faltantes)
+        raise RuntimeError(
+            f"Supabase no esta configurado. Faltan variables en backend/.env: {variables}"
+        )
+
+
 def _get_client():
     global _supabase
+    _validar_configuracion()
     if _supabase is None:
-        if not SUPABASE_URL or not SUPABASE_KEY:
-            raise RuntimeError("Supabase no esta configurado. Revisa el archivo .env")
         _supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
     return _supabase
 
@@ -53,6 +72,8 @@ def subir_imagen(archivo) -> str | None:
         url = client.storage.from_(SUPABASE_BUCKET).get_public_url(nombre_archivo)
         return url
 
+    except RuntimeError:
+        raise
     except Exception as e:
         logger.error(f"Error al subir imagen: {e}")
         return None

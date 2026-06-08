@@ -3,3 +3,4 @@ backend/entorno_virtual
 venv/
 __pycache__/
 .env
+backend/.env
