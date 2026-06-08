@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css')}}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vista - clientes</title>
+</head>
+<body>
+    <div class="app-container">    
+        <header class="main-header">
+            <div class="user-profile">
+                <div class="avatar">
+                    <span>L</span> 
+                </div>
+                <div>
+                    <h1 class="salon-title">Peluquería Elegance</h1>
+                    <p class="welcome-text">Bienvenido, {{usuario['nombre']}}</p>
+                </div>
+            </div>
+            <div class="logout-container">
+                <button class="logout-btn">Salir</button>
+            </div>
+        </header>
+
+        <nav class="nav-bar">
+            <a href="{{ url_for('clientes.mostrar_barberos', id_usuario=usuario['id_usuario']) }}" class="nav-link">
+                <span>👤</span> Nuestros Peluqueros
+            </a>
+            
+            <a href="#" class="nav-link active">
+                <span>📅</span> Mis Reservas
+                {% if turnos | length > 0 %}
+                    <span class="indicador-numero">{{ turnos|length }}</span>
+                {% else %}
+                    <span class="indicador-numero"></span>
+                {% endif %}
+            </a>
+            
+            <a href="{{ url_for('clientes.acerca_de', id_usuario=usuario['id_usuario']) }}" class="nav-link">
+                <span>ℹ</span> Acerca de Nosotros
+            </a>
+        </nav>
+
+        {% if turnos %}
+            
+            <div class="section-header">
+                <div>
+                    <h2 class="section-title">Mis Reservas Activas</h2>
+                    <p class="section-subtitle">Gestiona tus citas pendientes y deja reseñas de los servicios completados</p>
+                </div>
+                <button class="btn-history">
+                    <span>🕒</span> Ver Historial
+                </button>
+            </div>
+
+            {% for turno in turnos %}
+                <div class="reserva-card">
+                    
+                    <div class="card-top">
+                        <div>
+                            <h3 class="card-title">{{ turno['barbero_nombre'] }}</h3>
+                            <p class="card-service">
+                                <span>✂️</span> {{ turno['servicio_nombre'] }}
+                            </p>
+                        </div>
+                        <div class="status-badge">
+                            <span>ℹ️</span> {{ turno['estado'].capitalize() }}
+                        </div>
+                    </div>
+
+                    <div class="card-meta">
+                        <div class="meta-item">
+                            <span>📅</span> {{ turno['fecha'] }}
+                        </div>
+                        <div class="meta-item">
+                            <span>🕒</span> {{ turno['hora_inicio'] }}
+                        </div>
+                    </div>
+
+                    <hr class="card-divider">
+
+                    <div class="card-bottom">
+                        <p class="card-note">Te esperamos en tu cita. Recuerda llegar 5 minutos antes.</p>
+                        <button class="btn-cancel">
+                            <span>🗑️</span> Cancelar Turno
+                        </button>
+                    </div>
+
+                </div>
+            {% endfor %}
+
+        {% else %}
+            <div class="estado-vacio">
+                <p>No tienes reservas activas en este momento.</p>
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>

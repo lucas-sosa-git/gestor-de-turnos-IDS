@@ -95,6 +95,7 @@ def registrar_en_backend(nombre, email, clave):
 def login():
     if request.method == "GET":
         exito = None
+    return render_template("clientes.html")
 
         if request.args.get("registro") == "ok":
             exito = "Cuenta creada correctamente. Ya podés iniciar sesión."
