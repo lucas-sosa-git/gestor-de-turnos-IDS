@@ -1,5 +1,6 @@
 import json
 import os
+from datetime import date, timedelta
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
@@ -335,6 +336,169 @@ def admin_panel():
         barberos_top=data.get("barberos_top", []),
         servicios=data.get("servicios", []),
         servicios_top=data.get("servicios_top", [])
+    )
+
+
+#  AGENDA BARBERO
+
+ 
+def parsear_fecha(fecha_str):
+    """Convierte 'YYYY-MM-DD' a date. Si falla, devuelve hoy."""
+    try:
+        return date.fromisoformat(fecha_str)
+    except (ValueError, TypeError):
+        return date.today()
+ 
+ 
+def inicio_de_semana(d):
+    """Devuelve el lunes de la semana que contiene d."""
+    return d - timedelta(days=d.weekday())
+ 
+ 
+DIAS_ES   = ["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"]
+DIAS_CORTOS = ["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"]
+MESES_ES  = ["","enero","febrero","marzo","abril","mayo","junio",
+             "julio","agosto","septiembre","octubre","noviembre","diciembre"]
+ 
+ 
+def formatear_fecha_larga(d):
+    """ej: 'domingo, 7 de junio de 2026'"""
+    nombre_dia = DIAS_ES[d.weekday()]
+    return f"{nombre_dia}, {d.day} de {MESES_ES[d.month]} de {d.year}"
+ 
+ 
+def formatear_fecha_corta(d):
+    """ej: '7 jun 2026'  o  '7 jun' (sin año si es el mismo año)"""
+    anio = f" {d.year}" if d.year != date.today().year else ""
+    return f"{d.day} {MESES_ES[d.month][:3]}{anio}"
+ 
+def hacer_request(url, method="GET", payload=None, token=None):
+    """
+    Wrapper genérico para llamadas al backend.
+    Devuelve (data_dict_or_list, error_str_or_None).
+    """
+    headers = {"Content-Type": "application/json"}
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+ 
+    data = json.dumps(payload).encode("utf-8") if payload else None
+    req = Request(url, data=data, headers=headers, method=method)
+ 
+    try:
+        with urlopen(req, timeout=5) as response:
+            return json.loads(response.read().decode("utf-8")), None
+ 
+    except HTTPError as error:
+        mensaje = "Error en el servidor."
+        try:
+            body = json.loads(error.read().decode("utf-8"))
+            mensaje = body.get("error") or body.get("mensaje") or mensaje
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            pass
+        return None, mensaje
+ 
+    except (URLError, TimeoutError):
+        return None, "No se pudo conectar con el backend."
+
+# Llamadas al backend
+ 
+def obtener_citas_dia(id_barbero, fecha_str, token):
+    """
+    GET /barberos/<id>/agenda?fecha=YYYY-MM-DD
+    Espera lista de citas:
+      [{ cliente_nombre, cliente_email, hora, servicio }, ...]
+    """
+    url = f"{get_backend_url()}/barberos/{id_barbero}/agenda?fecha={fecha_str}"
+    data, error = hacer_request(url, token=token)
+    if error or not isinstance(data, list):
+        return []
+    return data
+ 
+ 
+def obtener_citas_semana(id_barbero, lunes_str, token):
+    """
+    GET /barberos/<id>/agenda/semana?inicio=YYYY-MM-DD
+    Espera dict: { "YYYY-MM-DD": [ {cita}, ... ], ... }
+    """
+    url = f"{get_backend_url()}/barberos/{id_barbero}/agenda/semana?inicio={lunes_str}"
+    data, error = hacer_request(url, token=token)
+    if error or not isinstance(data, dict):
+        return {}
+    return data
+ 
+@app.route("/agenda")
+def agenda():
+    # Verificar sesión
+    if not session.get("token"):
+        return redirect(url_for("login"))
+ 
+    id_barbero    = session.get("id_usuario")
+    barbero_nombre = session.get("usuario", {}).get("nombre", "Barbero")
+    token         = session.get("token")
+ 
+    # Parámetros de la URL
+    vista     = request.args.get("vista", "dia")          # 'dia' | 'semana'
+    fecha_str = request.args.get("fecha", date.today().isoformat())
+    fecha_actual = parsear_fecha(fecha_str)
+ 
+    # ── VISTA DÍA ─────────────────────────────────────────
+    if vista == "dia":
+        fecha_anterior  = (fecha_actual - timedelta(days=1)).isoformat()
+        fecha_siguiente = (fecha_actual + timedelta(days=1)).isoformat()
+        fecha_label     = formatear_fecha_larga(fecha_actual)
+ 
+        citas = obtener_citas_dia(id_barbero, fecha_str, token)
+ 
+        return render_template(
+            "barbero/agenda_barbero.html",
+            barbero_nombre   = barbero_nombre,
+            vista            = "dia",
+            fecha_str        = fecha_str,
+            fecha_anterior   = fecha_anterior,
+            fecha_siguiente  = fecha_siguiente,
+            fecha_label      = fecha_label,
+            # semana (no usadas en vista día pero evitan error de template)
+            semana_inicio_label = "",
+            semana_fin_label    = "",
+            dias_semana         = [],
+            citas               = citas,
+        )
+ 
+    # VISTA SEMANA
+    lunes        = inicio_de_semana(fecha_actual)
+    domingo      = lunes + timedelta(days=6)
+    lunes_str    = lunes.isoformat()
+ 
+    fecha_anterior  = (lunes - timedelta(weeks=1)).isoformat()
+    fecha_siguiente = (lunes + timedelta(weeks=1)).isoformat()
+ 
+    semana_inicio_label = formatear_fecha_corta(lunes)
+    semana_fin_label    = formatear_fecha_corta(domingo)
+ 
+    citas_por_dia = obtener_citas_semana(id_barbero, lunes_str, token)
+ 
+    # Armar lista de 7 días con sus citas
+    dias_semana = []
+    for i in range(7):
+        dia = lunes + timedelta(days=i)
+        dias_semana.append({
+            "nombre_corto": DIAS_CORTOS[dia.weekday()],
+            "fecha_label":  f"{dia.day} de {MESES_ES[dia.month]}",
+            "citas":        citas_por_dia.get(dia.isoformat(), []),
+        })
+ 
+    return render_template(
+        "barbero/agenda_barbero.html",
+        barbero_nombre      = barbero_nombre,
+        vista               = "semana",
+        fecha_str           = lunes_str,
+        fecha_anterior      = fecha_anterior,
+        fecha_siguiente     = fecha_siguiente,
+        semana_inicio_label = semana_inicio_label,
+        semana_fin_label    = semana_fin_label,
+        dias_semana         = dias_semana,
+        fecha_label = "",
+        citas       = [],
     )
 
 if __name__ == "__main__":
