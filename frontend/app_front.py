@@ -88,31 +88,6 @@ def registrar_en_backend(nombre, email, clave):
 
     except (URLError, TimeoutError):
         return False, "No se pudo conectar con el backend. Verifica que este levantado."
-
-@app.route("/clientes")
-def clientes_panel():
-    usuario = session.get("usuario")
-
-    if not usuario:
-        return redirect(url_for("login"))
-
-    return render_template(
-        "feature_clientes/clientes.html",
-        usuario=usuario
-    )
-
-
-@app.route("/panel_peluquero")
-def panel_peluquero():
-    usuario = session.get("usuario")
-
-    if not usuario:
-        return redirect(url_for("login"))
-
-    return render_template(
-        "panel_barberos.html",
-        usuario=usuario
-    )
     
 @app.route("/", methods=["GET", "POST"])
 @app.route("/login", methods=["GET", "POST"])
@@ -159,6 +134,7 @@ def login():
         "login.html",
         error=f"Rol no reconocido: {rol}"
     )
+
 @app.route("/clientes")
 def clientes_panel():
     usuario = session.get("usuario")
