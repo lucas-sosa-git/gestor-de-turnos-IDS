@@ -1,6 +1,8 @@
 import json
 import os
+import requests
 from urllib.error import HTTPError, URLError
+from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 from flask import Flask, redirect, render_template, request, session, url_for
@@ -194,9 +196,38 @@ def stats_admin_vacias():
     }
 
 
+ADMIN_ERROR_MESSAGES = {
+    "backend": "No se pudo conectar con el backend.",
+    "crear_servicio": "No se pudo crear el servicio.",
+    "editar_servicio": "No se pudo editar el servicio.",
+    "eliminar_servicio": "No se pudo eliminar el servicio.",
+}
+
+
+def mensaje_error_admin():
+    error = request.args.get("error")
+    if not error:
+        return None
+
+    return ADMIN_ERROR_MESSAGES.get(error, error)
+
+
+def mensaje_error_backend(response, mensaje_default):
+    try:
+        data = response.json()
+        return data.get("error") or data.get("mensaje") or mensaje_default
+    except ValueError:
+        return mensaje_default
+
+
+def redirect_admin_error(mensaje):
+    return redirect("/admin?" + urlencode({"error": mensaje}))
+
+
 @app.route("/admin")
 def admin_panel():
     data, error = obtener_dashboard_admin()
+    error_admin = mensaje_error_admin()
 
     if error:
         return render_template(
@@ -217,8 +248,105 @@ def admin_panel():
         barberos=data.get("barberos", []),
         barberos_top=data.get("barberos_top", []),
         servicios=data.get("servicios", []),
-        servicios_top=data.get("servicios_top", [])
+        servicios_top=data.get("servicios_top", []),
+        error=error_admin
     )
+
+@app.route("/admin/servicios/crear", methods=["POST"])
+def crear_servicio_front():
+    nombre = request.form.get("nombre", "").strip()
+    descripcion = request.form.get("descripcion", "").strip()
+    duracion = request.form.get("duracion", "").strip()
+    precio = request.form.get("precio", "").strip()
+    imagen = request.files.get("imagen")
+
+    data = {
+        "nombre": nombre,
+        "descripcion": descripcion,
+        "duracion": duracion,
+        "precio": precio
+    }
+
+    files = None
+
+    if imagen and imagen.filename:
+        files = {
+            "imagen": (imagen.filename, imagen.stream, imagen.mimetype)
+        }
+
+    try:
+        response = requests.post(
+            f"{get_backend_url()}/admin/servicios",
+            data=data,
+            files=files,
+            timeout=10
+        )
+
+        if response.status_code >= 400:
+            mensaje = mensaje_error_backend(response, "No se pudo crear el servicio.")
+            return redirect_admin_error(mensaje)
+
+    except requests.RequestException:
+        return redirect_admin_error("backend")
+
+    return redirect("/admin")
+
+@app.route("/admin/servicios/<int:id_servicio>/editar", methods=["POST"])
+def editar_servicio_front(id_servicio):
+    nombre = request.form.get("nombre", "").strip()
+    descripcion = request.form.get("descripcion", "").strip()
+    duracion = request.form.get("duracion", "").strip()
+    precio = request.form.get("precio", "").strip()
+    imagen = request.files.get("imagen")
+
+    data = {
+        "nombre": nombre,
+        "descripcion": descripcion,
+        "duracion": duracion,
+        "precio": precio
+    }
+
+    files = None
+
+    if imagen and imagen.filename:
+        files = {
+            "imagen": (imagen.filename, imagen.stream, imagen.mimetype)
+        }
+
+    try:
+        response = requests.put(
+            f"{get_backend_url()}/admin/servicios/{id_servicio}",
+            data=data,
+            files=files,
+            timeout=10
+        )
+
+        if response.status_code >= 400:
+            mensaje = mensaje_error_backend(response, "No se pudo editar el servicio.")
+            return redirect_admin_error(mensaje)
+
+    except requests.RequestException:
+        return redirect_admin_error("backend")
+
+    return redirect("/admin")
+
+
+@app.route("/admin/servicios/<int:id_servicio>/eliminar", methods=["POST"])
+def eliminar_servicio_front(id_servicio):
+    try:
+        response = requests.delete(
+            f"{get_backend_url()}/admin/servicios/{id_servicio}",
+            timeout=10
+        )
+
+        if response.status_code >= 400:
+            mensaje = mensaje_error_backend(response, "No se pudo eliminar el servicio.")
+            return redirect_admin_error(mensaje)
+
+    except requests.RequestException:
+        return redirect_admin_error("backend")
+
+    return redirect("/admin")
 
 if __name__ == "__main__":
     app.run(debug=True, port=5001)
