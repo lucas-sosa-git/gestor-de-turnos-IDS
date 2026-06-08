@@ -88,6 +88,50 @@ def registrar_en_backend(nombre, email, clave):
 
     except (URLError, TimeoutError):
         return False, "No se pudo conectar con el backend. Verifica que este levantado."
+
+
+def obtener_json_backend(path, mensaje_error):
+    url = f"{get_backend_url()}{path}"
+    backend_request = Request(
+        url,
+        headers={"Content-Type": "application/json"},
+        method="GET",
+    )
+
+    try:
+        with urlopen(backend_request, timeout=5) as response:
+            return json.loads(response.read().decode("utf-8")), None
+
+    except HTTPError as error:
+        try:
+            data = json.loads(error.read().decode("utf-8"))
+            return None, data.get("error") or mensaje_error
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            return None, mensaje_error
+
+    except (URLError, TimeoutError):
+        return None, mensaje_error
+
+
+def obtener_panel_cliente(id_usuario):
+    return obtener_json_backend(
+        f"/clientes/panel/{id_usuario}",
+        "No se pudieron cargar los datos del cliente"
+    )
+
+
+def obtener_barberos_cliente(id_usuario):
+    return obtener_json_backend(
+        f"/clientes/barberos/{id_usuario}",
+        "No se pudieron cargar los barberos"
+    )
+
+
+def obtener_info_cliente(id_usuario):
+    return obtener_json_backend(
+        f"/clientes/acerca-de/{id_usuario}",
+        "No se pudo cargar la informacion del cliente"
+    )
     
 @app.route("/", methods=["GET", "POST"])
 @app.route("/login", methods=["GET", "POST"])
@@ -125,7 +169,8 @@ def login():
         return redirect("/admin")
 
     if rol == "cliente":
-        return redirect("/clientes")
+        id_usuario = usuario.get("id_usuario")
+        return redirect(f"/clientes/{id_usuario}")
 
     if rol in ["barbero", "peluquero", "profesional"]:
         return redirect("/panel_peluquero")
@@ -135,16 +180,64 @@ def login():
         error=f"Rol no reconocido: {rol}"
     )
 
-@app.route("/clientes")
-def clientes_panel():
+@app.route("/clientes/<int:id_usuario>")
+def clientes_panel(id_usuario):
     usuario = session.get("usuario")
 
     if not usuario:
-        return redirect(url_for("login"))
+        return redirect("/login")
+
+    data, error = obtener_panel_cliente(id_usuario)
+    if data:
+        usuario = data.get("usuario", usuario)
 
     return render_template(
         "feature_clientes/clientes.html",
-        usuario=usuario
+        usuario=usuario,
+        id_usuario=id_usuario,
+        turnos=data.get("turnos", []) if data else [],
+        error=error
+    )
+
+
+@app.route("/clientes/<int:id_usuario>/barberos")
+def clientes_barberos(id_usuario):
+    usuario = session.get("usuario")
+
+    if not usuario:
+        return redirect("/login")
+
+    data, error = obtener_barberos_cliente(id_usuario)
+    if data:
+        usuario = data.get("usuario", usuario)
+
+    return render_template(
+        "feature_clientes/nuestros_barberos.html",
+        usuario=usuario,
+        id_usuario=id_usuario,
+        barberos=data.get("barberos", []) if data else [],
+        turnos=data.get("turnos", []) if data else [],
+        error=error
+    )
+
+
+@app.route("/clientes/<int:id_usuario>/info")
+def clientes_info(id_usuario):
+    usuario = session.get("usuario")
+
+    if not usuario:
+        return redirect("/login")
+
+    data, error = obtener_info_cliente(id_usuario)
+    if data:
+        usuario = data.get("usuario", usuario)
+
+    return render_template(
+        "feature_clientes/Info.html",
+        usuario=usuario,
+        id_usuario=id_usuario,
+        turnos=data.get("turnos", []) if data else [],
+        error=error
     )
 
 

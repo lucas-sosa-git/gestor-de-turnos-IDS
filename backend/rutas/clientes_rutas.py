@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, render_template
+from flask import Blueprint, request, jsonify
 from db import get_db_connection
 from datetime import datetime, timedelta
 import hashlib
@@ -68,12 +68,21 @@ def mostrar_servicios():
 def mostrar_barberos(id_usuario):
     conn = get_db_connection()
     usuario = conn.execute(''' select * from usuarios where id_usuario = ? ''', (id_usuario,)).fetchone()
+    if not usuario:
+        conn.close()
+        return jsonify({"error": "Usuario no encontrado"}), 404
+
     barberos = conn.execute('''SELECT b.id_barbero, u.nombre, u.email, b.activo FROM barberos b JOIN usuarios u on b.id_usuario=u.id_usuario''').fetchall()
     turnos = conn.execute('''
         select id_cita from citas where id_usuario = ?
     ''', (id_usuario,)).fetchall()
     conn.close()
-    return render_template('feature_clientes/nuestros_barberos.html', barberos=barberos, id_usuario = id_usuario, turnos = turnos, usuario = usuario)
+    return jsonify({
+        "usuario": dict(usuario),
+        "id_usuario": id_usuario,
+        "barberos": [dict(barbero) for barbero in barberos],
+        "turnos": [dict(turno) for turno in turnos]
+    }), 200
 
 # 4. VISTA HTML: PANEL DE RESERVAS DEL CLIENTE
 @clientes_bp.route('/panel/<int:id_usuario>', methods=['GET'])
@@ -106,10 +115,14 @@ def panel_cliente(id_usuario):
     conn.close()
 
     if not usuario:
-        return "Usuario no encontrado", 404
+        return jsonify({"error": "Usuario no encontrado"}), 404
 
     # Enviamos las variables 'usuario' y 'turnos' directamente al HTML
-    return render_template('feature_clientes/clientes.html', usuario=usuario, turnos=turnos, id_usuario = id_usuario)
+    return jsonify({
+        "usuario": dict(usuario),
+        "id_usuario": id_usuario,
+        "turnos": [dict(turno) for turno in turnos]
+    }), 200
 
 @clientes_bp.route('/acerca-de/<int:id_usuario>', methods=['GET'])
 def acerca_de(id_usuario):
@@ -121,7 +134,14 @@ def acerca_de(id_usuario):
     # 3. Cerramos la conexión a la base de datos
     conn.close()
     # 4. Enviamos absolutamente todo al HTML
-    return render_template('feature_clientes/Info.html', id_usuario=id_usuario, usuario=usuario, turnos=turnos)
+    if not usuario:
+        return jsonify({"error": "Usuario no encontrado"}), 404
+
+    return jsonify({
+        "usuario": dict(usuario),
+        "id_usuario": id_usuario,
+        "turnos": [dict(turno) for turno in turnos]
+    }), 200
 
 @clientes_bp.route('/barberos/<int:id_barbero>/horarios', methods=['GET'])
 def mostrar_horarios_barbero(id_barbero):
