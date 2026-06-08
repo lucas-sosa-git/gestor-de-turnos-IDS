@@ -1,4 +1,6 @@
 from flask import Blueprint, request, jsonify
+from backend.storage import subir_imagen
+from backend.storage import subir_imagen
 from db import get_db_connection
 import hashlib
 from datetime import date, timedelta
@@ -11,10 +13,10 @@ admin_bp = Blueprint('admin', __name__)
 
 @admin_bp.route('/barberos', methods=['POST'])
 def crear_barbero():
-    data = request.get_json()
-    nombre = data.get('nombre')
-    email = data.get('email')
-    clave = data.get('clave')
+    nombre  = request.form.get('nombre')
+    email   = request.form.get('email')
+    clave   = request.form.get('clave')
+    archivo = request.files.get('imagen')
 
     if not nombre or not email or not clave:
         return jsonify({"error": "Faltan campos obligatorios"}), 400
@@ -27,6 +29,13 @@ def crear_barbero():
     if existe:
         conn.close()
         return jsonify({"error": "Email ya registrado"}), 400
+    
+    img_barbero = None
+    if archivo:
+        img_barbero = subir_imagen(archivo)
+        if not img_barbero:
+            conn.close()
+            return jsonify({"error": "Error al subir la imagen"}), 500
 
     clave_hash = hashlib.sha256(clave.encode()).hexdigest()
     cursor.execute('INSERT INTO usuarios (nombre, email, clave, rol) VALUES (?, ?, ?, ?)', (nombre, email, clave_hash, "barbero"))
@@ -34,12 +43,12 @@ def crear_barbero():
     
     #crear barbero asociado
     
-    cursor.execute('INSERT INTO barberos (id_usuario) values (?)', (id_usuario,))
+    cursor.execute('INSERT INTO barberos (id_usuario, img_barbero) values (?, ?)', (id_usuario, img_barbero))
     id_barbero = cursor.lastrowid
     conn.commit()
 
     barbero = cursor.execute('''
-        SELECT b.id_barbero, u.nombre, u.email, b.activo
+        SELECT b.id_barbero, u.nombre, u.email, b.activo b.img_barbero
         FROM barberos b
         JOIN usuarios u ON b.id_usuario = u.id_usuario
         WHERE b.id_barbero = ?
@@ -114,18 +123,33 @@ def eliminar_barbero(id_barbero):
 
 @admin_bp.route('/servicios', methods=['POST'])
 def crear_servicio():
-    data = request.json
+    nombre      = request.form.get('nombre')
+    descripcion = request.form.get('descripcion', '')
+    duracion    = request.form.get('duracion')
+    precio      = request.form.get('precio')
+    archivo     = request.files.get('imagen')
+
+    if not nombre or not duracion or not precio:
+        return jsonify({"error": "nombre, duracion y precio son obligatorios"}), 400
+
+    img_servicio = None
+    if archivo:
+        img_servicio = subir_imagen(archivo)
+        if not img_servicio:
+            return jsonify({"error": "Error al subir la imagen. Verifica el formato (png, jpg, jpeg, webp)"}), 500
+
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute('''INSERT INTO servicios (nombre, descripcion, duracion, precio) VALUES (?, ?, ?, ?)''',
-        (data['nombre'], data['descripcion'], data['duracion'], data['precio'])
-    )
+    cursor.execute('''
+        INSERT INTO servicios (nombre, descripcion, duracion, precio, img_servicio)
+        VALUES (?, ?, ?, ?, ?)
+    ''', (nombre, descripcion, int(duracion), float(precio), img_servicio))
     id_servicio = cursor.lastrowid
     conn.commit()
 
-    #devolver el servicio creado
-    servicio = cursor.execute('SELECT * FROM servicios WHERE id_servicio = ?', (id_servicio,)).fetchone()
-
+    servicio = cursor.execute(
+        'SELECT * FROM servicios WHERE id_servicio = ?', (id_servicio,)
+    ).fetchone()
     conn.close()
 
     return jsonify({"mensaje": "Servicio creado", "servicio": dict(servicio)}), 201
