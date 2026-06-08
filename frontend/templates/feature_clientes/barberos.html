@@ -14,7 +14,7 @@
                     <span>L</span> 
                 </div>
                 <div>
-                    <h1 class="salon-title">Salón Elegance</h1>
+                    <h1 class="salon-title">Peluquería Elegance</h1>
                     <p class="welcome-text"></p>
                 </div>
             </div>
@@ -23,21 +23,23 @@
             </div>
         </header>
         <nav class="nav-bar">
-            <a href="{{ url_for('clientes.mostrar_barberos') }}" class="nav-link active">
+            <a href="#" class="nav-link active">
                 <span>👤</span> Nuestros Estilistas
             </a>
-            <a href="{{ url_for('clientes.panel_cliente', id_usuario=1) }}" class="nav-link">
+            <a href="{{ url_for('clientes.panel_cliente', id_usuario=id_usuario) }}" class="nav-link">
                 <span>📅</span> Mis Reservas
-                <span class="indicador-numero">1</span>
+                {% if turnos and turnos | length > 0%}
+                <span class="indicador-numero">{{turnos | length}}</span>
+                {% endif %}
             </a>
-            <a href="#" class="nav-link">
+            <a href="{{ url_for('clientes.acerca_de', id_usuario=usuario['id_usuario']) }}" class="nav-link">
                 <span>ℹ</span> Acerca de Nosotros
             </a>
         </nav>
         <div class="contenedor-principal">
             <div class="section-header">
                 <div>
-                    <h2 class="section-title">Nuestros Estilistas</h2>
+                    <h2 class="section-title">Nuestros Peluqueros</h2>
                     <p class="section-subtitle">Conoce a los expertos que transformarán tu estilo</p>
                 </div>
             </div>
@@ -48,15 +50,11 @@
                             <span style="font-size: 40px;">🧔🏻‍♂️</span>
                         </div>
                         <h3 class="card-title">{{ barbero['nombre'] }}</h3>
-                        <p class="card-role">Barbero Profesional</p>
+                        <p class="card-role">Peluquero Profesional</p>
                         <div class="estrellas">⭐⭐⭐⭐⭐</div>
                         <button class="btn-reservar">
                             Reservar Turno
                         </button>
-                    </div>
-                {% else %}
-                    <div class="estado-vacio">
-                        <p>No hay estilistas disponibles en este momento.</p>
                     </div>
                 {% endfor %}
             </div>

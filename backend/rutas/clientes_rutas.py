@@ -59,12 +59,16 @@ def mostrar_servicios():
 
 
 # 3. MOSTRAR BARBEROS
-@clientes_bp.route('/barberos', methods=['GET'])
-def mostrar_barberos():
+@clientes_bp.route('/barberos/<int:id_usuario>', methods=['GET'])
+def mostrar_barberos(id_usuario):
     conn = get_db_connection()
-    barberos = conn.execute('SELECT b.id_barbero, u.nombre, u.email, b.activo FROM barberos b JOIN usuarios u on b.id_usuario=u.id_usuario').fetchall()
+    usuario = conn.execute(''' select * from usuarios where id_usuario = ? ''', (id_usuario,)).fetchone()
+    barberos = conn.execute('''SELECT b.id_barbero, u.nombre, u.email, b.activo FROM barberos b JOIN usuarios u on b.id_usuario=u.id_usuario''').fetchall()
+    turnos = conn.execute('''
+        select id_cita from citas where id_usuario = ?
+    ''', (id_usuario,)).fetchall()
     conn.close()
-    return render_template('feature_clientes/barberos.html', barberos=barberos)
+    return render_template('feature_clientes/barberos.html', barberos=barberos, id_usuario = id_usuario, turnos = turnos, usuario = usuario)
 
 # 4. VISTA HTML: PANEL DE RESERVAS DEL CLIENTE
 @clientes_bp.route('/panel/<int:id_usuario>', methods=['GET'])
@@ -74,7 +78,7 @@ def panel_cliente(id_usuario):
 
     # 1. Traer los datos del usuario logueado para personalizar el saludo
     usuario = cursor.execute(
-        'SELECT nombre FROM usuarios WHERE id_usuario = ?', (id_usuario,)
+        'SELECT nombre,id_usuario FROM usuarios WHERE id_usuario = ?', (id_usuario,)
     ).fetchone()
 
     # 2. Buscar solo sus turnos ACTIVOS (no cancelados) uniendo servicios y barberos
@@ -100,7 +104,19 @@ def panel_cliente(id_usuario):
         return "Usuario no encontrado", 404
 
     # Enviamos las variables 'usuario' y 'turnos' directamente al HTML
-    return render_template('feature_clientes/clientes.html', usuario=usuario, turnos=turnos)
+    return render_template('feature_clientes/clientes.html', usuario=usuario, turnos=turnos, id_usuario = id_usuario)
+
+@clientes_bp.route('/acerca-de/<int:id_usuario>', methods=['GET'])
+def acerca_de(id_usuario):
+    conn = get_db_connection()
+    # 1. Buscamos el usuario actual (un solo registro con .fetchone())
+    usuario = conn.execute(''' SELECT * FROM usuarios WHERE id_usuario = ? ''', (id_usuario,)).fetchone()
+    # 2. Buscamos las citas del usuario para el contador de la barra de navegación
+    turnos = conn.execute(''' SELECT id_cita FROM citas WHERE id_usuario = ? ''', (id_usuario,)).fetchall()
+    # 3. Cerramos la conexión a la base de datos
+    conn.close()
+    # 4. Enviamos absolutamente todo al HTML
+    return render_template('feature_clientes/Info.html', id_usuario=id_usuario, usuario=usuario, turnos=turnos)
 
 @clientes_bp.route('/barberos/<int:id_barbero>/horarios', methods=['GET'])
 def mostrar_horarios_barbero(id_barbero):

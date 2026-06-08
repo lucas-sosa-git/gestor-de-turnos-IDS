@@ -14,7 +14,7 @@
                     <span>L</span> 
                 </div>
                 <div>
-                    <h1 class="salon-title">Salón Elegance</h1>
+                    <h1 class="salon-title">Peluquería Elegance</h1>
                     <p class="welcome-text">Bienvenido, {{usuario['nombre']}}</p>
                 </div>
             </div>
@@ -24,8 +24,8 @@
         </header>
 
         <nav class="nav-bar">
-            <a href="{{ url_for('clientes.mostrar_barberos') }}" class="nav-link">
-                <span>👤</span> Nuestros Estilistas
+            <a href="{{ url_for('clientes.mostrar_barberos', id_usuario=usuario['id_usuario']) }}" class="nav-link">
+                <span>👤</span> Nuestros Peluqueros
             </a>
             
             <a href="#" class="nav-link active">
@@ -37,7 +37,7 @@
                 {% endif %}
             </a>
             
-            <a href="#" class="nav-link">
+            <a href="{{ url_for('clientes.acerca_de', id_usuario=usuario['id_usuario']) }}" class="nav-link">
                 <span>ℹ</span> Acerca de Nosotros
             </a>
         </nav>
