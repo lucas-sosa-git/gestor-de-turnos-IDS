@@ -1,6 +1,5 @@
 from flask import Blueprint, request, jsonify
-from backend.storage import subir_imagen
-from backend.storage import subir_imagen
+from storage import subir_imagen
 from db import get_db_connection
 import hashlib
 from datetime import date, timedelta
@@ -58,21 +57,30 @@ def crear_barbero():
 
 @admin_bp.route('/barberos/<int:id_barbero>', methods=['PUT'])
 def editar_barbero(id_barbero):
-    data = request.get_json()
-    nuevo_nombre = data.get('nombre')
-
-    if not nuevo_nombre:
-        return jsonify({"error": "El campo nombre es obligatorio"}), 400
+    nombre = request.form.get('nombre')
+    archivo = request.files.get('imagen')
 
     conn = get_db_connection()
     cursor = conn.cursor()
-
-    barbero = cursor.execute('SELECT id_usuario FROM barberos WHERE id_barbero = ?', (id_barbero,)).fetchone()
+    
+    barbero = cursor.execute('SELECT * FROM barberos WHERE id_barbero = ?', (id_barbero,)).fetchone()
     if not barbero:
         conn.close()
         return jsonify({"error": "Barbero no encontrado"}), 404
 
-    cursor.execute('''
+    img_barbero = barbero['img_barbero']
+    if archivo:
+        nueva_url = subir_imagen(archivo)
+        if not nueva_url:
+            conn.close()
+            return jsonify({"error": "Error al subir la imagen"}), 500
+        img_barbero = nueva_url
+
+    nombre = nombre or cursor.execute('SELECT nombre FROM usuarios WHERE id_usuario = ?', (barbero['id_usuario'],)).fetchone()['nombre']
+
+
+    if nombre:
+        cursor.execute('''
         UPDATE usuarios
         SET nombre = ?
         WHERE id_usuario = (
@@ -80,11 +88,18 @@ def editar_barbero(id_barbero):
             FROM barberos
             WHERE id_barbero = ?
         )
-        ''', (nuevo_nombre, id_barbero))
+        ''', (nombre, barbero['id_usuario']))
+
+    cursor.execute('''
+        UPDATE barberos
+        SET img_barbero = ?
+        WHERE id_barbero = ?
+    ''', (img_barbero, id_barbero))
+    
     conn.commit()
 
     actualizado = cursor.execute('''
-        SELECT b.id_barbero, u.nombre, u.email, b.activo
+        SELECT b.id_barbero, u.nombre, u.email, b.activo, b.img_barbero
         FROM barberos b
         JOIN usuarios u ON b.id_usuario = u.id_usuario
         WHERE b.id_barbero = ?
@@ -153,6 +168,48 @@ def crear_servicio():
     conn.close()
 
     return jsonify({"mensaje": "Servicio creado", "servicio": dict(servicio)}), 201
+
+@admin_bp.route('/servicios/<int:id_servicio>', methods=['PATCH'])
+def actualizar_servicio(id_servicio):
+    nombre = request.form.get('nombre')
+    descripcion = request.form.get('descripcion')
+    duracion = request.form.get('duracion')
+    precio = request.form.get('precio')
+    archivo = request.files.get('imagen')
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    servicio = cursor.execute('SELECT * FROM servicios WHERE id_servicio = ?', (id_servicio,)).fetchone()
+    if not servicio:
+        conn.close()
+        return jsonify({"error": "Servicio no encontrado"}), 404
+    
+    img_servicio = servicio['img_servicio']
+    if archivo:
+        nueva_url = subir_imagen(archivo)
+        if not nueva_url:
+            conn.close()
+            return jsonify({"error": "Error al subir la imagen"}), 500
+        img_servicio = nueva_url
+
+
+    nombre = nombre or servicio['nombre']
+    descripcion = descripcion if descripcion is not None else servicio['descripcion']
+    duracion = int(duracion) if duracion is not None else servicio['duracion']
+    precio = float(precio) if precio is not None else servicio['precio']
+
+    cursor.execute('''
+        UPDATE servicios
+        SET nombre = ?, descripcion = ?, duracion = ?, precio = ?, img_servicio = ?
+        WHERE id_servicio = ?
+    ''', (nombre, descripcion, duracion, precio, img_servicio, id_servicio))
+    conn.commit()
+
+    actualizado = cursor.execute('SELECT * FROM servicios WHERE id_servicio = ?', (id_servicio,)).fetchone()
+    conn.close()
+    
+    return jsonify({"mensaje": "Servicio actualizado", "servicio": dict(actualizado)}), 200
+
 
 # CONFIGURAR HORARIOS (Update de un barbero específico)
 @admin_bp.route('/barberos/<int:id_barbero>/horarios', methods=['PATCH'])
