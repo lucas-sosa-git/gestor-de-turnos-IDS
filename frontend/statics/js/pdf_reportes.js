@@ -1,4 +1,3 @@
-```javascript
 /*
  * Genera archivos PDF a partir de las secciones
  * HTML ya cargadas en la dashboard.
@@ -261,4 +260,3 @@
     window.generarPDF = generarPDF;
 
 })();
-```
