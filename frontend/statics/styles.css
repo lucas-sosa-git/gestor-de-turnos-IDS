@@ -706,3 +706,237 @@ body {
     align-items: center;
     gap: 10px; /* Separación entre el tilde y el texto */
 }
+/* ==========================================================
+   BOTONES PARA GENERAR REPORTES PDF
+   ========================================================== */
+
+/*
+ * Contenedor del botón que aparece dentro de cada pestaña.
+ */
+.reporte-acciones {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 1rem;
+}
+
+
+/*
+ * Botón para descargar el reporte.
+ *
+ * Se especifica width: auto porque en otros sectores del
+ * proyecto puede existir un estilo general de button
+ * que aplique width: 100%.
+ */
+.btn-pdf {
+    width: auto;
+    min-height: 42px;
+    margin: 0;
+    padding: 0.65rem 1rem;
+
+    border: 1px solid #f5a623;
+    border-radius: 8px;
+
+    color: #f5a623;
+    background: transparent;
+
+    font-size: 0.85rem;
+    font-weight: 700;
+
+    cursor: pointer;
+}
+
+
+/*
+ * Efecto al pasar el mouse por el botón.
+ */
+.btn-pdf:hover {
+    color: #0f1117;
+    background: #f5a623;
+}
+
+
+/*
+ * Estado utilizado mientras se está creando el PDF.
+ */
+.btn-pdf:disabled {
+    cursor: wait;
+    opacity: 0.65;
+}
+
+
+/* ==========================================================
+   CONTENEDOR TEMPORAL DEL PDF
+   ========================================================== */
+
+/*
+ * JavaScript crea este contenedor solamente mientras
+ * se genera el reporte.
+ *
+ * Se encuentra fuera de la pantalla, pero continúa
+ * renderizado para que html2pdf pueda capturarlo.
+ */
+.pdf-contenedor-temporal {
+    position: absolute;
+    top: 0;
+    left: -10000px;
+    z-index: -1;
+
+    width: 760px;
+    min-height: 1000px;
+    padding: 30px;
+
+    color: #1f2937;
+    background: #ffffff;
+
+    font-family: "Segoe UI", Arial, sans-serif;
+
+    pointer-events: none;
+}
+
+
+/* ==========================================================
+   ENCABEZADO DEL PDF
+   ========================================================== */
+
+.pdf-encabezado {
+    margin-bottom: 24px;
+    padding-bottom: 14px;
+
+    border-bottom: 3px solid #f5a623;
+}
+
+
+.pdf-encabezado h1 {
+    margin: 0;
+
+    color: #111827;
+
+    font-size: 26px;
+    line-height: 1.2;
+}
+
+
+.pdf-encabezado p {
+    margin: 7px 0 0;
+
+    color: #6b7280;
+
+    font-size: 12px;
+}
+
+
+/* ==========================================================
+   ADAPTACIÓN DE LA DASHBOARD A FORMATO A4
+   ========================================================== */
+
+/*
+ * En pantalla existen cuatro indicadores por fila.
+ * Para el PDF se muestran dos para que sean legibles.
+ */
+.pdf-exportando .kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+
+/*
+ * En el PDF, los paneles inferiores se muestran uno debajo
+ * del otro para evitar que queden demasiado pequeños.
+ */
+.pdf-exportando .bottom-grid {
+    grid-template-columns: 1fr;
+}
+
+
+/*
+ * Fondo claro de las tarjetas dentro del PDF.
+ */
+.pdf-exportando .kpi-card,
+.pdf-exportando .panel-card,
+.pdf-exportando .barbero-card-full,
+.pdf-exportando .servicio-card {
+    color: #1f2937;
+    background: #ffffff;
+
+    border-color: #d1d5db;
+
+    box-shadow: none;
+}
+
+
+/*
+ * Desactiva el movimiento de las tarjetas dentro del PDF.
+ */
+.pdf-exportando .kpi-card:hover {
+    transform: none;
+}
+
+
+/*
+ * Textos principales oscuros.
+ */
+.pdf-exportando .kpi-value,
+.pdf-exportando .panel-card-title,
+.pdf-exportando .barbero-card-nombre,
+.pdf-exportando .barbero-nombre,
+.pdf-exportando .servicio-card-nombre,
+.pdf-exportando .servicio-nombre,
+.pdf-exportando .cita-info-nombre {
+    color: #111827;
+}
+
+
+/*
+ * Textos secundarios del reporte.
+ */
+.pdf-exportando .kpi-label,
+.pdf-exportando .cita-info-sub,
+.pdf-exportando .cita-hora,
+.pdf-exportando .barbero-card-stats,
+.pdf-exportando .barbero-sub,
+.pdf-exportando .servicio-card-dur,
+.pdf-exportando .servicio-card-veces,
+.pdf-exportando .semana-label {
+    color: #6b7280;
+}
+
+
+/*
+ * Fondo de las filas de citas.
+ */
+.pdf-exportando .cita-row {
+    color: #1f2937;
+    background: #f3f4f6;
+}
+
+
+/*
+ * Colores del gráfico de ingresos semanales.
+ */
+.pdf-exportando .semana-bar {
+    background: #f5a623;
+}
+
+
+.pdf-exportando .semana-bar.highlight {
+    background: #22c55e;
+}
+
+
+/* ==========================================================
+   CONTROL DE SALTOS DE PÁGINA
+   ========================================================== */
+
+/*
+ * Evita que una tarjeta quede dividida entre dos páginas.
+ */
+.pdf-exportando .kpi-card,
+.pdf-exportando .panel-card,
+.pdf-exportando .barbero-card-full,
+.pdf-exportando .servicio-card,
+.pdf-exportando .cita-row,
+.pdf-exportando .barbero-row,
+.pdf-exportando .servicio-row {
+    break-inside: avoid;
+    page-break-inside: avoid;
+}
+
