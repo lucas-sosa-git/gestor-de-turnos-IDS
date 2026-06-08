@@ -181,14 +181,15 @@
                     type: "jpeg",
                     quality: 0.98
                 },
-
                 html2canvas: {
                     scale: 2,
                     useCORS: true,
                     backgroundColor: "#ffffff",
                     scrollX: 0,
-                    scrollY: 0
-                },
+                    scrollY: 0,
+                    windowWidth: contenedorTemporal.scrollWidth,
+                    windowHeight: contenedorTemporal.scrollHeight
+                                },
 
                 jsPDF: {
                     unit: "mm",
@@ -196,12 +197,11 @@
                     orientation: "portrait"
                 },
 
-                pagebreak: {
-                    mode: [
-                        "avoid-all",
-                        "css",
-                        "legacy"
-                    ],
+                    pagebreak: {
+                        mode: [
+                            "css",
+                            "legacy"
+                        ],
 
                     avoid: [
                         ".kpi-card",
