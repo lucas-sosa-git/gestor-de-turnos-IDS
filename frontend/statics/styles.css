@@ -776,10 +776,10 @@ body {
  * renderizado para que html2pdf pueda capturarlo.
  */
 .pdf-contenedor-temporal {
-    position: absolute;
+    position: fixed;
     top: 0;
-    left: -10000px;
-    z-index: -1;
+    left: 0;
+    z-index: 999999;
 
     width: 760px;
     min-height: 1000px;
@@ -791,6 +791,7 @@ body {
     font-family: "Segoe UI", Arial, sans-serif;
 
     pointer-events: none;
+    overflow: visible;
 }
 
 
