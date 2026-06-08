@@ -89,13 +89,36 @@ def registrar_en_backend(nombre, email, clave):
     except (URLError, TimeoutError):
         return False, "No se pudo conectar con el backend. Verifica que este levantado."
 
+@app.route("/clientes")
+def clientes_panel():
+    usuario = session.get("usuario")
 
+    if not usuario:
+        return redirect(url_for("login"))
+
+    return render_template(
+        "feature_clientes/clientes.html",
+        usuario=usuario
+    )
+
+
+@app.route("/panel_peluquero")
+def panel_peluquero():
+    usuario = session.get("usuario")
+
+    if not usuario:
+        return redirect(url_for("login"))
+
+    return render_template(
+        "panel_barberos.html",
+        usuario=usuario
+    )
+    
 @app.route("/", methods=["GET", "POST"])
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "GET":
         exito = None
-    return render_template("clientes.html")
 
         if request.args.get("registro") == "ok":
             exito = "Cuenta creada correctamente. Ya podés iniciar sesión."
@@ -127,7 +150,7 @@ def login():
         return redirect("/admin")
 
     if rol == "cliente":
-        return redirect("/detalle")
+        return redirect("/clientes")
 
     if rol in ["barbero", "peluquero", "profesional"]:
         return redirect("/panel_peluquero")
@@ -136,7 +159,30 @@ def login():
         "login.html",
         error=f"Rol no reconocido: {rol}"
     )
+@app.route("/clientes")
+def clientes_panel():
+    usuario = session.get("usuario")
 
+    if not usuario:
+        return redirect(url_for("login"))
+
+    return render_template(
+        "feature_clientes/clientes.html",
+        usuario=usuario
+    )
+
+
+@app.route("/panel_peluquero")
+def panel_peluquero():
+    usuario = session.get("usuario")
+
+    if not usuario:
+        return redirect(url_for("login"))
+
+    return render_template(
+        "panel_barberos.html",
+        usuario=usuario
+    )
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
@@ -156,6 +202,7 @@ def register():
                 return redirect(url_for("login", registro="ok"))
 
     return render_template("register.html", error=error)
+
 
 def obtener_dashboard_admin():
     dashboard_url = f"{get_backend_url()}/admin/dashboard"

@@ -73,7 +73,7 @@ def mostrar_barberos(id_usuario):
         select id_cita from citas where id_usuario = ?
     ''', (id_usuario,)).fetchall()
     conn.close()
-    return render_template('feature_clientes/barberos.html', barberos=barberos, id_usuario = id_usuario, turnos = turnos, usuario = usuario)
+    return render_template('feature_clientes/nuestros_barberos.html', barberos=barberos, id_usuario = id_usuario, turnos = turnos, usuario = usuario)
 
 # 4. VISTA HTML: PANEL DE RESERVAS DEL CLIENTE
 @clientes_bp.route('/panel/<int:id_usuario>', methods=['GET'])
