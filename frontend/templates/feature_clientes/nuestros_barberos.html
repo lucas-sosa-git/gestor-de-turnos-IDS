@@ -26,13 +26,13 @@
             <a href="#" class="nav-link active">
                 <span>👤</span> Nuestros Estilistas
             </a>
-            <a href="{{ url_for('clientes.panel_cliente', id_usuario=id_usuario) }}" class="nav-link">
+            <a href="{{ url_for('clientes_panel') }}" class="nav-link">
                 <span>📅</span> Mis Reservas
                 {% if turnos and turnos | length > 0%}
                 <span class="indicador-numero">{{turnos | length}}</span>
                 {% endif %}
             </a>
-            <a href="{{ url_for('clientes.acerca_de', id_usuario=usuario['id_usuario']) }}" class="nav-link">
+            <a href="{{ url_for('clientes_panel') }}" class="nav-link">
                 <span>ℹ</span> Acerca de Nosotros
             </a>
         </nav>

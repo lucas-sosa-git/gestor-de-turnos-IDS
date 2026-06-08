@@ -24,7 +24,7 @@
         </header>
 
         <nav class="nav-bar">
-            <a href="{{ url_for('clientes.mostrar_barberos', id_usuario=usuario['id_usuario']) }}" class="nav-link">
+            <a href="{{ url_for('clientes_barberos') }}" class="nav-link">
                 <span>👤</span> Nuestros Peluqueros
             </a>
             
@@ -37,7 +37,7 @@
                 {% endif %}
             </a>
             
-            <a href="{{ url_for('clientes.acerca_de', id_usuario=usuario['id_usuario']) }}" class="nav-link">
+            <a href="{{ url_for('clientes_info') }}" class="nav-link">
                 <span>ℹ</span> Acerca de Nosotros
             </a>
         </nav>
