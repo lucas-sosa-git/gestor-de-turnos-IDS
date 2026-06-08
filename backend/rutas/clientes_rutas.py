@@ -64,13 +64,84 @@ def mostrar_servicios():
 
 
 # 3. MOSTRAR BARBEROS
-@clientes_bp.route('/barberos', methods=['GET'])
-def mostrar_barberos():
+@clientes_bp.route('/barberos/<int:id_usuario>', methods=['GET'])
+def mostrar_barberos(id_usuario):
     conn = get_db_connection()
-    barberos = conn.execute('SELECT b.id_barbero, u.nombre, u.email, b.activo FROM barberos b JOIN usuarios u on b.id_usuario=u.id_usuario').fetchall()
-    conn.close()
-    return jsonify([dict(b) for b in barberos])
+    usuario = conn.execute(''' select * from usuarios where id_usuario = ? ''', (id_usuario,)).fetchone()
+    if not usuario:
+        conn.close()
+        return jsonify({"error": "Usuario no encontrado"}), 404
 
+    barberos = conn.execute('''SELECT b.id_barbero, u.nombre, u.email, b.activo FROM barberos b JOIN usuarios u on b.id_usuario=u.id_usuario''').fetchall()
+    turnos = conn.execute('''
+        select id_cita from citas where id_usuario = ?
+    ''', (id_usuario,)).fetchall()
+    conn.close()
+    return jsonify({
+        "usuario": dict(usuario),
+        "id_usuario": id_usuario,
+        "barberos": [dict(barbero) for barbero in barberos],
+        "turnos": [dict(turno) for turno in turnos]
+    }), 200
+
+# 4. VISTA HTML: PANEL DE RESERVAS DEL CLIENTE
+@clientes_bp.route('/panel/<int:id_usuario>', methods=['GET'])
+def panel_cliente(id_usuario):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # 1. Traer los datos del usuario logueado para personalizar el saludo
+    usuario = cursor.execute(
+        'SELECT nombre,id_usuario FROM usuarios WHERE id_usuario = ?', (id_usuario,)
+    ).fetchone()
+
+    # 2. Buscar solo sus turnos ACTIVOS (no cancelados) uniendo servicios y barberos
+    query = '''
+        SELECT 
+            c.id_cita,
+            c.fecha,
+            c.hora_inicio,
+            c.estado,
+            ub.nombre AS barbero_nombre,
+            s.nombre AS servicio_nombre
+        FROM citas c
+        JOIN barberos b ON c.id_barbero = b.id_barbero
+        JOIN usuarios ub ON b.id_usuario = ub.id_usuario
+        JOIN servicios s ON c.id_servicio = s.id_servicio
+        WHERE c.id_usuario = ? AND c.estado != 'cancelada'
+        ORDER BY c.fecha ASC, c.hora_inicio ASC
+    '''
+    turnos = cursor.execute(query, (id_usuario,)).fetchall()
+    conn.close()
+
+    if not usuario:
+        return jsonify({"error": "Usuario no encontrado"}), 404
+
+    # Enviamos las variables 'usuario' y 'turnos' directamente al HTML
+    return jsonify({
+        "usuario": dict(usuario),
+        "id_usuario": id_usuario,
+        "turnos": [dict(turno) for turno in turnos]
+    }), 200
+
+@clientes_bp.route('/acerca-de/<int:id_usuario>', methods=['GET'])
+def acerca_de(id_usuario):
+    conn = get_db_connection()
+    # 1. Buscamos el usuario actual (un solo registro con .fetchone())
+    usuario = conn.execute(''' SELECT * FROM usuarios WHERE id_usuario = ? ''', (id_usuario,)).fetchone()
+    # 2. Buscamos las citas del usuario para el contador de la barra de navegación
+    turnos = conn.execute(''' SELECT id_cita FROM citas WHERE id_usuario = ? ''', (id_usuario,)).fetchall()
+    # 3. Cerramos la conexión a la base de datos
+    conn.close()
+    # 4. Enviamos absolutamente todo al HTML
+    if not usuario:
+        return jsonify({"error": "Usuario no encontrado"}), 404
+
+    return jsonify({
+        "usuario": dict(usuario),
+        "id_usuario": id_usuario,
+        "turnos": [dict(turno) for turno in turnos]
+    }), 200
 
 @clientes_bp.route('/barberos/<int:id_barbero>/horarios', methods=['GET'])
 def mostrar_horarios_barbero(id_barbero):

@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block title %}Mi Agenda · Salón Elegance{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='styles.css', external=True) }}">
+{% endblock %}
+
+{% block content %}
+
+{# HEADER #}
+<header class="agenda-header">
+  <div class="agenda-header-left">
+
+    <div class="agenda-logo">✂️</div>
+
+    <div>
+      <p class="agenda-brand-title">Salón Elegance</p>
+      <p class="agenda-brand-sub">Bienvenido, {{ barbero_nombre }}</p>
+    </div>
+  </div>
+
+  <a href="{{ url_for('auth.logout') }}" class="btn-salir">↩ Salir</a>
+</header>
+
+{# SHELL #}
+<div class="agenda-shell">
+
+  {# ── Hero Banner ─────────────────────────── #}
+  <div class="agenda-hero">
+    <h1 class="agenda-hero-title">Mi Agenda</h1>
+    <p class="agenda-hero-sub">Gestiona tus citas de forma eficiente</p>
+  </div>
+
+  {# ── Controles: tabs + navegación de fecha ─ #}
+  <div class="agenda-controls">
+
+    {# Tabs Día / Semana #}
+    <div class="agenda-tabs">
+      <a href="{{ url_for('agenda', vista='dia',    fecha=fecha_str) }}" class="agenda-tab {% if vista == 'dia' %}active{% endif %}">Día</a>
+      <a href="{{ url_for('agenda', vista='semana', fecha=fecha_str) }}" class="agenda-tab {% if vista == 'semana' %}active{% endif %}">Semana</a>
+    </div>
+
+    {# Navegación de fecha #}
+    <div class="agenda-nav">
+      <a href="{{ url_for('agenda', vista=vista, fecha=fecha_anterior) }}" class="agenda-nav-btn">‹</a>
+
+      <span class="agenda-fecha-label">
+        🗓
+        {% if vista == 'dia' %}
+          {{ fecha_label }}
+        {% else %}
+          Semana del {{ semana_inicio_label }} - {{ semana_fin_label }}
+        {% endif %}
+      </span>
+
+      <a href="{{ url_for('agenda', vista=vista, fecha=fecha_siguiente) }}" class="agenda-nav-btn">›</a>
+    </div>
+  </div>
+
+
+  {# VISTA DÍA #}
+  {% if vista == 'dia' %}
+
+  <div class="citas-lista">
+    {% if citas %}
+      {% for cita in citas %}
+      <div class="cita-card">
+
+        <div class="cita-avatar">{{ cita.cliente_nombre[0] | upper }}</div>
+
+        <div class="cita-info">
+          <div class="cita-info-row">
+            <span class="cita-icon">👤</span>
+            <span class="cita-nombre">{{ cita.cliente_nombre }}</span>
+          </div>
+          <div class="cita-info-row">
+            <span class="cita-icon">✉️</span>
+            <span class="cita-email">{{ cita.cliente_email }}</span>
+          </div>
+        </div>
+
+        <div class="cita-right">
+          <span class="cita-hora">🕐 {{ cita.hora }}</span>
+          <span class="badge-servicio">{{ cita.servicio }}</span>
+        </div>
+
+      </div>
+      {% endfor %}
+
+    {% else %}
+      <div class="sin-citas">
+        <span class="sin-citas-icon">📅</span>
+        No hay citas para este día.
+      </div>
+    {% endif %}
+  </div>
+
+
+  {# VISTA SEMANA #}
+  {% elif vista == 'semana' %}
+
+  <div class="semana-lista">
+    {% for dia in dias_semana %}
+
+      {% if dia.citas %}
+        <div>
+          <div class="semana-dia-header">
+            <div class="semana-dia-info">
+              <div class="semana-dia-nombre">{{ dia.nombre_corto }}</div>
+              <div class="semana-dia-fecha">{{ dia.fecha_label }}</div>
+            </div>
+            <span class="semana-citas-badge">
+              {{ dia.citas | length }}
+              {% if dia.citas | length == 1 %}cita{% else %}citas{% endif %}
+            </span>
+          </div>
+
+          <div class="semana-dia-body">
+            {% for cita in dia.citas %}
+            <div class="semana-cita-row">
+              <div class="semana-avatar">{{ cita.cliente_nombre[0] | upper }}</div>
+              <div class="semana-cita-info">
+                <div class="semana-cita-nombre">{{ cita.cliente_nombre }}</div>
+                <div class="semana-cita-email">{{ cita.cliente_email }}</div>
+              </div>
+              <div class="semana-cita-right">
+                <span class="semana-hora">🕐 {{ cita.hora }}</span>
+                <span class="badge-servicio">{{ cita.servicio }}</span>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+
+      {% else %}
+        <div class="semana-dia-header sin-citas-dia">
+          <div class="semana-dia-info">
+            <div class="semana-dia-nombre">{{ dia.nombre_corto }}</div>
+            <div class="semana-dia-fecha">{{ dia.fecha_label }}</div>
+          </div>
+          <span class="semana-citas-badge badge-vacio">1 cita</span>
+        </div>
+      {% endif %}
+
+    {% endfor %}
+  </div>
+
+  {% endif %}
+
+</div>{# /agenda-shell #}
+
+{% endblock %}
+</body></html>

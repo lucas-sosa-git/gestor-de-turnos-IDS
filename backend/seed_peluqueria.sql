@@ -1,7 +1,5 @@
 --clave123 = 5ac0852e770506dcd80f1a36d20ba7878bf82244b836d9324593bd14bc56dcb5
 --admin1234 = ac9689e2272427085e35b9d3e3e8bed88cb3434828b43b86fc0596cad4c6e270
-
-
 -- Admin
 INSERT INTO usuarios (nombre, email, clave, rol)
 VALUES ('Admin', 'admin@barberia.com', 'ac9689e2272427085e35b9d3e3e8bed88cb3434828b43b86fc0596cad4c6e270', 'administrador');
@@ -84,3 +82,11 @@ VALUES
 (2, 6, 5, 'Excelente corte'),
 (3, 7, 4, 'Muy buena atención'),
 (5, 9, 5, 'Rapido y prolijo');
+INSERT INTO citas (id_usuario, id_barbero, id_servicio, fecha, hora_inicio, hora_fin, estado)
+VALUES
+(1,1,1,'2026-05-20','10:00:00','10:30:00','pendiente'),
+(1,1,5, '2026-05-22', '10:00:00','11:30:00', 'confirmada'),
+(2,2,2,'2026-05-20','11:00:00','11:45:00','pendiente'),
+(3,1,3,'2026-05-21','12:00:00','12:25:00','confirmada'),
+(4,2,4,'2026-05-21','12:30:00','12:45:00','pendiente'),
+(5,3,5,'2026-05-22','13:00:00','14:30:00','confirmada');
