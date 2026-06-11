@@ -8,7 +8,7 @@ from email.mime.image import MIMEImage
 EMAIL_REMITENTE = "barberia.fiuba@gmail.com"
 CLAVE_APP = "ydxh pvav yktv lnoy"
 
-def enviar_mail(destinatario, nombre, fecha, hora, barbero, servicio, qr_token):
+def enviar_mail(destinatario, nombre, fecha, hora, barbero, servicio, qr_token, id_cita):
     asunto = "Confirmación de tu turno"
     cuerpo = f"""
     Hola {nombre},
