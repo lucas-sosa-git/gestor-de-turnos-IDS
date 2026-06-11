@@ -1,4 +1,4 @@
-from flask import Blueprint
+from flask import Blueprint, render_template
 from db import get_db_connection
 
 cancelacion_bp = Blueprint('cancelacion', _name_)
@@ -22,7 +22,4 @@ def cancelar_desde_mail(id_cita):
     conn.commit()
     conn.close()
 
-    return """
-    <h2>Turno cancelado correctamente</h2>
-    <p>Tu reserva fue cancelada con éxito.</p>
-    """
+    return render_template('cancelacion_exitosa.html')
