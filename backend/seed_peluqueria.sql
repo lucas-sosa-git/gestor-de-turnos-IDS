@@ -1,17 +1,5 @@
 --clave123 = 5ac0852e770506dcd80f1a36d20ba7878bf82244b836d9324593bd14bc56dcb5
 --admin1234 = ac9689e2272427085e35b9d3e3e8bed88cb3434828b43b86fc0596cad4c6e270
-INSERT INTO usuarios (nombre, email, clave, rol)
-VALUES
-('Juan Pérez', 'juan.perez@mail.com', 'clave123', 'cliente'),
-('María Gómez', 'maria.gomez@mail.com', 'clave123', 'cliente'),
-('Lucía Fernández', 'lucia.fernandez@mail.com', 'clave123', 'cliente'),
-('Carlos Rodríguez', 'carlos.rodriguez@mail.com', 'clave123', 'cliente'),
-('Sofía Martínez', 'sofia.martinez@mail.com', 'clave123', 'cliente'),
-('Pedro López', 'pedro.lopez@peluqueria.com', 'clave123', 'barbero'),
-('Ana Torres', 'ana.torres@peluqueria.com', 'clave123', 'barbero'),
-('Martín Silva', 'martin.silva@peluqueria.com', 'clave123', 'barbero');
-
-
 -- Admin
 INSERT INTO usuarios (nombre, email, clave, rol)
 VALUES ('Admin', 'admin@barberia.com', 'ac9689e2272427085e35b9d3e3e8bed88cb3434828b43b86fc0596cad4c6e270', 'administrador');

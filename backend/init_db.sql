@@ -18,13 +18,15 @@ CREATE TABLE IF NOT EXISTS servicios (
     nombre       TEXT NOT NULL,
     descripcion  TEXT,
     duracion     INTEGER NOT NULL,
-    precio       REAL NOT NULL
+    precio       REAL NOT NULL,
+    img_servicio TEXT
 );
 
 CREATE TABLE IF NOT EXISTS barberos (
     id_barbero  INTEGER PRIMARY KEY AUTOINCREMENT,
     id_usuario  INTEGER NOT NULL UNIQUE,
     activo      INTEGER NOT NULL DEFAULT 1,
+    img_barbero TEXT,
     FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)
 );
 
@@ -45,7 +47,7 @@ CREATE TABLE IF NOT EXISTS citas (
     fecha             TEXT NOT NULL,
     hora_inicio       TEXT NOT NULL,
     hora_fin          TEXT NOT NULL,
-    estado            TEXT NOT NULL DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'confirmada', 'cancelada')),
+    estado            TEXT NOT NULL DEFAULT 'confirmada' CHECK (estado IN ('confirmada', 'completada', 'pendiente', 'cancelada')),
     ausencia          INTEGER NOT NULL DEFAULT 0,
     fecha_creacion    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     fecha_cancelacion TIMESTAMP NULL DEFAULT NULL,
