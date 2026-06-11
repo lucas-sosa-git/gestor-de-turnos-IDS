@@ -386,6 +386,7 @@ def reservar_turno():
     barbero=cita['barbero'],
     servicio=cita['servicio'],
     qr_token=qr_token
+    id_cita=id_cita
     )
 
     
