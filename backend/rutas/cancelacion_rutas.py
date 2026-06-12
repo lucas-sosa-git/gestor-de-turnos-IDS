@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template
 from db import get_db_connection
 
-cancelacion_bp = Blueprint('cancelacion', _name_)
+cancelacion_bp = Blueprint('cancelacion', __name__)
 
 @cancelacion_bp.route('/cancelar/<int:id_cita>', methods=['GET'])
 def cancelar_desde_mail(id_cita):

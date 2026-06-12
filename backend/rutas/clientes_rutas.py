@@ -379,14 +379,14 @@ def reservar_turno():
     conn.close()
 
     enviar_mail(
-    destinatario=cita['cliente_email'],
-    nombre=cita['cliente'],
-    fecha=cita['fecha'],
-    hora=cita['hora_inicio'],
-    barbero=cita['barbero'],
-    servicio=cita['servicio'],
-    qr_token=qr_token
-    id_cita=id_cita
+        destinatario=cita['cliente_email'],
+        nombre=cita['cliente'],
+        fecha=cita['fecha'],
+        hora=cita['hora_inicio'],
+        barbero=cita['barbero'],
+        servicio=cita['servicio'],
+        qr_token=qr_token,
+        id_cita=id_cita
     )
 
     
