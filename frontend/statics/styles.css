@@ -32,20 +32,36 @@
   padding: 1.4rem 2rem;
   border-bottom: 1px solid var(--card-border);
 }
+
 .admin-header-left {
   display: flex;
   align-items: center;
   gap: 1rem;
 }
+
 .admin-logo {
-  width: 48px; height: 48px;
+  width: 48px;
+  height: 48px;
   background: var(--accent-gold);
   border-radius: 12px;
-  display: flex; align-items: center; justify-content: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 1.4rem;
 }
-.admin-title { font-size: 1.4rem; font-weight: 700; margin: 0; }
-.admin-subtitle { font-size: .8rem; color: var(--text-muted); margin: 0; }
+
+.admin-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.admin-subtitle {
+  font-size: .8rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
 .btn-salir {
   background: transparent;
   border: 1px solid var(--card-border);
@@ -55,7 +71,11 @@
   font-size: .85rem;
   text-decoration: none;
 }
-.btn-salir:hover { border-color: var(--accent-gold); color: var(--accent-gold); }
+
+.btn-salir:hover {
+  border-color: var(--accent-gold);
+  color: var(--accent-gold);
+}
 
 /* ── Tabs ── */
 .admin-tabs {
@@ -64,6 +84,7 @@
   padding: 0 2rem;
   border-bottom: 1px solid var(--card-border);
 }
+
 .admin-tab {
   padding: .85rem 1.4rem;
   font-size: .9rem;
@@ -71,20 +92,33 @@
   color: var(--text-muted);
   cursor: pointer;
   border-bottom: 2px solid transparent;
-  display: flex; align-items: center; gap: .4rem;
+  display: flex;
+  align-items: center;
+  gap: .4rem;
 }
+
 .admin-tab.active {
   color: var(--accent-gold);
   border-bottom-color: var(--accent-gold);
 }
-.admin-tab:hover:not(.active) { color: var(--text-primary); }
+
+.admin-tab:hover:not(.active) {
+  color: var(--text-primary);
+}
 
 /* ── Contenido de tabs ── */
-.tab-pane-content { display: none; }
-.tab-pane-content.active { display: block; }
+.tab-pane-content {
+  display: none;
+}
+
+.tab-pane-content.active {
+  display: block;
+}
 
 /* ── Body ── */
-.admin-body { padding: 2rem; }
+.admin-body {
+  padding: 2rem;
+}
 
 .alert-error {
   background: #fee2e2;
@@ -102,6 +136,7 @@
   gap: 1rem;
   margin-bottom: 1.5rem;
 }
+
 .kpi-card {
   background: var(--card-bg);
   border: 1px solid var(--card-border);
@@ -109,33 +144,77 @@
   padding: 1.4rem;
   transition: transform .2s;
 }
-.kpi-card:hover { transform: translateY(-2px); }
+
+.kpi-card:hover {
+  transform: translateY(-2px);
+}
+
 .kpi-top {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   margin-bottom: 1rem;
 }
+
 .kpi-icon {
-  width: 42px; height: 42px;
+  width: 42px;
+  height: 42px;
   border-radius: 10px;
-  display: flex; align-items: center; justify-content: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 1.2rem;
 }
-.kpi-icon.green { background: rgba(34,197,94,.2); color: var(--accent-green); }
-.kpi-icon.blue { background: rgba(59,130,246,.2); color: var(--accent-blue); }
-.kpi-icon.purple { background: rgba(139,92,246,.2); color: var(--accent-purple); }
-.kpi-icon.gold { background: rgba(245,166,35,.2); color: var(--accent-gold); }
+
+.kpi-icon.green {
+  background: rgba(34,197,94,.2);
+  color: var(--accent-green);
+}
+
+.kpi-icon.blue {
+  background: rgba(59,130,246,.2);
+  color: var(--accent-blue);
+}
+
+.kpi-icon.purple {
+  background: rgba(139,92,246,.2);
+  color: var(--accent-purple);
+}
+
+.kpi-icon.gold {
+  background: rgba(245,166,35,.2);
+  color: var(--accent-gold);
+}
+
 .kpi-delta {
   font-size: .78rem;
   font-weight: 600;
   padding: .2rem .5rem;
   border-radius: 20px;
 }
-.kpi-delta.pos { background: rgba(34,197,94,.15); color: var(--accent-green); }
-.kpi-delta.neg { background: rgba(220,38,38,.15); color: #f87171; }
-.kpi-value { font-size: 2rem; font-weight: 800; margin: 0; line-height: 1; }
-.kpi-label { font-size: .8rem; color: var(--text-muted); margin-top: .3rem; }
+
+.kpi-delta.pos {
+  background: rgba(34,197,94,.15);
+  color: var(--accent-green);
+}
+
+.kpi-delta.neg {
+  background: rgba(220,38,38,.15);
+  color: #f87171;
+}
+
+.kpi-value {
+  font-size: 2rem;
+  font-weight: 800;
+  margin: 0;
+  line-height: 1;
+}
+
+.kpi-label {
+  font-size: .8rem;
+  color: var(--text-muted);
+  margin-top: .3rem;
+}
 
 /* ── Bottom Grid ── */
 .bottom-grid {
@@ -151,11 +230,14 @@
   border-radius: var(--radius-card);
   padding: 1.4rem;
 }
+
 .panel-card-title {
   font-size: 1rem;
   font-weight: 700;
   margin-bottom: 1rem;
-  display: flex; align-items: center; gap: .5rem;
+  display: flex;
+  align-items: center;
+  gap: .5rem;
 }
 
 /* ── Citas ── */
@@ -169,19 +251,49 @@
   justify-content: space-between;
   gap: 1rem;
 }
-.cita-info-nombre { font-weight: 600; font-size: .9rem; }
-.cita-info-sub { font-size: .78rem; color: var(--text-muted); }
-.cita-right { display: flex; align-items: center; gap: .7rem; }
-.cita-hora { font-size: .82rem; color: var(--text-muted); }
+
+.cita-info-nombre {
+  font-weight: 600;
+  font-size: .9rem;
+}
+
+.cita-info-sub {
+  font-size: .78rem;
+  color: var(--text-muted);
+}
+
+.cita-right {
+  display: flex;
+  align-items: center;
+  gap: .7rem;
+}
+
+.cita-hora {
+  font-size: .82rem;
+  color: var(--text-muted);
+}
+
 .badge-estado {
   font-size: .72rem;
   font-weight: 600;
   padding: .25rem .65rem;
   border-radius: 20px;
 }
-.badge-completada { background: rgba(22,163,74,.2); color: #4ade80; }
-.badge-pendiente { background: rgba(37,99,235,.2); color: #60a5fa; }
-.badge-cancelada { background: rgba(220,38,38,.2); color: #f87171; }
+
+.badge-completada {
+  background: rgba(22,163,74,.2);
+  color: #4ade80;
+}
+
+.badge-pendiente {
+  background: rgba(37,99,235,.2);
+  color: #60a5fa;
+}
+
+.badge-cancelada {
+  background: rgba(220,38,38,.2);
+  color: #f87171;
+}
 
 /* ── Semanas ── */
 .semana-bars {
@@ -191,8 +303,22 @@
   height: 80px;
   margin-top: 1rem;
 }
-.semana-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: .3rem; }
-.semana-bar-wrap { flex: 1; width: 100%; display: flex; align-items: flex-end; }
+
+.semana-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .3rem;
+}
+
+.semana-bar-wrap {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+}
+
 .semana-bar {
   width: 100%;
   border-radius: 4px 4px 0 0;
@@ -200,11 +326,24 @@
   opacity: .7;
   min-height: 4px;
 }
-.semana-bar.highlight { opacity: 1; background: var(--accent-green); }
-.semana-label { font-size: .68rem; color: var(--text-muted); }
 
-.mb-3 { margin-bottom: 1rem; }
-.mt-3 { margin-top: 1rem; }
+.semana-bar.highlight {
+  opacity: 1;
+  background: var(--accent-green);
+}
+
+.semana-label {
+  font-size: .68rem;
+  color: var(--text-muted);
+}
+
+.mb-3 {
+  margin-bottom: 1rem;
+}
+
+.mt-3 {
+  margin-top: 1rem;
+}
 
 /* Gestion de servicios */
 .service-section {
@@ -471,7 +610,11 @@ body {
     font-family: Arial, Helvetica, sans-serif;
     color: var(--text);
     background:
-        radial-gradient(circle at top left, rgba(217, 70, 143, 0.12), transparent 30%),
+        radial-gradient(
+            circle at top left,
+            rgba(217, 70, 143, 0.12),
+            transparent 30%
+        ),
         var(--bg);
 }
 
@@ -504,7 +647,11 @@ body {
     color: #ffffff;
     font-weight: 700;
     letter-spacing: 0;
-    background: linear-gradient(135deg, var(--primary), var(--accent));
+    background: linear-gradient(
+        135deg,
+        var(--primary),
+        var(--accent)
+    );
 }
 
 .login-header {
@@ -627,6 +774,7 @@ button:hover {
         padding: 28px 22px;
     }
 }
+
 :root {
     --primary-color: #a855f7;
     --text-main: #1f2937;
@@ -635,7 +783,6 @@ button:hover {
     --border-color: #e5e7eb;
     --border-light: #f3f4f6;
     --bg-white: #ffffff;
-
     --badge-pending-bg: #e0f2fe;
     --badge-pending-text: #0369a1;
     --btn-cancel-bg: #fef2f2;
@@ -861,10 +1008,14 @@ body {
     padding: 40px 0;
     color: var(--text-muted);
 }
-/*estilos para barberos clientes*/
+
+/* estilos para barberos clientes */
 .estilistas-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    grid-template-columns: repeat(
+        auto-fill,
+        minmax(250px, 1fr)
+    );
     gap: 20px;
     margin-top: 20px;
 }
@@ -899,57 +1050,71 @@ body {
     margin-top: 15px;
     cursor: pointer;
 }
+
 .info-container {
     max-width: 800px;
     margin: 10px auto;
     padding: 20px;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family:
+        'Segoe UI',
+        Tahoma,
+        Geneva,
+        Verdana,
+        sans-serif;
 }
+
 .info-titulo {
     text-align: center;
     font-size: 2.5rem;
     margin-bottom: 30px;
-    color: #1e1e1e; 
+    color: #1e1e1e;
     text-transform: uppercase;
     letter-spacing: 2px;
 }
+
 .info-card {
-    background-color: #1e1e1e; /* Color oscuro de fondo */
-    border-radius: 12px; /* Bordes redondeados */
+    background-color: #1e1e1e;
+    border-radius: 12px;
     padding: 30px;
     margin-bottom: 25px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5); /* Sombra para dar profundidad */
-    border: 1px solid #333; /* Borde sutil */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    border: 1px solid #333;
 }
+
 .info-card h2 {
     font-size: 1.5rem;
-    color: #f39c12; /* Un tono dorado/naranja para resaltar, puedes cambiarlo */
+    color: #f39c12;
     margin-bottom: 15px;
     border-bottom: 1px solid #444;
     padding-bottom: 10px;
 }
+
 .info-card p {
     line-height: 1.6;
-    color: #cccccc; /* Gris claro para que no canse la vista */
+    color: #cccccc;
     font-size: 1.1rem;
 }
+
 .info-lista {
     list-style: none;
     padding: 0;
     color: #cccccc;
 }
+
 .acerca-lista li {
     margin-bottom: 12px;
     color: #cccccc;
     font-size: 1.1rem;
     display: flex;
     align-items: center;
-    gap: 10px; /* Separación entre el tilde y el texto */
+    gap: 10px;
 }
+
 .nav-buttons-group {
     display: flex;
     gap: 10px;
 }
+
 .indicador-numero {
     background-color: var(--accent, #d9468f);
     color: white;
@@ -960,126 +1125,135 @@ body {
     margin-left: 5px;
     display: inline-block;
 }
+
 .semana-dia-contenedor {
     margin-top: 30px;
     margin-bottom: 15px;
-    border-left: 4px solid var(--primary-color, #a855f7);
+    border-left: 4px solid var(
+        --primary-color,
+        #a855f7
+    );
     padding-left: 15px;
 }
+
 .semana-dia-titulo {
     color: var(--text-main, #1f2937);
     font-size: 1.25rem;
     font-weight: bold;
     margin: 0;
 }
+
 .reserva-card.card-compacta {
     padding: 16px 24px;
     margin-bottom: 12px;
-    border-color: var(--border-light, #f3f4f6);
-    background-color: var(--bg-white, #ffffff);
+    border-color: var(
+        --border-light,
+        #f3f4f6
+    );
+    background-color: var(
+        --bg-white,
+        #ffffff
+    );
 }
 
 .reserva-card.card-compacta .card-top {
     margin-bottom: 0;
     align-items: center;
 }
+
 .btn-cancel.btn-success-action {
-    background-color: var(--success-bg, #edfdf4);
-    color: var(--success-text, #11613a);
+    background-color: var(
+        --success-bg,
+        #edfdf4
+    );
+    color: var(
+        --success-text,
+        #11613a
+    );
     transition: background-color 0.2s ease;
 }
 
 .btn-cancel.btn-success-action:hover {
     background-color: #dbfce7;
 }
+
 /* ==========================================================
    BOTONES PARA GENERAR REPORTES PDF
    ========================================================== */
 
-/*
- * Contenedor del botón que aparece dentro de cada pestaña.
- */
 .reporte-acciones {
     display: flex;
     justify-content: flex-end;
     margin-bottom: 1rem;
 }
 
-
-/*
- * Botón para descargar el reporte.
- *
- * Se especifica width: auto porque en otros sectores del
- * proyecto puede existir un estilo general de button
- * que aplique width: 100%.
- */
 .btn-pdf {
     width: auto;
     min-height: 42px;
     margin: 0;
     padding: 0.65rem 1rem;
-
     border: 1px solid #f5a623;
     border-radius: 8px;
-
     color: #f5a623;
     background: transparent;
-
     font-size: 0.85rem;
     font-weight: 700;
-
     cursor: pointer;
 }
 
-
-/*
- * Efecto al pasar el mouse por el botón.
- */
 .btn-pdf:hover {
     color: #0f1117;
     background: #f5a623;
 }
 
-
-/*
- * Estado utilizado mientras se está creando el PDF.
- */
 .btn-pdf:disabled {
     cursor: wait;
     opacity: 0.65;
 }
-
 
 /* ==========================================================
    CONTENEDOR TEMPORAL DEL PDF
    ========================================================== */
 
 /*
- * JavaScript crea este contenedor solamente mientras
- * se genera el reporte.
- *
- * Se encuentra fuera de la pantalla, pero continúa
- * renderizado para que html2pdf pueda capturarlo.
+ * Este contenedor existe solamente durante la generación.
+ * Se mantiene visible y con dimensiones reales para que
+ * html2canvas no produzca una captura vacía.
  */
 .pdf-contenedor-temporal {
-    position: fixed;
+    position: absolute;
     top: 0;
     left: 0;
     z-index: 999999;
-
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    transform: none !important;
     width: 760px;
     min-height: 1000px;
+    box-sizing: border-box;
     padding: 30px;
-
     color: #1f2937;
     background: #ffffff;
-
     font-family: "Segoe UI", Arial, sans-serif;
-
     pointer-events: none;
     overflow: visible;
+    isolation: isolate;
 }
 
+.pdf-contenedor-temporal .tab-pane-content {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    position: static !important;
+    transform: none !important;
+}
+
+.pdf-exportando,
+.pdf-exportando * {
+    animation: none !important;
+    transition: none !important;
+}
 
 /* ==========================================================
    ENCABEZADO DEL PDF
@@ -1088,93 +1262,64 @@ body {
 .pdf-encabezado {
     margin-bottom: 24px;
     padding-bottom: 14px;
-
     border-bottom: 3px solid #f5a623;
 }
 
-
 .pdf-encabezado h1 {
     margin: 0;
-
     color: #111827;
-
     font-size: 26px;
     line-height: 1.2;
 }
 
-
 .pdf-encabezado p {
     margin: 7px 0 0;
-
     color: #6b7280;
-
     font-size: 12px;
 }
-
 
 /* ==========================================================
    ADAPTACIÓN DE LA DASHBOARD A FORMATO A4
    ========================================================== */
 
-/*
- * En pantalla existen cuatro indicadores por fila.
- * Para el PDF se muestran dos para que sean legibles.
- */
 .pdf-exportando .kpi-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
 }
 
-
-/*
- * En el PDF, los paneles inferiores se muestran uno debajo
- * del otro para evitar que queden demasiado pequeños.
- */
 .pdf-exportando .bottom-grid {
     grid-template-columns: 1fr;
 }
 
-
-/*
- * Fondo claro de las tarjetas dentro del PDF.
- */
 .pdf-exportando .kpi-card,
 .pdf-exportando .panel-card,
 .pdf-exportando .barbero-card-full,
-.pdf-exportando .servicio-card {
+.pdf-exportando .servicio-card,
+.pdf-exportando .service-card,
+.pdf-exportando .service-form-card {
     color: #1f2937;
     background: #ffffff;
-
     border-color: #d1d5db;
-
     box-shadow: none;
 }
 
-
-/*
- * Desactiva el movimiento de las tarjetas dentro del PDF.
- */
 .pdf-exportando .kpi-card:hover {
     transform: none;
 }
 
-
-/*
- * Textos principales oscuros.
- */
 .pdf-exportando .kpi-value,
 .pdf-exportando .panel-card-title,
 .pdf-exportando .barbero-card-nombre,
 .pdf-exportando .barbero-nombre,
 .pdf-exportando .servicio-card-nombre,
 .pdf-exportando .servicio-nombre,
-.pdf-exportando .cita-info-nombre {
+.pdf-exportando .cita-info-nombre,
+.pdf-exportando .services-header h3,
+.pdf-exportando .service-info h3,
+.pdf-exportando .service-info h4 {
     color: #111827;
 }
 
-
-/*
- * Textos secundarios del reporte.
- */
 .pdf-exportando .kpi-label,
 .pdf-exportando .cita-info-sub,
 .pdf-exportando .cita-hora,
@@ -1182,44 +1327,53 @@ body {
 .pdf-exportando .barbero-sub,
 .pdf-exportando .servicio-card-dur,
 .pdf-exportando .servicio-card-veces,
-.pdf-exportando .semana-label {
+.pdf-exportando .semana-label,
+.pdf-exportando .services-header span,
+.pdf-exportando .service-info p {
     color: #6b7280;
 }
 
-
-/*
- * Fondo de las filas de citas.
- */
 .pdf-exportando .cita-row {
     color: #1f2937;
     background: #f3f4f6;
 }
 
-
-/*
- * Colores del gráfico de ingresos semanales.
- */
 .pdf-exportando .semana-bar {
     background: #f5a623;
 }
-
 
 .pdf-exportando .semana-bar.highlight {
     background: #22c55e;
 }
 
+.pdf-exportando .service-card {
+    grid-template-columns:
+        120px minmax(0, 1fr);
+    gap: 16px;
+    margin-bottom: 16px;
+    padding: 16px;
+}
+
+.pdf-exportando .service-image,
+.pdf-exportando .service-no-image {
+    width: 120px;
+    height: 95px;
+}
+
+.pdf-exportando .service-card hr,
+.pdf-exportando .service-card > h4 {
+    display: none;
+}
 
 /* ==========================================================
    CONTROL DE SALTOS DE PÁGINA
    ========================================================== */
 
-/*
- * Evita que una tarjeta quede dividida entre dos páginas.
- */
 .pdf-exportando .kpi-card,
 .pdf-exportando .panel-card,
 .pdf-exportando .barbero-card-full,
 .pdf-exportando .servicio-card,
+.pdf-exportando .service-card,
 .pdf-exportando .cita-row,
 .pdf-exportando .barbero-row,
 .pdf-exportando .servicio-row {
@@ -1334,7 +1488,21 @@ body {
   margin-right: 1rem;
 }
 
-.semana-cita-nombre { font-weight: bold; }
-.semana-cita-email { color: var(--text-muted); font-size: 0.85rem; }
-.semana-cita-right { margin-left: auto; text-align: right; }
-.semana-hora { color: var(--accent-gold); display: block; }
+.semana-cita-nombre {
+  font-weight: bold;
+}
+
+.semana-cita-email {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.semana-cita-right {
+  margin-left: auto;
+  text-align: right;
+}
+
+.semana-hora {
+  color: var(--accent-gold);
+  display: block;
+}
