@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vista - Panel Barbero</title>
+</head>
+<body>
+    <div class="app-container">    
+        
+        <header class="main-header">
+            <div class="user-profile">
+                <div class="avatar">
+                    <span>{{ usuario['nombre'][0].upper() }}</span> 
+                </div>
+                <div>
+                    <h1 class="salon-title">Peluquería Elegance</h1>
+                    <p class="welcome-text">Bienvenido, {{ usuario['nombre'] }}</p>
+                </div>
+            </div>
+            <div class="logout-container">
+                <a href="/"><button class="logout-btn">Salir</button></a>
+            </div>
+        </header>
+
+        <nav class="nav-bar">
+            <a href="/panel_peluquero/{{ id_usuario }}?vista=dia&fecha={{ fecha_str }}" 
+               class="nav-link {% if vista == 'dia' %}active{% endif %}">
+                <span>📅</span> Vista Diaria
+                {% if vista == 'dia' and turnos | length > 0 %}
+                    <span class="indicador-numero">{{ turnos|length }}</span>
+                {% endif %}
+            </a>
+            
+            <a href="/panel_peluquero/{{ id_usuario }}?vista=semana&fecha={{ fecha_str }}" 
+               class="nav-link {% if vista == 'semana' %}active{% endif %}">
+                <span>📊</span> Vista Semanal
+            </a>
+        </nav>
+
+        <div class="section-header">
+            <div>
+                <h2 class="section-title">
+                    {% if vista == 'semana' %}
+                        Semana: {{ semana_inicio_label }} al {{ semana_fin_label }}
+                    {% else %}
+                        Agenda del Día: {{ fecha_label }}
+                    {% endif %}
+                </h2>
+                <p class="section-subtitle">Gestioná tus citas asignadas y controlá el estado de los servicios programados</p>
+            </div>
+            <div class="nav-buttons-group">
+                <a href="/panel_peluquero/{{ id_usuario }}?vista={{ vista }}&fecha={{ fecha_anterior }}" style="text-decoration: none;">
+                    <button class="btn-history"><span>◀</span> Anterior</button>
+                </a>
+                <a href="/panel_peluquero/{{ id_usuario }}?vista={{ vista }}&fecha={{ fecha_siguiente }}" style="text-decoration: none;">
+                    <button class="btn-history">Siguiente <span>▶</span></button>
+                </a>
+            </div>
+        </div>
+
+        {% if error %}
+            <div class="estado-vacio">
+                <p>{{ error }}</p>
+            </div>
+        
+        {% elif vista == 'dia' %}
+            {% if turnos and turnos|length > 0 %}
+                {% for turno in turnos %}
+                    <div class="reserva-card">
+                        
+                        <div class="card-top">
+                            <div>
+                                <h3 class="card-title">{{ turno['cliente_nombre'] }}</h3>
+                                <p class="card-service">
+                                    <span>✂️</span> {{ turno['servicio_nombre'] }}
+                                </p>
+                            </div>
+                            <div class="status-badge">
+                                <span>ℹ️</span> {{ turno['estado'].capitalize() }}
+                            </div>
+                        </div>
+
+                        <div class="card-meta">
+                            <div class="meta-item">
+                                <span>📅</span> {{ turno['fecha'] }}
+                            </div>
+                            <div class="meta-item">
+                                <span>🕒</span> {{ turno['hora_inicio'] }} hs
+                            </div>
+                        </div>
+
+                        <hr class="card-divider">
+
+                        <div class="card-bottom">
+                            <p class="card-note">Contacto: {{ turno['cliente_email'] }}</p>
+                            <button class="btn-cancel btn-success-action">
+                                <span>✅</span> Finalizar Turno
+                            </button>
+                        </div>
+
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="estado-vacio">
+                    <p>No tenés citas programadas para esta fecha.</p>
+                </div>
+            {% endif %}
+
+        {% elif vista == 'semana' %}
+            {% for dia in dias_semana %}
+                <div class="semana-dia-contenedor">
+                    <h3 class="semana-dia-titulo">{{ dia.nombre_dia }} ({{ dia.fecha_label }})</h3>
+                </div>
+
+                {% if dia.citas and dia.citas|length > 0 %}
+                    {% for turno in dia.citas %}
+                        <div class="reserva-card card-compacta">
+                            <div class="card-top">
+                                <div>
+                                    <h3 class="card-title" style="font-size: 16px;">{{ turno['cliente_nombre'] }}</h3>
+                                    <p class="card-service" style="margin-top: 4px;">
+                                        <span>✂️</span> {{ turno['servicio_nombre'] }}
+                                    </p>
+                                </div>
+                                <div class="meta-item" style="font-size: 15px; font-weight: 600; color: var(--primary-color);">
+                                    <span>🕒</span> {{ turno['hora_inicio'] }} hs
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="reserva-card card-compacta" style="opacity: 0.6; background-color: #fafafa;">
+                        <p class="card-note">Sin turnos asignados para este día.</p>
+                    </div>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+
+    </div>
+</body>
+</html>

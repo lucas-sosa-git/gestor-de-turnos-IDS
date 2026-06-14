@@ -3,6 +3,8 @@ import os
 from datetime import date, timedelta
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
+from collections import defaultdict
+from datetime import datetime,timedelta
 
 from flask import Flask, redirect, render_template, request, session, url_for
 
@@ -174,7 +176,8 @@ def login():
         return redirect(f"/clientes/{id_usuario}")
 
     if rol in ["barbero", "peluquero", "profesional"]:
-        return redirect("/panel_peluquero")
+        id_usuario = usuario.get("id_usuario")
+        return redirect(f"/panel_peluquero/{id_usuario}")
 
     return render_template(
         "login.html",
@@ -241,17 +244,89 @@ def clientes_info(id_usuario):
         error=error
     )
 
-
-@app.route("/panel_peluquero")
-def panel_peluquero():
+def obtener_panel_peluqueros(id_usuario):
+    return obtener_json_backend(
+        f"/peluqueros/{id_usuario}",
+        "No se pudieron cargar los datos del cliente"
+    )
+def normalizar_fecha(fecha_objeto_o_cadena):
+    """Convierte cualquier variante de fecha de la DB a formato estándar string 'YYYY-MM-DD'"""
+    if not fecha_objeto_o_cadena:
+        return ""
+    fecha_limpia = str(fecha_objeto_o_cadena).split(' ')[0].strip() # Quita horas sobrantes si existen
+    for formato in ('%Y-%m-%d', '%d/%m/%Y', '%Y/%m/%d', '%d-%m-%Y'):
+        try:
+            return datetime.strptime(fecha_limpia, formato).strftime('%Y-%m-%d')
+        except ValueError:
+            continue
+    return fecha_limpia
+@app.route("/panel_peluquero/<int:id_usuario>")
+def panel_peluquero(id_usuario):
     usuario = session.get("usuario")
+    vista_actual = request.args.get('vista', 'dia') 
+    fecha_str_actual = request.args.get('fecha')
+    if not fecha_str_actual:
+        fecha_str_actual = datetime.today().strftime('%Y-%m-%d')
+    try:
+        fecha_actual = datetime.strptime(fecha_str_actual, '%Y-%m-%d')
+    except ValueError:
+        fecha_actual = datetime.today()
+        fecha_str_actual = fecha_actual.strftime('%Y-%m-%d')
+    if vista_actual == 'semana':
+        fecha_anterior = (fecha_actual - timedelta(days=7)).strftime('%Y-%m-%d')
+        fecha_siguiente = (fecha_actual + timedelta(days=7)).strftime('%Y-%m-%d')
+    else:
+        fecha_anterior = (fecha_actual - timedelta(days=1)).strftime('%Y-%m-%d')
+        fecha_siguiente = (fecha_actual + timedelta(days=1)).strftime('%Y-%m-%d')
+    fecha_label = fecha_actual.strftime('%d de %B de %Y')
+    #Calculamos de lun a dom de la semana que se elige
+    semana_inicio = fecha_actual - timedelta(days=fecha_actual.weekday())
+    semana_inicio_label = semana_inicio.strftime('%d %b')
+    semana_fin_label = (semana_inicio + timedelta(days=6)).strftime('%d %b')
+    data, error= obtener_panel_peluqueros(id_usuario)
 
-    if not usuario:
-        return redirect(url_for("login"))
+    lista_total_citas = data.get("turnos", []) if data else []
+    usuario_datos = data.get("usuario", usuario) if data else usuario
+    turnos_dia = []
+    dias_semana = []
+    fecha_hoy_normalizada = normalizar_fecha(fecha_str_actual)
+    if vista_actual == 'semana':
+        nombres_dias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
+        dias_dict = {}
+        for i in range(7):
+            dia_fecha = semana_inicio + timedelta(days=i)
+            dia_str = dia_fecha.strftime('%Y-%m-%d')
+            dias_dict[dia_str] = {
+                'nombre_dia': nombres_dias[i],
+                'fecha_label': dia_fecha.strftime('%d %b'),
+                'fecha_str': dia_str,
+                'citas': []
+            }
+        for turno in lista_total_citas:
+            fecha_turno_normalizada = normalizar_fecha(turno.get('fecha'))
+            if fecha_turno_normalizada in dias_dict:
+                dias_dict[fecha_turno_normalizada]['citas'].append(turno)
+        dias_semana = list(dias_dict.values())
+    else:
+        for turno in lista_total_citas:
+            fecha_turno_normalizada = normalizar_fecha(turno.get('fecha'))
+            if fecha_turno_normalizada == fecha_hoy_normalizada:
+                turnos_dia.append(turno)
 
     return render_template(
         "panel_barberos.html",
-        usuario=usuario
+        usuario=usuario_datos,
+        id_usuario = id_usuario,
+        turnos = turnos_dia,
+        dias_semana= dias_semana,
+        error = error,
+        vista = vista_actual,
+        fecha_str = fecha_str_actual,
+        fecha_anterior = fecha_anterior,
+        fecha_siguiente = fecha_siguiente,
+        fecha_label = fecha_label,
+        semana_inicio_label = semana_inicio_label,
+        semana_fin_label = semana_fin_label
     )
 
 @app.route("/register", methods=["GET", "POST"])

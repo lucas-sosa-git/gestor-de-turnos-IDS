@@ -706,6 +706,52 @@ body {
     align-items: center;
     gap: 10px; /* Separación entre el tilde y el texto */
 }
+.nav-buttons-group {
+    display: flex;
+    gap: 10px;
+}
+.indicador-numero {
+    background-color: var(--accent, #d9468f);
+    color: white;
+    font-size: 11px;
+    font-weight: bold;
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-left: 5px;
+    display: inline-block;
+}
+.semana-dia-contenedor {
+    margin-top: 30px;
+    margin-bottom: 15px;
+    border-left: 4px solid var(--primary-color, #a855f7);
+    padding-left: 15px;
+}
+.semana-dia-titulo {
+    color: var(--text-main, #1f2937);
+    font-size: 1.25rem;
+    font-weight: bold;
+    margin: 0;
+}
+.reserva-card.card-compacta {
+    padding: 16px 24px;
+    margin-bottom: 12px;
+    border-color: var(--border-light, #f3f4f6);
+    background-color: var(--bg-white, #ffffff);
+}
+
+.reserva-card.card-compacta .card-top {
+    margin-bottom: 0;
+    align-items: center;
+}
+.btn-cancel.btn-success-action {
+    background-color: var(--success-bg, #edfdf4);
+    color: var(--success-text, #11613a);
+    transition: background-color 0.2s ease;
+}
+
+.btn-cancel.btn-success-action:hover {
+    background-color: #dbfce7;
+}
 /* ==========================================================
    BOTONES PARA GENERAR REPORTES PDF
    ========================================================== */
@@ -940,3 +986,114 @@ body {
     page-break-inside: avoid;
 }
 
+/* ── ESTILOS DARK MODE PARA panel peluqueros ── */
+.agenda-shell {
+  background: var(--admin-bg);
+  min-height: 100vh;
+  color: var(--text-primary);
+  padding: 2rem;
+}
+
+.agenda-hero-title {
+  color: var(--accent-gold);
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.agenda-hero-sub {
+  color: var(--text-muted);
+}
+
+.agenda-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--card-bg);
+  padding: 1rem 2rem;
+  border-radius: var(--radius-card);
+  border: 1px solid var(--card-border);
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+}
+
+.agenda-tab {
+  color: var(--text-primary);
+  text-decoration: none;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-inner);
+  background: transparent;
+  transition: 0.3s;
+}
+
+.agenda-tab.active {
+  background: var(--accent-gold);
+  color: #000;
+  font-weight: bold;
+}
+
+.agenda-nav-btn {
+  color: var(--accent-gold);
+  text-decoration: none;
+  font-size: 1.5rem;
+  padding: 0 1rem;
+}
+
+.semana-dia-header {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-inner);
+  padding: 1rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  margin-top: 1rem;
+}
+
+.semana-dia-nombre {
+  color: var(--accent-gold);
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+.semana-citas-badge {
+  background: var(--badge-pending);
+  color: white;
+  padding: 0.3rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
+}
+
+.badge-vacio {
+  background: var(--card-border);
+  color: var(--text-muted);
+}
+
+.semana-cita-row {
+  display: flex;
+  align-items: center;
+  background: #232736;
+  padding: 1rem;
+  border-radius: var(--radius-inner);
+  margin-left: 2rem;
+  margin-bottom: 0.5rem;
+  border-left: 4px solid var(--accent-green);
+}
+
+.semana-avatar {
+  background: var(--accent-gold);
+  color: #000;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  margin-right: 1rem;
+}
+
+.semana-cita-nombre { font-weight: bold; }
+.semana-cita-email { color: var(--text-muted); font-size: 0.85rem; }
+.semana-cita-right { margin-left: auto; text-align: right; }
+.semana-hora { color: var(--accent-gold); display: block; }

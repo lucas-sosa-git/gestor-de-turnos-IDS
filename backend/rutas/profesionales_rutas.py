@@ -4,6 +4,37 @@ from db import get_db_connection
 profesionales_bp = Blueprint("profesionales", __name__)
 
 
+# --- EN TU FRONTEND ---
+@profesionales_bp.route('/peluqueros/<int:id_usuario>', methods=['GET'])
+def agenda_peluquero(id_usuario):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    # Buscamos los datos básicos del usuario
+    usuario = cursor.execute(
+        'SELECT nombre, id_usuario FROM usuarios WHERE id_usuario = ?', (id_usuario,)
+    ).fetchone()
+    #Buscamos qué id_barbero tiene asignado este usuario
+    barbero_reg = cursor.execute(
+        'SELECT id_barbero FROM barberos WHERE id_usuario = ?', (id_usuario,)
+    ).fetchone()
+    id_barbero_destino = barbero_reg['id_barbero'] if barbero_reg else id_usuario
+    query = '''
+            SELECT c.id_cita, c.fecha, c.hora_inicio, c.estado,
+                uc.nombre as cliente_nombre, uc.email as cliente_email, s.nombre as servicio_nombre
+            FROM citas c JOIN usuarios uc ON c.id_usuario = uc.id_usuario
+            JOIN servicios s ON c.id_servicio = s.id_servicio
+            WHERE c.id_barbero = ?
+            ORDER BY c.fecha ASC, c.hora_inicio ASC
+        '''
+    turnos = cursor.execute(query, (id_barbero_destino,)).fetchall()
+    turnos_lista = [dict(turno) for turno in turnos]
+
+    # Mandamos el id_barbero al HTML para que JavaScript pueda hacer la consulta al backend
+    return jsonify({
+        "usuario": dict(usuario) if usuario else {"nombre": "Profesional"}, 
+        "id_usuario": id_usuario,
+        "turnos": turnos_lista
+    }), 200
 # GET /profesionales/1/turnos?desde=2026-05-01&hasta=2026-05-31
 @profesionales_bp.route("/profesionales/<int:id_barbero>/turnos", methods=["GET"])
 def ver_turnos_periodo(id_barbero):
