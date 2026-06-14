@@ -1,7 +1,9 @@
-import json
+﻿import json
 import os
+import requests
 from datetime import date, timedelta
 from urllib.error import HTTPError, URLError
+from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 from collections import defaultdict
 from datetime import datetime,timedelta
@@ -39,12 +41,12 @@ def login_en_backend(email, clave):
             usuario = data.get("usuario")
 
             if not token or not usuario:
-                return False, None, None, "El backend no devolvió token o datos del usuario."
+                return False, None, None, "El backend no devolviÃ³ token o datos del usuario."
 
             return True, usuario, token, None
 
     except HTTPError as error:
-        mensaje = "Email o contraseña incorrectos."
+        mensaje = "Email o contraseÃ±a incorrectos."
 
         try:
             data = json.loads(error.read().decode("utf-8"))
@@ -55,7 +57,7 @@ def login_en_backend(email, clave):
         return False, None, None, mensaje
 
     except (URLError, TimeoutError):
-        return False, None, None, "No se pudo conectar con el backend. Verificá que esté levantado en el puerto 5000."
+        return False, None, None, "No se pudo conectar con el backend. VerificÃ¡ que estÃ© levantado en el puerto 5000."
 
 
 def registrar_en_backend(nombre, email, clave):
@@ -135,7 +137,7 @@ def obtener_info_cliente(id_usuario):
         f"/clientes/acerca-de/{id_usuario}",
         "No se pudo cargar la informacion del cliente"
     )
-    
+
 @app.route("/", methods=["GET", "POST"])
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -143,7 +145,7 @@ def login():
         exito = None
 
         if request.args.get("registro") == "ok":
-            exito = "Cuenta creada correctamente. Ya podés iniciar sesión."
+            exito = "Cuenta creada correctamente. Ya podÃ©s iniciar sesiÃ³n."
 
         return render_template("login.html", exito=exito)
 
@@ -153,7 +155,7 @@ def login():
     if not email or not clave:
         return render_template(
             "login.html",
-            error="Completá email y contraseña."
+            error="CompletÃ¡ email y contraseÃ±a."
         )
 
     ok, usuario, token, error = login_en_backend(email, clave)
@@ -339,7 +341,7 @@ def register():
         clave = request.form.get("clave", "")
 
         if not nombre or not email or not clave:
-            error = "Completá todos los campos."
+            error = "CompletÃ¡ todos los campos."
         else:
             registro_ok, error = registrar_en_backend(nombre, email, clave)
 
@@ -365,9 +367,9 @@ def obtener_dashboard_admin():
     except HTTPError as error:
         try:
             data = json.loads(error.read().decode("utf-8"))
-            return None, data.get("error") or "Error al obtener estadísticas."
+            return None, data.get("error") or "Error al obtener estadÃ­sticas."
         except Exception:
-            return None, "Error al obtener estadísticas."
+            return None, "Error al obtener estadÃ­sticas."
 
     except (URLError, TimeoutError):
         return None, "No se pudo conectar con el backend."
@@ -387,9 +389,38 @@ def stats_admin_vacias():
     }
 
 
+ADMIN_ERROR_MESSAGES = {
+    "backend": "No se pudo conectar con el backend.",
+    "crear_servicio": "No se pudo crear el servicio.",
+    "editar_servicio": "No se pudo editar el servicio.",
+    "eliminar_servicio": "No se pudo eliminar el servicio.",
+}
+
+
+def mensaje_error_admin():
+    error = request.args.get("error")
+    if not error:
+        return None
+
+    return ADMIN_ERROR_MESSAGES.get(error, error)
+
+
+def mensaje_error_backend(response, mensaje_default):
+    try:
+        data = response.json()
+        return data.get("error") or data.get("mensaje") or mensaje_default
+    except ValueError:
+        return mensaje_default
+
+
+def redirect_admin_error(mensaje):
+    return redirect("/admin?" + urlencode({"error": mensaje}))
+
+
 @app.route("/admin")
 def admin_panel():
     data, error = obtener_dashboard_admin()
+    error_admin = mensaje_error_admin()
 
     if error:
         return render_template(
@@ -410,59 +441,155 @@ def admin_panel():
         barberos=data.get("barberos", []),
         barberos_top=data.get("barberos_top", []),
         servicios=data.get("servicios", []),
-        servicios_top=data.get("servicios_top", [])
+        servicios_top=data.get("servicios_top", []),
+        error=error_admin
     )
 
+@app.route("/admin/servicios/crear", methods=["POST"])
+def crear_servicio_front():
+    nombre = request.form.get("nombre", "").strip()
+    descripcion = request.form.get("descripcion", "").strip()
+    duracion = request.form.get("duracion", "").strip()
+    precio = request.form.get("precio", "").strip()
+    imagen = request.files.get("imagen")
+
+    data = {
+        "nombre": nombre,
+        "descripcion": descripcion,
+        "duracion": duracion,
+        "precio": precio
+    }
+
+    files = None
+
+    if imagen and imagen.filename:
+        files = {
+            "imagen": (imagen.filename, imagen.stream, imagen.mimetype)
+        }
+
+    try:
+        response = requests.post(
+            f"{get_backend_url()}/admin/servicios",
+            data=data,
+            files=files,
+            timeout=10
+        )
+
+        if response.status_code >= 400:
+            mensaje = mensaje_error_backend(response, "No se pudo crear el servicio.")
+            return redirect_admin_error(mensaje)
+
+    except requests.RequestException:
+        return redirect_admin_error("backend")
+
+    return redirect("/admin")
+
+@app.route("/admin/servicios/<int:id_servicio>/editar", methods=["POST"])
+def editar_servicio_front(id_servicio):
+    nombre = request.form.get("nombre", "").strip()
+    descripcion = request.form.get("descripcion", "").strip()
+    duracion = request.form.get("duracion", "").strip()
+    precio = request.form.get("precio", "").strip()
+    imagen = request.files.get("imagen")
+
+    data = {
+        "nombre": nombre,
+        "descripcion": descripcion,
+        "duracion": duracion,
+        "precio": precio
+    }
+
+    files = None
+
+    if imagen and imagen.filename:
+        files = {
+            "imagen": (imagen.filename, imagen.stream, imagen.mimetype)
+        }
+
+    try:
+        response = requests.patch(
+            f"{get_backend_url()}/admin/servicios/{id_servicio}",
+            data=data,
+            files=files,
+            timeout=10
+        )
+
+        if response.status_code >= 400:
+            mensaje = mensaje_error_backend(response, "No se pudo editar el servicio.")
+            return redirect_admin_error(mensaje)
+
+    except requests.RequestException:
+        return redirect_admin_error("backend")
+
+    return redirect("/admin")
+
+
+@app.route("/admin/servicios/<int:id_servicio>/eliminar", methods=["POST"])
+def eliminar_servicio_front(id_servicio):
+    try:
+        response = requests.delete(
+            f"{get_backend_url()}/admin/servicios/{id_servicio}",
+            timeout=10
+        )
+
+        if response.status_code >= 400:
+            mensaje = mensaje_error_backend(response, "No se pudo eliminar el servicio.")
+            return redirect_admin_error(mensaje)
+
+    except requests.RequestException:
+        return redirect_admin_error("backend")
+
+    return redirect("/admin")
 
 #  AGENDA BARBERO
 
- 
+
 def parsear_fecha(fecha_str):
     """Convierte 'YYYY-MM-DD' a date. Si falla, devuelve hoy."""
     try:
         return date.fromisoformat(fecha_str)
     except (ValueError, TypeError):
         return date.today()
- 
- 
+
+
 def inicio_de_semana(d):
     """Devuelve el lunes de la semana que contiene d."""
     return d - timedelta(days=d.weekday())
- 
- 
-DIAS_ES   = ["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"]
-DIAS_CORTOS = ["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"]
+
+
+DIAS_ES   = ["Lunes","Martes","MiÃ©rcoles","Jueves","Viernes","SÃ¡bado","Domingo"]
+DIAS_CORTOS = ["Lun","Mar","MiÃ©","Jue","Vie","SÃ¡b","Dom"]
 MESES_ES  = ["","enero","febrero","marzo","abril","mayo","junio",
              "julio","agosto","septiembre","octubre","noviembre","diciembre"]
- 
- 
+
+
 def formatear_fecha_larga(d):
     """ej: 'domingo, 7 de junio de 2026'"""
     nombre_dia = DIAS_ES[d.weekday()]
     return f"{nombre_dia}, {d.day} de {MESES_ES[d.month]} de {d.year}"
- 
- 
+
+
 def formatear_fecha_corta(d):
-    """ej: '7 jun 2026'  o  '7 jun' (sin año si es el mismo año)"""
+    """ej: '7 jun 2026'  o  '7 jun' (sin aÃ±o si es el mismo aÃ±o)"""
     anio = f" {d.year}" if d.year != date.today().year else ""
     return f"{d.day} {MESES_ES[d.month][:3]}{anio}"
- 
+
 def hacer_request(url, method="GET", payload=None, token=None):
     """
-    Wrapper genérico para llamadas al backend.
+    Wrapper genÃ©rico para llamadas al backend.
     Devuelve (data_dict_or_list, error_str_or_None).
     """
     headers = {"Content-Type": "application/json"}
     if token:
         headers["Authorization"] = f"Bearer {token}"
- 
+
     data = json.dumps(payload).encode("utf-8") if payload else None
     req = Request(url, data=data, headers=headers, method=method)
- 
+
     try:
         with urlopen(req, timeout=5) as response:
             return json.loads(response.read().decode("utf-8")), None
- 
+
     except HTTPError as error:
         mensaje = "Error en el servidor."
         try:
@@ -471,12 +598,12 @@ def hacer_request(url, method="GET", payload=None, token=None):
         except (json.JSONDecodeError, UnicodeDecodeError):
             pass
         return None, mensaje
- 
+
     except (URLError, TimeoutError):
         return None, "No se pudo conectar con el backend."
 
 # Llamadas al backend
- 
+
 def obtener_citas_dia(id_barbero, fecha_str, token):
     """
     GET /barberos/<id>/agenda?fecha=YYYY-MM-DD
@@ -488,8 +615,8 @@ def obtener_citas_dia(id_barbero, fecha_str, token):
     if error or not isinstance(data, list):
         return []
     return data
- 
- 
+
+
 def obtener_citas_semana(id_barbero, lunes_str, token):
     """
     GET /barberos/<id>/agenda/semana?inicio=YYYY-MM-DD
@@ -500,59 +627,59 @@ def obtener_citas_semana(id_barbero, lunes_str, token):
     if error or not isinstance(data, dict):
         return {}
     return data
- 
+
 @app.route("/agenda")
 def agenda():
-    # Verificar sesión
+    # Verificar sesiÃ³n
     if not session.get("token"):
         return redirect(url_for("login"))
- 
+
     id_barbero    = session.get("id_usuario")
     barbero_nombre = session.get("usuario", {}).get("nombre", "Barbero")
     token         = session.get("token")
- 
-    # Parámetros de la URL
+
+    # ParÃ¡metros de la URL
     vista     = request.args.get("vista", "dia")          # 'dia' | 'semana'
     fecha_str = request.args.get("fecha", date.today().isoformat())
     fecha_actual = parsear_fecha(fecha_str)
- 
-    # ── VISTA DÍA ─────────────────────────────────────────
+
+    # â”€â”€ VISTA DÃA â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     if vista == "dia":
         fecha_anterior  = (fecha_actual - timedelta(days=1)).isoformat()
         fecha_siguiente = (fecha_actual + timedelta(days=1)).isoformat()
         fecha_label     = formatear_fecha_larga(fecha_actual)
- 
+
         citas = obtener_citas_dia(id_barbero, fecha_str, token)
- 
+
         return render_template(
-            "barbero/agenda_barbero.html",
+            "peluqueros/agenda.html",
             barbero_nombre   = barbero_nombre,
             vista            = "dia",
             fecha_str        = fecha_str,
             fecha_anterior   = fecha_anterior,
             fecha_siguiente  = fecha_siguiente,
             fecha_label      = fecha_label,
-            # semana (no usadas en vista día pero evitan error de template)
+            # semana (no usadas en vista dÃ­a pero evitan error de template)
             semana_inicio_label = "",
             semana_fin_label    = "",
             dias_semana         = [],
             citas               = citas,
         )
- 
+
     # VISTA SEMANA
     lunes        = inicio_de_semana(fecha_actual)
     domingo      = lunes + timedelta(days=6)
     lunes_str    = lunes.isoformat()
- 
+
     fecha_anterior  = (lunes - timedelta(weeks=1)).isoformat()
     fecha_siguiente = (lunes + timedelta(weeks=1)).isoformat()
- 
+
     semana_inicio_label = formatear_fecha_corta(lunes)
     semana_fin_label    = formatear_fecha_corta(domingo)
- 
+
     citas_por_dia = obtener_citas_semana(id_barbero, lunes_str, token)
- 
-    # Armar lista de 7 días con sus citas
+
+    # Armar lista de 7 dÃ­as con sus citas
     dias_semana = []
     for i in range(7):
         dia = lunes + timedelta(days=i)
@@ -561,9 +688,9 @@ def agenda():
             "fecha_label":  f"{dia.day} de {MESES_ES[dia.month]}",
             "citas":        citas_por_dia.get(dia.isoformat(), []),
         })
- 
+
     return render_template(
-        "barbero/agenda_barbero.html",
+        "peluqueros/agenda.html",
         barbero_nombre      = barbero_nombre,
         vista               = "semana",
         fecha_str           = lunes_str,
@@ -575,6 +702,7 @@ def agenda():
         fecha_label = "",
         citas       = [],
     )
+
 
 if __name__ == "__main__":
     app.run(debug=True, port=5001)

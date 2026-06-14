@@ -37,13 +37,13 @@
 
     {# Tabs Día / Semana #}
     <div class="agenda-tabs">
-      <a href="{{ url_for('barbero.agenda', vista='dia',    fecha=fecha_str) }}" class="agenda-tab {% if vista == 'dia' %}active{% endif %}">Día</a>
-      <a href="{{ url_for('barbero.agenda', vista='semana', fecha=fecha_str) }}" class="agenda-tab {% if vista == 'semana' %}active{% endif %}">Semana</a>
+      <a href="{{ url_for('agenda', vista='dia',    fecha=fecha_str) }}" class="agenda-tab {% if vista == 'dia' %}active{% endif %}">Día</a>
+      <a href="{{ url_for('agenda', vista='semana', fecha=fecha_str) }}" class="agenda-tab {% if vista == 'semana' %}active{% endif %}">Semana</a>
     </div>
 
     {# Navegación de fecha #}
     <div class="agenda-nav">
-      <a href="{{ url_for('barbero.agenda', vista=vista, fecha=fecha_anterior) }}" class="agenda-nav-btn">‹</a>
+      <a href="{{ url_for('agenda', vista=vista, fecha=fecha_anterior) }}" class="agenda-nav-btn">‹</a>
 
       <span class="agenda-fecha-label">
         🗓
@@ -54,7 +54,7 @@
         {% endif %}
       </span>
 
-      <a href="{{ url_for('barbero.agenda', vista=vista, fecha=fecha_siguiente) }}" class="agenda-nav-btn">›</a>
+      <a href="{{ url_for('agenda', vista=vista, fecha=fecha_siguiente) }}" class="agenda-nav-btn">›</a>
     </div>
   </div>
 

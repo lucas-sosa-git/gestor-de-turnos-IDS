@@ -1,4 +1,7 @@
+from copy import error
+
 from flask import Blueprint, request, jsonify
+from storage import subir_imagen
 from db import get_db_connection
 import hashlib
 from datetime import date, timedelta
@@ -11,10 +14,10 @@ admin_bp = Blueprint('admin', __name__)
 
 @admin_bp.route('/barberos', methods=['POST'])
 def crear_barbero():
-    data = request.get_json()
-    nombre = data.get('nombre')
-    email = data.get('email')
-    clave = data.get('clave')
+    nombre  = request.form.get('nombre')
+    email   = request.form.get('email')
+    clave   = request.form.get('clave')
+    archivo  = request.files.get('imagen')
 
     if not nombre or not email or not clave:
         return jsonify({"error": "Faltan campos obligatorios"}), 400
@@ -27,6 +30,14 @@ def crear_barbero():
     if existe:
         conn.close()
         return jsonify({"error": "Email ya registrado"}), 400
+    
+    img_barbero = None
+    if archivo:
+        img_barbero = subir_imagen(archivo)
+        if not img_barbero:
+            conn.close()
+            return jsonify({"error": "Error al subir la imagen"}), 500
+
 
     clave_hash = hashlib.sha256(clave.encode()).hexdigest()
     cursor.execute('INSERT INTO usuarios (nombre, email, clave, rol) VALUES (?, ?, ?, ?)', (nombre, email, clave_hash, "barbero"))
@@ -34,12 +45,12 @@ def crear_barbero():
     
     #crear barbero asociado
     
-    cursor.execute('INSERT INTO barberos (id_usuario) values (?)', (id_usuario,))
+    cursor.execute('INSERT INTO barberos (id_usuario, img_barbero) values (?, ?)', (id_usuario, img_barbero))
     id_barbero = cursor.lastrowid
     conn.commit()
 
     barbero = cursor.execute('''
-        SELECT b.id_barbero, u.nombre, u.email, b.activo
+        SELECT b.id_barbero, u.nombre, u.email, b.activo, b.img_barbero
         FROM barberos b
         JOIN usuarios u ON b.id_usuario = u.id_usuario
         WHERE b.id_barbero = ?
@@ -47,23 +58,30 @@ def crear_barbero():
     conn.close()
     return jsonify({"mensaje": "Barbero creado", "barbero": dict(barbero)}), 201
 
-@admin_bp.route('/barberos/<int:id_barbero>', methods=['PUT'])
+@admin_bp.route('/barberos/<int:id_barbero>', methods=['PATCH'])
 def editar_barbero(id_barbero):
-    data = request.get_json()
-    nuevo_nombre = data.get('nombre')
-
-    if not nuevo_nombre:
-        return jsonify({"error": "El campo nombre es obligatorio"}), 400
+    nombre = request.form.get('nombre')
+    archivo = request.files.get('imagen')
 
     conn = get_db_connection()
     cursor = conn.cursor()
-
-    barbero = cursor.execute('SELECT id_usuario FROM barberos WHERE id_barbero = ?', (id_barbero,)).fetchone()
+    
+    barbero = cursor.execute('SELECT * FROM barberos WHERE id_barbero = ?', (id_barbero,)).fetchone()
     if not barbero:
         conn.close()
         return jsonify({"error": "Barbero no encontrado"}), 404
 
-    cursor.execute('''
+    img_barbero = barbero['img_barbero']
+    if archivo:
+        nueva_url = subir_imagen(archivo)
+        if not nueva_url:
+            conn.close()
+            return jsonify({"error": "Error al subir la imagen"}), 500
+        img_barbero = nueva_url
+
+
+    if nombre:
+        cursor.execute('''
         UPDATE usuarios
         SET nombre = ?
         WHERE id_usuario = (
@@ -71,11 +89,18 @@ def editar_barbero(id_barbero):
             FROM barberos
             WHERE id_barbero = ?
         )
-        ''', (nuevo_nombre, id_barbero))
+        ''', (nombre, barbero['id_usuario']))
+
+    cursor.execute('''
+        UPDATE barberos
+        SET img_barbero = ?
+        WHERE id_barbero = ?
+    ''', (img_barbero, id_barbero))
+    
     conn.commit()
 
     actualizado = cursor.execute('''
-        SELECT b.id_barbero, u.nombre, u.email, b.activo
+        SELECT b.id_barbero, u.nombre, u.email, b.activo, b.img_barbero
         FROM barberos b
         JOIN usuarios u ON b.id_usuario = u.id_usuario
         WHERE b.id_barbero = ?
@@ -114,21 +139,113 @@ def eliminar_barbero(id_barbero):
 
 @admin_bp.route('/servicios', methods=['POST'])
 def crear_servicio():
-    data = request.json
+    nombre      = request.form.get('nombre')
+    descripcion = request.form.get('descripcion', '')
+    duracion    = request.form.get('duracion')
+    precio      = request.form.get('precio')
+    archivo     = request.files.get('imagen')
+
+    if not nombre or not duracion or not precio:
+        return jsonify({"error": "nombre, duracion y precio son obligatorios"}), 400
+
+    img_servicio = None
+    if archivo:
+        try:
+            img_servicio = subir_imagen(archivo)
+        except RuntimeError as error:
+            return jsonify({"error": str(error)}), 500
+        if not img_servicio:
+            return jsonify({"error": "Error al subir la imagen. Verifica el formato (png, jpg, jpeg, webp)"}), 500
+
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute('''INSERT INTO servicios (nombre, descripcion, duracion, precio) VALUES (?, ?, ?, ?)''',
-        (data['nombre'], data['descripcion'], data['duracion'], data['precio'])
-    )
+    cursor.execute('''
+        INSERT INTO servicios (nombre, descripcion, duracion, precio, img_servicio)
+        VALUES (?, ?, ?, ?, ?)
+    ''', (nombre, descripcion, int(duracion), float(precio), img_servicio))
     id_servicio = cursor.lastrowid
     conn.commit()
 
-    #devolver el servicio creado
-    servicio = cursor.execute('SELECT * FROM servicios WHERE id_servicio = ?', (id_servicio,)).fetchone()
-
+    servicio = cursor.execute(
+        'SELECT * FROM servicios WHERE id_servicio = ?', (id_servicio,)
+    ).fetchone()
     conn.close()
 
     return jsonify({"mensaje": "Servicio creado", "servicio": dict(servicio)}), 201
+
+@admin_bp.route('/servicios/<int:id_servicio>', methods=['PATCH'])
+def actualizar_servicio(id_servicio):
+    nombre = request.form.get('nombre')
+    descripcion = request.form.get('descripcion')
+    duracion = request.form.get('duracion')
+    precio = request.form.get('precio')
+    archivo = request.files.get('imagen')
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    servicio = cursor.execute('SELECT * FROM servicios WHERE id_servicio = ?', (id_servicio,)).fetchone()
+    if not servicio:
+        conn.close()
+        return jsonify({"error": "Servicio no encontrado"}), 404
+    
+    img_servicio = servicio['img_servicio']
+    if archivo and archivo.filename:
+        try:
+            nueva_url = subir_imagen(archivo)
+            if not nueva_url:
+                conn.close()
+                return jsonify({"error": "Error al subir la imagen"}), 500
+            img_servicio = nueva_url
+        except RuntimeError as error:
+            conn.close()
+            return jsonify({"error": str(error)}), 500
+
+
+    nombre = nombre or servicio['nombre']
+    descripcion = descripcion if descripcion is not None else servicio['descripcion']
+    duracion = int(duracion) if duracion is not None else servicio['duracion']
+    precio = float(precio) if precio is not None else servicio['precio']
+
+    cursor.execute('''
+        UPDATE servicios
+        SET nombre = ?, descripcion = ?, duracion = ?, precio = ?, img_servicio = ?
+        WHERE id_servicio = ?
+    ''', (nombre, descripcion, duracion, precio, img_servicio, id_servicio))
+    conn.commit()
+
+    actualizado = cursor.execute('SELECT * FROM servicios WHERE id_servicio = ?', (id_servicio,)).fetchone()
+    conn.close()
+    
+    return jsonify({"mensaje": "Servicio actualizado", "servicio": dict(actualizado)}), 200
+
+
+
+@admin_bp.route('/servicios/<int:id_servicio>', methods=['DELETE'])
+def eliminar_servicio(id_servicio):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    servicio = cursor.execute(
+        'SELECT id_servicio FROM servicios WHERE id_servicio = ?', (id_servicio,)
+    ).fetchone()
+    if not servicio:
+        conn.close()
+        return jsonify({"error": "Servicio no encontrado"}), 404
+
+    citas_asociadas = cursor.execute(
+        'SELECT COUNT(*) AS total FROM citas WHERE id_servicio = ?', (id_servicio,)
+    ).fetchone()
+    if citas_asociadas["total"] > 0:
+        conn.close()
+        return jsonify({
+            "error": "No se puede eliminar el servicio porque tiene citas asociadas."
+        }), 400
+
+    cursor.execute('DELETE FROM servicios WHERE id_servicio = ?', (id_servicio,))
+    conn.commit()
+    conn.close()
+
+    return jsonify({"mensaje": "Servicio eliminado correctamente"}), 200
 
 # CONFIGURAR HORARIOS (Update de un barbero específico)
 @admin_bp.route('/barberos/<int:id_barbero>/horarios', methods=['PATCH'])
@@ -340,7 +457,7 @@ def estadisticas():
     } for fila in filas_servicios_top]
 
     filas_servicios = cursor.execute('''
-        SELECT s.nombre, s.descripcion, s.duracion, s.precio,
+        SELECT s.id_servicio, s.nombre, s.descripcion, s.duracion, s.precio, s.img_servicio,
                COUNT(c.id_cita) AS veces_solicitado
         FROM servicios s
         LEFT JOIN citas c ON s.id_servicio = c.id_servicio
@@ -350,10 +467,12 @@ def estadisticas():
     ''', (desde, hasta)).fetchall()
 
     servicios = [{
+        "id_servicio": fila["id_servicio"],
         "nombre": fila["nombre"],
         "descripcion": fila["descripcion"],
         "duracion_min": fila["duracion"],
         "precio": int(fila["precio"]),
+        "img_servicio": fila["img_servicio"],
         "veces_solicitado": fila["veces_solicitado"],
     } for fila in filas_servicios]
 

@@ -1,8 +1,8 @@
 backend/entorno_virtual
 *.db
-__pycache__/
-venv/
+.env
 backend/.env
-backend/__pycache__/
+venv/
+__pycache__/
 backend/__pycache__/
 backend/rutas/__pycache__/
