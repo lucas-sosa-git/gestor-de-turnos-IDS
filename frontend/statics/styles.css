@@ -1216,29 +1216,44 @@ body {
    ========================================================== */
 
 /*
- * Este contenedor existe solamente durante la generación.
- * Se mantiene visible y con dimensiones reales para que
- * html2canvas no produzca una captura vacía.
+ * Durante unos instantes se muestra únicamente la copia que
+ * html2canvas va a capturar. Esto evita que otro elemento de
+ * la dashboard tape o interfiera con el reporte.
  */
+body.pdf-modo-captura > *:not(.pdf-contenedor-temporal) {
+    visibility: hidden !important;
+}
+
+body.pdf-modo-captura .pdf-contenedor-temporal,
+body.pdf-modo-captura .pdf-contenedor-temporal * {
+    visibility: visible !important;
+}
+
 .pdf-contenedor-temporal {
-    position: absolute;
-    top: 0;
-    left: 0;
-    z-index: 999999;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    z-index: 2147483647 !important;
+
     display: block !important;
     visibility: visible !important;
     opacity: 1 !important;
     transform: none !important;
-    width: 760px;
-    min-height: 1000px;
-    box-sizing: border-box;
-    padding: 30px;
-    color: #1f2937;
-    background: #ffffff;
-    font-family: "Segoe UI", Arial, sans-serif;
-    pointer-events: none;
-    overflow: visible;
-    isolation: isolate;
+
+    width: 760px !important;
+    min-height: 1px !important;
+    box-sizing: border-box !important;
+    padding: 30px !important;
+
+    color: #1f2937 !important;
+    background: #ffffff !important;
+
+    font-family:
+        "Segoe UI",
+        Arial,
+        sans-serif !important;
+
+    overflow: visible !important;
 }
 
 .pdf-contenedor-temporal .tab-pane-content {
@@ -1253,6 +1268,7 @@ body {
 .pdf-exportando * {
     animation: none !important;
     transition: none !important;
+    caret-color: transparent !important;
 }
 
 /* ==========================================================
