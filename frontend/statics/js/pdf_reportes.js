@@ -1,6 +1,10 @@
 /*
- * Genera archivos PDF a partir de las secciones HTML
- * que ya están cargadas en el panel administrativo.
+ * Generación de reportes PDF del panel administrativo.
+ *
+ * Esta versión no utiliza html2pdf.js para construir el archivo.
+ * Primero captura la sección con html2canvas y después arma cada
+ * página con jsPDF. De esta manera se evita el problema de los
+ * archivos que se descargaban correctamente pero quedaban blancos.
  */
 
 (function () {
@@ -14,22 +18,16 @@
         ".service-actions"
     ];
 
-    /*
-     * Espera dos ciclos de renderizado para que el navegador
-     * termine de aplicar tamaños, grillas y estilos.
-     */
     function esperarRenderizado() {
         return new Promise(function (resolve) {
             window.requestAnimationFrame(function () {
-                window.requestAnimationFrame(resolve);
+                window.requestAnimationFrame(function () {
+                    window.setTimeout(resolve, 150);
+                });
             });
         });
     }
 
-    /*
-     * Espera a que las imágenes de la sección terminen de cargar.
-     * Si alguna imagen falla, el PDF igualmente se genera.
-     */
     function esperarImagenes(elemento) {
         const imagenes = Array.from(
             elemento.querySelectorAll("img")
@@ -54,9 +52,6 @@
         );
     }
 
-    /*
-     * Crea el encabezado que aparece únicamente dentro del PDF.
-     */
     function crearEncabezado(tituloReporte) {
         const encabezado = document.createElement("div");
         encabezado.className = "pdf-encabezado";
@@ -75,10 +70,6 @@
         return encabezado;
     }
 
-    /*
-     * Fuerza a que la sección clonada sea visible tanto en el
-     * documento real como en la copia interna de html2canvas.
-     */
     function hacerVisible(elemento) {
         elemento.classList.add("active");
 
@@ -113,10 +104,6 @@
         );
     }
 
-    /*
-     * Quita de la copia botones y formularios que no deben salir
-     * en el reporte. La dashboard original no se modifica.
-     */
     function limpiarCopia(copia) {
         SELECTORES_EXCLUIDOS.forEach(function (selector) {
             copia
@@ -125,25 +112,29 @@
                     elemento.remove();
                 });
         });
+
+        /*
+         * Evita IDs duplicados mientras existe la copia temporal.
+         * Los IDs no son necesarios para dibujar el reporte.
+         */
+        copia
+            .querySelectorAll("[id]")
+            .forEach(function (elemento) {
+                elemento.removeAttribute("id");
+            });
     }
 
-    /*
-     * Crea una copia temporal de la sección a exportar.
-     */
     function crearContenedorTemporal(
         seccionOriginal,
         tituloReporte
     ) {
         const copia = seccionOriginal.cloneNode(true);
-        const identificador =
-            "pdf-temporal-" + Date.now();
 
         copia.removeAttribute("id");
         hacerVisible(copia);
         limpiarCopia(copia);
 
         const contenedor = document.createElement("div");
-        contenedor.id = identificador;
         contenedor.className =
             "pdf-contenedor-temporal pdf-exportando";
 
@@ -152,27 +143,26 @@
         );
 
         contenedor.appendChild(copia);
+
+        document.body.classList.add("pdf-modo-captura");
         document.body.appendChild(contenedor);
 
-        return {
-            elemento: contenedor,
-            identificador: identificador
-        };
+        return contenedor;
     }
 
-    /*
-     * Comprueba que el elemento tenga dimensiones reales antes
-     * de pedirle a html2canvas que lo capture.
-     */
     function validarDimensiones(elemento) {
-        const ancho = Math.max(
-            elemento.offsetWidth,
-            elemento.scrollWidth
+        const ancho = Math.ceil(
+            Math.max(
+                elemento.offsetWidth,
+                elemento.scrollWidth
+            )
         );
 
-        const alto = Math.max(
-            elemento.offsetHeight,
-            elemento.scrollHeight
+        const alto = Math.ceil(
+            Math.max(
+                elemento.offsetHeight,
+                elemento.scrollHeight
+            )
         );
 
         if (ancho <= 0 || alto <= 0) {
@@ -180,11 +170,175 @@
                 "La sección a exportar no tiene dimensiones visibles."
             );
         }
+
+        return {
+            ancho: ancho,
+            alto: alto
+        };
     }
 
-    /*
-     * Función principal llamada por los botones de dashboard.html.
-     */
+    function calcularEscala(ancho, alto) {
+        /*
+         * Evita superar los límites máximos del canvas del
+         * navegador cuando un reporte tiene mucho contenido.
+         */
+        const dimensionMaxima = 14000;
+        const escalaPorAncho = dimensionMaxima / ancho;
+        const escalaPorAlto = dimensionMaxima / alto;
+
+        return Math.max(
+            1,
+            Math.min(
+                1.5,
+                escalaPorAncho,
+                escalaPorAlto
+            )
+        );
+    }
+
+    function canvasTieneContenido(canvas) {
+        const contexto = canvas.getContext(
+            "2d",
+            {
+                willReadFrequently: true
+            }
+        );
+
+        if (!contexto) {
+            return false;
+        }
+
+        const ancho = canvas.width;
+        const alto = canvas.height;
+        const pasoX = Math.max(1, Math.floor(ancho / 40));
+        const pasoY = Math.max(1, Math.floor(alto / 40));
+
+        for (let y = 0; y < alto; y += pasoY) {
+            for (let x = 0; x < ancho; x += pasoX) {
+                const pixel = contexto.getImageData(
+                    x,
+                    y,
+                    1,
+                    1
+                ).data;
+
+                const esBlanco =
+                    pixel[0] > 248 &&
+                    pixel[1] > 248 &&
+                    pixel[2] > 248;
+
+                const esTransparente = pixel[3] === 0;
+
+                if (!esBlanco && !esTransparente) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    function agregarCanvasAlPDF(canvas, nombreArchivo) {
+        const jsPDF = window.jspdf.jsPDF;
+
+        const pdf = new jsPDF({
+            orientation: "portrait",
+            unit: "mm",
+            format: "a4",
+            compress: true
+        });
+
+        const margen = 8;
+        const anchoPagina =
+            pdf.internal.pageSize.getWidth();
+
+        const altoPagina =
+            pdf.internal.pageSize.getHeight();
+
+        const anchoUtil = anchoPagina - margen * 2;
+        const altoUtil = altoPagina - margen * 2;
+
+        /*
+         * Cantidad de píxeles del canvas que entran en una
+         * página A4 manteniendo la proporción.
+         */
+        const altoPaginaEnPixeles = Math.max(
+            1,
+            Math.floor(
+                canvas.width *
+                (altoUtil / anchoUtil)
+            )
+        );
+
+        let posicionY = 0;
+        let numeroPagina = 0;
+
+        while (posicionY < canvas.height) {
+            const altoFragmento = Math.min(
+                altoPaginaEnPixeles,
+                canvas.height - posicionY
+            );
+
+            const paginaCanvas =
+                document.createElement("canvas");
+
+            paginaCanvas.width = canvas.width;
+            paginaCanvas.height = altoFragmento;
+
+            const contexto =
+                paginaCanvas.getContext("2d");
+
+            contexto.fillStyle = "#ffffff";
+            contexto.fillRect(
+                0,
+                0,
+                paginaCanvas.width,
+                paginaCanvas.height
+            );
+
+            contexto.drawImage(
+                canvas,
+                0,
+                posicionY,
+                canvas.width,
+                altoFragmento,
+                0,
+                0,
+                canvas.width,
+                altoFragmento
+            );
+
+            if (numeroPagina > 0) {
+                pdf.addPage();
+            }
+
+            const imagen = paginaCanvas.toDataURL(
+                "image/jpeg",
+                0.95
+            );
+
+            const altoImagen =
+                altoFragmento *
+                (anchoUtil / canvas.width);
+
+            pdf.addImage(
+                imagen,
+                "JPEG",
+                margen,
+                margen,
+                anchoUtil,
+                altoImagen,
+                undefined,
+                "FAST"
+            );
+
+            posicionY += altoFragmento;
+            numeroPagina += 1;
+        }
+
+        pdf.save(nombreArchivo);
+    }
+
     async function generarPDF(
         idSeccion,
         nombreArchivo,
@@ -202,20 +356,26 @@
             return;
         }
 
-        if (typeof window.html2pdf !== "function") {
-            console.error(
-                "La librería html2pdf.js no está cargada."
+        if (typeof window.html2canvas !== "function") {
+            window.alert(
+                "No se cargó html2canvas. Revisá tu conexión a internet y recargá la página."
             );
 
+            return;
+        }
+
+        if (
+            !window.jspdf ||
+            typeof window.jspdf.jsPDF !== "function"
+        ) {
             window.alert(
-                "No se pudo cargar la herramienta para generar el PDF. Revisá tu conexión a internet y recargá la página."
+                "No se cargó jsPDF. Revisá tu conexión a internet y recargá la página."
             );
 
             return;
         }
 
         let contenedorTemporal = null;
-        let identificadorTemporal = null;
 
         const textoOriginalBoton =
             boton ? boton.textContent : "";
@@ -230,46 +390,46 @@
                 await document.fonts.ready;
             }
 
-            const temporal = crearContenedorTemporal(
-                seccionOriginal,
-                tituloReporte
-            );
-
-            contenedorTemporal = temporal.elemento;
-            identificadorTemporal = temporal.identificador;
+            contenedorTemporal =
+                crearContenedorTemporal(
+                    seccionOriginal,
+                    tituloReporte
+                );
 
             await esperarImagenes(contenedorTemporal);
             await esperarRenderizado();
 
-            validarDimensiones(contenedorTemporal);
+            const dimensiones =
+                validarDimensiones(
+                    contenedorTemporal
+                );
 
-            const opciones = {
-                margin: [8, 8, 8, 8],
-                filename: nombreArchivo,
+            const escala = calcularEscala(
+                dimensiones.ancho,
+                dimensiones.alto
+            );
 
-                image: {
-                    type: "jpeg",
-                    quality: 0.98
-                },
-
-                html2canvas: {
-                    scale: 1.5,
+            const canvas = await window.html2canvas(
+                contenedorTemporal,
+                {
+                    scale: escala,
                     useCORS: true,
                     allowTaint: false,
                     backgroundColor: "#ffffff",
                     scrollX: 0,
                     scrollY: 0,
                     logging: false,
+                    width: dimensiones.ancho,
+                    height: dimensiones.alto,
+                    windowWidth: dimensiones.ancho,
+                    windowHeight: dimensiones.alto,
+                    foreignObjectRendering: false,
+                    removeContainer: true,
 
-                    /*
-                     * html2canvas clona internamente el documento.
-                     * En esa segunda copia volvemos a forzar la
-                     * visibilidad para evitar capturas blancas.
-                     */
                     onclone: function (documentoClonado) {
                         const contenedorClonado =
-                            documentoClonado.getElementById(
-                                identificadorTemporal
+                            documentoClonado.querySelector(
+                                ".pdf-contenedor-temporal"
                             );
 
                         if (!contenedorClonado) {
@@ -302,33 +462,23 @@
                                 hacerVisible(pestana);
                             });
                     }
-                },
-
-                jsPDF: {
-                    unit: "mm",
-                    format: "a4",
-                    orientation: "portrait"
-                },
-
-                pagebreak: {
-                    mode: ["css", "legacy"],
-                    avoid: [
-                        ".kpi-card",
-                        ".panel-card",
-                        ".barbero-card-full",
-                        ".service-card",
-                        ".cita-row",
-                        ".barbero-row",
-                        ".servicio-row"
-                    ]
                 }
-            };
+            );
 
-            await window
-                .html2pdf()
-                .set(opciones)
-                .from(contenedorTemporal)
-                .save();
+            if (
+                canvas.width <= 0 ||
+                canvas.height <= 0 ||
+                !canvasTieneContenido(canvas)
+            ) {
+                throw new Error(
+                    "html2canvas generó una imagen vacía."
+                );
+            }
+
+            agregarCanvasAlPDF(
+                canvas,
+                nombreArchivo
+            );
 
         } catch (error) {
             console.error(
@@ -337,13 +487,17 @@
             );
 
             window.alert(
-                "Ocurrió un error al generar el PDF. Abrí la consola del navegador para ver el detalle."
+                "No se pudo generar el PDF. Abrí la consola del navegador para ver el error."
             );
 
         } finally {
             if (contenedorTemporal) {
                 contenedorTemporal.remove();
             }
+
+            document.body.classList.remove(
+                "pdf-modo-captura"
+            );
 
             if (boton) {
                 boton.disabled = false;
