@@ -481,80 +481,131 @@
         </button>
       </div>
 
-      <div class="row mb-3">
+      <!-- formulario para crear barbero -->
+  <section class="service-section">
+    <div class="service-form-card mb-3">
+      <h3>Crear nuevo barbero</h3>
 
-        <div class="col">
-
-          <p
-            style="
-              color: var(--text-muted);
-              font-size: .9rem;
-            "
-          >
-            {{ barberos | length }} barbero(s) registrado(s)
-          </p>
-
+      <form
+        class="service-form"
+        action="{{ url_for('crear_barbero_front') }}"
+        method="POST"
+        enctype="multipart/form-data"
+      >
+        <div class="service-form-group service-form-full">
+          <label>Nombre</label>
+          <input type="text" name="nombre" required placeholder="Ej: Juan Pérez">
         </div>
 
-      </div>
+        <div class="service-form-row service-form-full">
+          <div class="service-form-group">
+            <label>Email</label>
+            <input type="email" name="email" required placeholder="barbero@mail.com">
+          </div>
 
+          <div class="service-form-group">
+            <label>Contraseña</label>
+            <input type="password" name="clave" required placeholder="********">
+          </div>
+        </div>
+
+        <div class="service-form-group service-form-full">
+          <label>Imagen</label>
+          <input type="file" name="imagen" accept="image/*">
+        </div>
+
+        <button class="btn-primary service-form-full" type="submit">
+          Guardar barbero
+        </button>
+      </form>
+    </div>
+
+    <div class="services-header">
+      <h3>Barberos registrados</h3>
+      <span>{{ barberos | length }} barbero(s)</span>
+    </div>
+
+    <div class="services-list">
       {% for b in barberos %}
-
-      <div class="barbero-card-full">
-
-        <div
-          class="barbero-avatar"
-          style="
-            background:
-              {{ loop.cycle(
-                'rgba(245,166,35,.2)',
-                'rgba(59,130,246,.2)',
-                'rgba(139,92,246,.2)',
-                'rgba(34,197,94,.2)'
-              ) }};
-
-            color:
-              {{ loop.cycle(
-                '#f5a623',
-                '#3b82f6',
-                '#8b5cf6',
-                '#22c55e'
-              ) }};
-          "
-        >
-          {{ b.nombre[0] }}
+      <div class="service-card">
+        <div>
+          {% if b.img_barbero %}
+          <img
+            class="service-image"
+            src="{{ b.img_barbero }}"
+            alt="Imagen de {{ b.nombre }}"
+          >
+          {% else %}
+          <p class="service-no-image">Sin imagen</p>
+          {% endif %}
         </div>
 
-        <div class="barbero-card-info">
-
-          <div class="barbero-card-nombre">
-            {{ b.nombre }}
-          </div>
-
-          <div class="barbero-card-stats">
-            {{ b.citas }} citas este mes
-            &nbsp;•&nbsp;
-
-            ⭐ {{ b.rating }}
-            &nbsp;•&nbsp;
-
-            ${{ "{:,.0f}".format(b.ingresos) }} ingresos
-          </div>
-
+        <div class="service-info">
+          <h3>{{ b.nombre }}</h3>
+          <p>{{ b.citas }} citas este mes</p>
+          <p>⭐ {{ b.rating }}</p>
+          <p>${{ "{:,.0f}".format(b.ingresos) }} ingresos</p>
+          <p>{{ 'Activo' if b.activo else 'De descanso' }}</p>
         </div>
 
-        <span
-          class="barbero-card-badge
-          {{ 'bc-activo' if b.activo else 'bc-inactivo' }}"
-        >
-          {{ 'Activo' if b.activo else 'De descanso' }}
-        </span>
+        <hr>
 
+        <h4>Editar barbero</h4>
+
+        <form
+          class="edit-service-form"
+          action="{{ url_for('editar_barbero_front', id_barbero=b.id_barbero) }}"
+          method="POST"
+          enctype="multipart/form-data"
+        >
+          <div class="service-form-group">
+            <label>Nombre</label>
+            <input
+              type="text"
+              name="nombre"
+              value="{{ b.nombre }}"
+            >
+          </div>
+
+          <div class="service-form-group">
+            <label>Cambiar imagen</label>
+            <input type="file" name="imagen" accept="image/*">
+          </div>
+
+          <div class="service-actions">
+            <button class="btn-secondary" type="submit">
+              Guardar cambios
+            </button>
+          </div>
+        </form>
+
+        <h4>Eliminar barbero</h4>
+
+        <form
+          class="delete-service-form"
+          action="{{ url_for('eliminar_barbero_front', id_barbero=b.id_barbero) }}"
+          method="POST"
+        >
+          <div class="service-actions">
+            <button class="btn-danger" type="submit">
+              Eliminar barbero
+            </button>
+          </div>
+        </form>
       </div>
-
       {% endfor %}
 
+      {% if not barberos %}
+      <div class="service-card">
+        <div class="service-info">
+          <p>No hay barberos cargados.</p>
+        </div>
+      </div>
+      {% endif %}
     </div>
+  </section>
+
+</div>
     <!-- Fin barberos -->
 
 

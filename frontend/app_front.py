@@ -394,6 +394,9 @@ ADMIN_ERROR_MESSAGES = {
     "crear_servicio": "No se pudo crear el servicio.",
     "editar_servicio": "No se pudo editar el servicio.",
     "eliminar_servicio": "No se pudo eliminar el servicio.",
+    "crear_barbero": "No se pudo crear el barbero.",
+    "editar_barbero": "No se pudo editar el barbero",
+    "eliminar_barbero": "No se pudo eliminar el barbero.",
 }
 
 
@@ -534,6 +537,93 @@ def eliminar_servicio_front(id_servicio):
 
         if response.status_code >= 400:
             mensaje = mensaje_error_backend(response, "No se pudo eliminar el servicio.")
+            return redirect_admin_error(mensaje)
+
+    except requests.RequestException:
+        return redirect_admin_error("backend")
+
+    return redirect("/admin")
+
+# ABM BARBERO
+
+@app.route("/admin/barberos/crear", methods=["POST"])
+def crear_barbero_front():
+    nombre = request.form.get("nombre", "").strip()
+    email  = request.form.get("email", "").strip()
+    clave  = request.form.get("clave", "").strip()
+    imagen = request.files.get("imagen")
+
+    data = {
+        "nombre": nombre,
+        "email":  email,
+        "clave":  clave
+    }
+
+    files = None
+    if imagen and imagen.filename:
+        files = {
+            "imagen": (imagen.filename, imagen.stream, imagen.mimetype)
+        }
+
+    try:
+        response = requests.post(
+            f"{get_backend_url()}/admin/barberos",
+            data=data,
+            files=files,
+            timeout=10
+        )
+
+        if response.status_code >= 400:
+            mensaje = mensaje_error_backend(response, "No se pudo crear el barbero.")
+            return redirect_admin_error(mensaje)
+
+    except requests.RequestException:
+        return redirect_admin_error("backend")
+
+    return redirect("/admin")
+
+
+@app.route("/admin/barberos/<int:id_barbero>/editar", methods=["POST"])
+def editar_barbero_front(id_barbero):
+    nombre = request.form.get("nombre", "").strip()
+    imagen = request.files.get("imagen")
+
+    data = {"nombre": nombre}
+
+    files = None
+    if imagen and imagen.filename:
+        files = {
+            "imagen": (imagen.filename, imagen.stream, imagen.mimetype)
+        }
+
+    try:
+        response = requests.patch(
+            f"{get_backend_url()}/admin/barberos/{id_barbero}",
+            data=data,
+            files=files,
+            timeout=10
+        )
+
+        if response.status_code >= 400:
+            mensaje = mensaje_error_backend(response, "No se pudo editar el barbero.")
+            return redirect_admin_error(mensaje)
+
+    except requests.RequestException:
+        return redirect_admin_error("backend")
+
+    return redirect("/admin")
+
+
+@app.route("/admin/barberos/<int:id_barbero>/eliminar", methods=["POST"])
+def eliminar_barbero_front(id_barbero):
+    try:
+        response = requests.delete(
+            f"{get_backend_url()}/admin/barberos/{id_barbero}",
+            timeout=10
+        )
+
+        if response.status_code >= 400:
+            mensaje = mensaje_error_backend(response, "No se pudo eliminar el barbero.")
             return redirect_admin_error(mensaje)
 
     except requests.RequestException:
