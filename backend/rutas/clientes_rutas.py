@@ -72,7 +72,7 @@ def mostrar_barberos(id_usuario):
         conn.close()
         return jsonify({"error": "Usuario no encontrado"}), 404
 
-    barberos = conn.execute('''SELECT b.id_barbero, u.nombre, u.email, b.activo FROM barberos b JOIN usuarios u on b.id_usuario=u.id_usuario''').fetchall()
+    barberos = conn.execute('''SELECT b.id_barbero, u.nombre, u.email, b.activo, b.img_barbero FROM barberos b JOIN usuarios u on b.id_usuario=u.id_usuario''').fetchall()
     turnos = conn.execute('''
         select id_cita from citas where id_usuario = ?
     ''', (id_usuario,)).fetchall()

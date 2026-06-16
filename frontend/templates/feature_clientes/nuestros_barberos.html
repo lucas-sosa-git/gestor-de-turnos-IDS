@@ -51,9 +51,17 @@
             <div class="estilistas-grid">
                 {% for barbero in barberos %}
                     <div class="estilista-card">
+                        {% if barbero['img_barbero'] %}
+                            <img
+                                class="barbero-card-image"
+                                src="{{ barbero['img_barbero'] }}"
+                                alt="Foto de {{ barbero['nombre'] }}"
+                            >
+                        {% else %}
                         <div class="avatar-placeholder">
                             <span style="font-size: 40px;">🧔🏻‍♂️</span>
                         </div>
+                        {% endif %}
                         <h3 class="card-title">{{ barbero['nombre'] }}</h3>
                         <p class="card-role">Peluquero Profesional</p>
                         <div class="estrellas">⭐⭐⭐⭐⭐</div>

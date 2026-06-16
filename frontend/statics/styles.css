@@ -1040,6 +1040,16 @@ body {
     justify-content: center;
 }
 
+.barbero-card-image {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin: 0 auto 15px auto;
+    display: block;
+    background-color: #f0f0f0;
+}
+
 .btn-reservar {
     background-color: black;
     color: white;
