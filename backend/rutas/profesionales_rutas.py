@@ -35,8 +35,9 @@ def agenda_peluquero(id_usuario):
         "id_usuario": id_usuario,
         "turnos": turnos_lista
     }), 200
+
 # GET /profesionales/1/turnos?desde=2026-05-01&hasta=2026-05-31
-@profesionales_bp.route("/profesionales/<int:id_barbero>/turnos", methods=["GET"])
+@profesionales_bp.route("/<int:id_barbero>/turnos", methods=["GET"])
 def ver_turnos_periodo(id_barbero):
     desde = request.args.get("desde")
     hasta = request.args.get("hasta")
@@ -73,7 +74,7 @@ def ver_turnos_periodo(id_barbero):
 
 
 # GET /profesionales/1/turnos/5/cliente
-@profesionales_bp.route("/profesionales/<int:id_barbero>/turnos/<int:id_cita>/cliente", methods=["GET"])
+@profesionales_bp.route("/<int:id_barbero>/turnos/<int:id_cita>/cliente", methods=["GET"])
 def ver_cliente(id_barbero, id_cita):
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -102,7 +103,7 @@ def ver_cliente(id_barbero, id_cita):
     return jsonify(dict(cliente)), 200
 
 
-@profesionales_bp.route("/profesionales/check_in", methods=["POST"])
+@profesionales_bp.route("/check_in", methods=["POST"])
 def check_in():
     data = request.get_json()
     qr_token = data.get("qr_token")

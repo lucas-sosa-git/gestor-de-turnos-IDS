@@ -73,7 +73,8 @@ VALUES
 (3, 2, 2, '2026-06-04', '11:00:00', '11:45:00', 'confirmada', 'qr_junio_2'),
 (4, 1, 3, '2026-06-05', '12:00:00', '12:25:00', 'cancelada', 'qr_junio_3'),
 (5, 3, 1, '2026-06-10', '15:00:00', '15:30:00', 'confirmada', 'qr_junio_4'),
-(6, 2, 5, '2026-06-12', '16:00:00', '17:30:00', 'pendiente', 'qr_junio_5');
+(6, 2, 5, '2026-06-12', '16:00:00', '17:30:00', 'pendiente', 'qr_junio_5'),
+(6, 2, 5, '2026-06-20', '16:00:00', '17:30:00', 'pendiente', 'qr_junio_6');
 
 INSERT INTO resenias (id_usuario, id_cita, calificacion, comentario)
 VALUES
