@@ -413,7 +413,10 @@ def estadisticas():
     } for fila in filas_citas]
 
     filas_barberos = cursor.execute('''
-        SELECT b.id_barbero, u.nombre,
+        SELECT b.id_barbero, b.id_barbero,
+               u.nombre,
+               u.email,
+               b.img_barbero,
                COUNT(c.id_cita) AS citas,
                COALESCE(SUM(s.precio), 0) AS ingresos,
                ROUND(COALESCE(AVG(r.calificacion), 0), 1) AS rating,
@@ -425,7 +428,7 @@ def estadisticas():
                           AND DATE(c.fecha) BETWEEN DATE(?) AND DATE(?)
         LEFT JOIN servicios s ON c.id_servicio = s.id_servicio
         LEFT JOIN resenias r ON c.id_cita = r.id_cita
-        GROUP BY b.id_barbero
+        GROUP BY b.id_barbero, u.nombre, u.email, b.img_barbero, b.activo
         ORDER BY ingresos DESC
     ''', (desde, hasta)).fetchall()
 
@@ -433,6 +436,8 @@ def estadisticas():
     barberos_top = [{
         "id_barbero": fila["id_barbero"],
         "nombre": fila["nombre"],
+        "email": fila["email"],
+        "img_barbero": fila["img_barbero"],
         "citas": fila["citas"] or 0,
         "rating": fila["rating"] or 0,
         "ingresos": int(fila["ingresos"] or 0),
