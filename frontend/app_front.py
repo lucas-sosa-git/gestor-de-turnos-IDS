@@ -193,6 +193,13 @@ def login():
         error=f"Rol no reconocido: {rol}"
     )
 
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("login"))
+
+
 @app.route("/clientes/<int:id_usuario>")
 def clientes_panel(id_usuario):
     usuario = session.get("usuario")
