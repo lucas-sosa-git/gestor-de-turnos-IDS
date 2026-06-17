@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <title>Servicios</title>
+</head>
+<body>
+    <div class="app-container">
+        <header class="main-header">
+            <div class="user-profile">
+                <div class="avatar">
+                    <span>L</span>
+                </div>
+                <div>
+                    <h1 class="salon-title">Peluqueria Elegance</h1>
+                    <p class="welcome-text">Bienvenido, {{ usuario['nombre'] }}</p>
+                </div>
+            </div>
+            <div class="logout-container">
+                <button class="logout-btn">Salir</button>
+            </div>
+        </header>
+
+        <nav class="nav-bar">
+            <a href="{{ url_for('clientes_barberos', id_usuario=id_usuario) }}" class="nav-link">
+                <span>&#128100;</span> Nuestros Peluqueros
+            </a>
+            <a href="{{ url_for('clientes_servicios', id_usuario=id_usuario) }}" class="nav-link active">
+                <span>&#9986;&#65039;</span> Servicios
+            </a>
+            <a href="{{ url_for('clientes_panel', id_usuario=id_usuario) }}" class="nav-link">
+                <span>&#128197;</span> Mis Reservas
+                {% if turnos and turnos | length > 0 %}
+                    <span class="indicador-numero">{{ turnos | length }}</span>
+                {% endif %}
+            </a>
+            <a href="{{ url_for('clientes_info', id_usuario=id_usuario) }}" class="nav-link">
+                <span>&#8505;</span> Acerca de Nosotros
+            </a>
+        </nav>
+
+        <div class="contenedor-principal">
+            <div class="section-header">
+                <div>
+                    <h2 class="section-title">Nuestros Servicios</h2>
+                    <p class="section-subtitle">Conoce los cortes y tratamientos disponibles</p>
+                </div>
+            </div>
+
+            {% if error %}
+                <div class="estado-vacio">
+                    <p>{{ error }}</p>
+                </div>
+            {% endif %}
+
+            {% if servicios %}
+                <div class="servicios-cliente-grid">
+                    {% for servicio in servicios %}
+                        <div class="servicio-cliente-card">
+                            {% if servicio['img_servicio'] %}
+                                <img
+                                    class="servicio-cliente-img"
+                                    src="{{ servicio['img_servicio'] }}"
+                                    alt="Imagen de {{ servicio['nombre'] }}"
+                                >
+                            {% else %}
+                                <div class="servicio-cliente-placeholder">
+                                    <span>&#9986;&#65039;</span>
+                                </div>
+                            {% endif %}
+
+                            <div class="servicio-cliente-info">
+                                <h3 class="card-title">{{ servicio['nombre'] }}</h3>
+
+                                {% if servicio['descripcion'] %}
+                                    <p class="card-description">{{ servicio['descripcion'] }}</p>
+                                {% endif %}
+
+                                <div class="servicio-cliente-meta">
+                                    <span>&#128338; {{ servicio['duracion'] }} min</span>
+                                    <span>${{ "{:,.0f}".format(servicio['precio']) }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="estado-vacio">
+                    <p>No hay servicios disponibles en este momento.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

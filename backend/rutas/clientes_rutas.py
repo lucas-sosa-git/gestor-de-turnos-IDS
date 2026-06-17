@@ -63,6 +63,36 @@ def mostrar_servicios():
     return jsonify([dict(s) for s in servicios])
 
 
+@clientes_bp.route('/servicios/<int:id_usuario>', methods=['GET'])
+def mostrar_servicios_cliente(id_usuario):
+    conn = get_db_connection()
+    usuario = conn.execute('''SELECT * FROM usuarios WHERE id_usuario = ?''', (id_usuario,)).fetchone()
+    if not usuario:
+        conn.close()
+        return jsonify({"error": "Usuario no encontrado"}), 404
+
+    turnos = conn.execute('''SELECT id_cita FROM citas WHERE id_usuario = ?''', (id_usuario,)).fetchall()
+    servicios = conn.execute('''
+        SELECT
+            id_servicio,
+            nombre,
+            descripcion,
+            duracion,
+            precio,
+            img_servicio
+        FROM servicios
+        ORDER BY nombre ASC
+    ''').fetchall()
+    conn.close()
+
+    return jsonify({
+        "usuario": dict(usuario),
+        "id_usuario": id_usuario,
+        "servicios": [dict(servicio) for servicio in servicios],
+        "turnos": [dict(turno) for turno in turnos]
+    }), 200
+
+
 # 3. MOSTRAR BARBEROS
 @clientes_bp.route('/barberos/<int:id_usuario>', methods=['GET'])
 def mostrar_barberos(id_usuario):

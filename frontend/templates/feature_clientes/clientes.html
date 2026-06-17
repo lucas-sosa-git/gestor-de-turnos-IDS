@@ -28,6 +28,10 @@
                 <span>👤</span> Nuestros Peluqueros
             </a>
             
+            <a href="{{ url_for('clientes_servicios', id_usuario=id_usuario) }}" class="nav-link">
+                <span>&#9986;&#65039;</span> Servicios
+            </a>
+
             <a href="#" class="nav-link active">
                 <span>📅</span> Mis Reservas
                 {% if turnos | length > 0 %}

@@ -132,6 +132,13 @@ def obtener_barberos_cliente(id_usuario):
     )
 
 
+def obtener_servicios_cliente(id_usuario):
+    return obtener_json_backend(
+        f"/clientes/servicios/{id_usuario}",
+        "No se pudieron cargar los servicios"
+    )
+
+
 def obtener_info_cliente(id_usuario):
     return obtener_json_backend(
         f"/clientes/acerca-de/{id_usuario}",
@@ -222,6 +229,27 @@ def clientes_barberos(id_usuario):
         usuario=usuario,
         id_usuario=id_usuario,
         barberos=data.get("barberos", []) if data else [],
+        turnos=data.get("turnos", []) if data else [],
+        error=error
+    )
+
+
+@app.route("/clientes/<int:id_usuario>/servicios")
+def clientes_servicios(id_usuario):
+    usuario = session.get("usuario")
+
+    if not usuario:
+        return redirect("/login")
+
+    data, error = obtener_servicios_cliente(id_usuario)
+    if data:
+        usuario = data.get("usuario", usuario)
+
+    return render_template(
+        "feature_clientes/servicios.html",
+        usuario=usuario,
+        id_usuario=id_usuario,
+        servicios=data.get("servicios", []) if data else [],
         turnos=data.get("turnos", []) if data else [],
         error=error
     )
