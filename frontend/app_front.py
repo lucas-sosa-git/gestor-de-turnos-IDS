@@ -248,7 +248,7 @@ def clientes_info(id_usuario):
 
 def obtener_panel_peluqueros(id_usuario):
     return obtener_json_backend(
-        f"/peluqueros/{id_usuario}",
+        f"/profesionales/peluqueros/{id_usuario}",
         "No se pudieron cargar los datos del cliente"
     )
 def normalizar_fecha(fecha_objeto_o_cadena):
@@ -262,6 +262,7 @@ def normalizar_fecha(fecha_objeto_o_cadena):
         except ValueError:
             continue
     return fecha_limpia
+
 @app.route("/panel_peluquero/<int:id_usuario>")
 def panel_peluquero(id_usuario):
     usuario = session.get("usuario")
