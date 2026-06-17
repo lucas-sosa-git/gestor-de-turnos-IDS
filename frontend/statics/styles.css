@@ -240,6 +240,37 @@
   gap: .5rem;
 }
 
+.tabla-dashboard {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 14px;
+}
+
+.tabla-dashboard th,
+.tabla-dashboard td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.tabla-dashboard th {
+  color: #9ca3af;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.tabla-dashboard td {
+  color: #ffffff;
+  font-size: 14px;
+}
+
+.tabla-vacia {
+  text-align: center;
+  color: #9ca3af;
+  padding: 18px;
+}
+
 /* ── Citas ── */
 .cita-row {
   background: #22253a;

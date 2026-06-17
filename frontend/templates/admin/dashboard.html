@@ -335,60 +335,34 @@
             🏆 Barberos Destacados
           </div>
 
-          {% for b in barberos_top %}
-
-          <div class="barbero-row">
-
-            <div class="barbero-num">
-              {{ loop.index }}
-            </div>
-
-            <div class="barbero-info">
-
-              <div class="barbero-nombre">
-                {{ b.nombre }}
-              </div>
-
-              <div class="barbero-sub">
-                {{ b.citas }} citas • ⭐ {{ b.rating }}
-              </div>
-
-              <div class="mini-bar-wrap">
-
-                <div class="mini-bar-bg">
-
-                  <div
-                    class="mini-bar-fill"
-                    style="width: {{ b.pct }}%"
-                  >
-                  </div>
-
-                </div>
-
-              </div>
-
-            </div>
-
-            <div class="barbero-ingresos">
-              ${{ "{:,.0f}".format(b.ingresos) }}
-            </div>
-
-          </div>
-
-          {% endfor %}
-
-          {% if not barberos_top %}
-
-          <p
-            style="
-              color: var(--text-muted);
-              font-size: .85rem;
-            "
-          >
-            Sin datos de barberos.
-          </p>
-
-          {% endif %}
+          <table class="tabla-admin tabla-dashboard">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Barbero</th>
+                <th>Citas</th>
+                <th>Rating</th>
+                <th>Ingresos</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for b in barberos_top %}
+              <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ b.nombre }}</td>
+                <td>{{ b.citas }}</td>
+                <td>&#11088; {{ b.rating }}</td>
+                <td>${{ "{:,.0f}".format(b.ingresos) }}</td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="5" class="tabla-vacia">
+                  No hay barberos para mostrar.
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
 
         </div>
 
@@ -401,52 +375,30 @@
           ✂️ Servicios Más Solicitados
         </div>
 
-        <div
-          class="servicio-row"
-          style="
-            color: var(--text-muted);
-            font-size: .78rem;
-            font-weight: 600;
-          "
-        >
-          <span>SERVICIO</span>
-          <span>VECES</span>
-          <span>PRECIO</span>
-        </div>
-
-        {% for s in servicios_top %}
-
-        <div class="servicio-row">
-
-          <span class="servicio-nombre">
-            {{ s.nombre }}
-          </span>
-
-          <span class="servicio-dato">
-            {{ s.veces }} pedidos
-          </span>
-
-          <span class="servicio-precio">
-            ${{ "{:,.0f}".format(s.precio) }}
-          </span>
-
-        </div>
-
-        {% endfor %}
-
-        {% if not servicios_top %}
-
-        <p
-          style="
-            color: var(--text-muted);
-            font-size: .85rem;
-            padding: .5rem;
-          "
-        >
-          Sin servicios solicitados este mes.
-        </p>
-
-        {% endif %}
+        <table class="tabla-admin tabla-dashboard">
+          <thead>
+            <tr>
+              <th>Servicio</th>
+              <th>Veces</th>
+              <th>Precio</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for s in servicios_top %}
+            <tr>
+              <td>{{ s.nombre }}</td>
+              <td>{{ s.veces }} pedidos</td>
+              <td>${{ "{:,.0f}".format(s.precio) }}</td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="3" class="tabla-vacia">
+                No hay servicios para mostrar.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
 
       </div>
 
