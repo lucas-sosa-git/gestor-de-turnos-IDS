@@ -141,5 +141,38 @@
         {% endif %}
 
     </div>
+    <script>
+
+async function finalizarTurno(idCita){
+
+    if(!confirm("¿Finalizar este turno?")){
+        return;
+    }
+
+    try{
+
+        const respuesta = await fetch(
+            `http://127.0.0.1:5000/profesionales/turnos/${idCita}/finalizar`,
+            {
+                method: "PATCH"
+            }
+        );
+
+        const data = await respuesta.json();
+
+        if(respuesta.ok){
+            alert("Turno finalizado correctamente");
+            location.reload();
+        }else{
+            alert(data.error);
+        }
+
+    }catch(error){
+        alert("Error al conectar con el servidor");
+    }
+
+}
+
+</script>
 </body>
 </html>
