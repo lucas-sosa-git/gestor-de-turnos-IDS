@@ -150,3 +150,32 @@ def check_in():
     conn.close()
 
     return jsonify({"mensaje": "Asistencia confirmada", "cita": dict(cita_actualizada)}), 200
+
+@profesionales_bp.route("/turnos/<int:id_cita>/finalizar", methods=["PATCH"])
+def finalizar_turno(id_cita):
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cita = cursor.execute(
+        "SELECT * FROM citas WHERE id_cita = ?",
+        (id_cita,)
+    ).fetchone()
+
+    if not cita:
+        conn.close()
+        return jsonify({"error": "Turno no encontrado"}), 404
+
+    cursor.execute(
+        """
+        UPDATE citas
+        SET estado = 'completada'
+        WHERE id_cita = ?
+        """,
+        (id_cita,)
+    )
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({"mensaje": "Turno finalizado correctamente"}), 200
