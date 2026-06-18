@@ -95,7 +95,9 @@
 
                         <div class="card-bottom">
                             <p class="card-note">Contacto: {{ turno['cliente_email'] }}</p>
-                            <button class="btn-cancel btn-success-action">
+                            <button 
+                                class="btn-cancel btn-success-action"
+                                onclick="finalizarTurno({{ turno['id_cita'] }})">
                                 <span>✅</span> Finalizar Turno
                             </button>
                         </div>
