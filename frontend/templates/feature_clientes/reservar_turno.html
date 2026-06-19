@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Reservar Turno</title>
+</head>
+<body>
+
+<h1>Reservar Turno</h1>
+
+<form id="formReserva">
+
+    <label>Servicio:</label>
+    <select id="id_servicio">
+        <option value="1">Corte pelo de hombre</option>
+        <option value="2">Corte pelo de mujer</option>
+        <option value="3">Barba</option>
+        <option value="4">Cejas</option>
+        <option value="5">Tintura</option>
+    </select>
+
+    <br><br>
+
+    <label>Fecha:</label>
+    <input type="date" id="fecha">
+
+    <br><br>
+
+    <label>Hora:</label>
+    <input type="time" id="hora_inicio">
+
+    <br><br>
+
+    <button type="submit">
+        Confirmar Reserva
+    </button>
+
+</form>
+
+<p id="mensaje"></p>
+
+<script>
+
+document.getElementById("formReserva").addEventListener("submit", async function(e){
+
+    e.preventDefault();
+
+    const respuesta = await fetch("http://127.0.0.1:5000/clientes/turnos", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            id_usuario: {{ id_usuario }},
+            id_barbero: {{ id_barbero }},
+            id_servicio: document.getElementById("id_servicio").value,
+            fecha: document.getElementById("fecha").value,
+            hora_inicio: document.getElementById("hora_inicio").value
+        })
+    });
+
+    const data = await respuesta.json();
+
+    if(respuesta.ok){
+        document.getElementById("mensaje").innerText =
+            "Turno reservado correctamente";
+    }
+    else{
+        document.getElementById("mensaje").innerText =
+            data.error;
+    }
+
+});
+
+</script>
+
+</body>
+</html>
