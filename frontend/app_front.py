@@ -1,18 +1,127 @@
 ﻿import json
 import os
 import requests
-from datetime import date, timedelta
+import jwt
+from datetime import date, datetime, timedelta
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
-from collections import defaultdict
-from datetime import datetime,timedelta
 
-from flask import Flask, redirect, render_template, request, session, url_for
+from flask import Flask, g, redirect, render_template, request, session, url_for
+
+try:
+    from jwt import ExpiredSignatureError, InvalidTokenError
+except ImportError:
+    from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 
 
 app = Flask(__name__, template_folder="templates", static_folder="statics")
 app.secret_key = "clave_front_tp_barberia"
+
+JWT_SECRET = os.environ.get("JWT_SECRET", "clave_secreta_tp_barberia")
+JWT_ALGORITHM = "HS256"
+
+ROLES_ADMIN = {"admin", "administrador"}
+ROLES_CLIENTE = {"cliente"}
+ROLES_BARBERO = {"barbero", "peluquero", "profesional"}
+
+
+def validar_token_session():
+    token = session.get("token")
+    if not token:
+        return None
+
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        usuario_id = int(payload["usuario_id"])
+        rol = str(payload["rol"]).lower()
+    except (ExpiredSignatureError, InvalidTokenError, KeyError, TypeError, ValueError):
+        session.clear()
+        return None
+
+    session["id_usuario"] = usuario_id
+    session["rol"] = rol
+
+    return {
+        "id_usuario": usuario_id,
+        "rol": rol,
+        "usuario": session.get("usuario", {})
+    }
+
+
+def redirigir_por_rol(usuario_actual):
+    rol = usuario_actual.get("rol")
+    id_usuario = usuario_actual.get("id_usuario")
+
+    if rol in ROLES_ADMIN:
+        return redirect("/admin")
+
+    if rol in ROLES_CLIENTE:
+        return redirect(f"/clientes/{id_usuario}")
+
+    if rol in ROLES_BARBERO:
+        return redirect(f"/panel_peluquero/{id_usuario}")
+
+    session.clear()
+    return redirect("/login")
+
+
+def obtener_id_desde_path(indice):
+    partes = request.path.strip("/").split("/")
+
+    try:
+        return int(partes[indice])
+    except (IndexError, TypeError, ValueError):
+        return None
+
+
+@app.before_request
+def proteger_vistas_privadas():
+    if request.endpoint == "static":
+        return None
+
+    if request.path in {"/", "/login"}:
+        usuario_actual = validar_token_session()
+        if usuario_actual:
+            g.usuario_actual = usuario_actual
+            return redirigir_por_rol(usuario_actual)
+        return None
+
+    if request.path in {"/register", "/logout"}:
+        return None
+
+    usuario_actual = validar_token_session()
+    if not usuario_actual:
+        return redirect("/login")
+
+    g.usuario_actual = usuario_actual
+    path = request.path
+    rol = usuario_actual["rol"]
+    id_usuario_token = usuario_actual["id_usuario"]
+
+    if path.startswith("/admin"):
+        if rol not in ROLES_ADMIN:
+            return redirigir_por_rol(usuario_actual)
+        return None
+
+    if path.startswith("/clientes/"):
+        id_usuario_url = obtener_id_desde_path(1)
+        if rol not in ROLES_CLIENTE or id_usuario_url != id_usuario_token:
+            return redirigir_por_rol(usuario_actual)
+        return None
+
+    if path.startswith("/panel_peluquero/"):
+        id_usuario_url = obtener_id_desde_path(1)
+        if rol not in ROLES_BARBERO or id_usuario_url != id_usuario_token:
+            return redirigir_por_rol(usuario_actual)
+        return None
+
+    if path == "/agenda":
+        if rol not in ROLES_BARBERO:
+            return redirigir_por_rol(usuario_actual)
+        return None
+
+    return None
 
 
 def get_backend_url():
@@ -204,9 +313,6 @@ def logout():
 def clientes_panel(id_usuario):
     usuario = session.get("usuario")
 
-    if not usuario:
-        return redirect("/login")
-
     data, error = obtener_panel_cliente(id_usuario)
     if data:
         usuario = data.get("usuario", usuario)
@@ -223,9 +329,6 @@ def clientes_panel(id_usuario):
 @app.route("/clientes/<int:id_usuario>/barberos")
 def clientes_barberos(id_usuario):
     usuario = session.get("usuario")
-
-    if not usuario:
-        return redirect("/login")
 
     data, error = obtener_barberos_cliente(id_usuario)
     if data:
@@ -245,9 +348,6 @@ def clientes_barberos(id_usuario):
 def clientes_servicios(id_usuario):
     usuario = session.get("usuario")
 
-    if not usuario:
-        return redirect("/login")
-
     data, error = obtener_servicios_cliente(id_usuario)
     if data:
         usuario = data.get("usuario", usuario)
@@ -265,9 +365,6 @@ def clientes_servicios(id_usuario):
 @app.route("/clientes/<int:id_usuario>/info")
 def clientes_info(id_usuario):
     usuario = session.get("usuario")
-
-    if not usuario:
-        return redirect("/login")
 
     data, error = obtener_info_cliente(id_usuario)
     if data:
@@ -756,10 +853,6 @@ def obtener_citas_semana(id_barbero, lunes_str, token):
 
 @app.route("/agenda")
 def agenda():
-    # Verificar sesiÃ³n
-    if not session.get("token"):
-        return redirect(url_for("login"))
-
     id_barbero    = session.get("id_usuario")
     barbero_nombre = session.get("usuario", {}).get("nombre", "Barbero")
     token         = session.get("token")
