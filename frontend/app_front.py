@@ -377,6 +377,14 @@ def clientes_info(id_usuario):
         turnos=data.get("turnos", []) if data else [],
         error=error
     )
+@app.route("/clientes/<int:id_usuario>/reservar/<int:id_barbero>")
+def reservar_turno_form(id_usuario, id_barbero):
+
+    return render_template(
+        "feature_clientes/reservar_turno.html",
+        id_usuario=id_usuario,
+        id_barbero=id_barbero
+    )
 
 def obtener_panel_peluqueros(id_usuario):
     return obtener_json_backend(

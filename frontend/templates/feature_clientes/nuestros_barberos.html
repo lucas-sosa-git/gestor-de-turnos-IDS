@@ -63,11 +63,15 @@
                         {% else %}
                         <div class="avatar-placeholder">
                             <span style="font-size: 40px;">🧔🏻‍♂️</span>
-                        </div>
+                        </div>    
                         {% endif %}
                         <h3 class="card-title">{{ barbero['nombre'] }}</h3>
                         <p class="card-role">Peluquero Profesional</p>
                         <div class="estrellas">⭐⭐⭐⭐⭐</div>
+                         <a href="{{ url_for('reservar_turno_form', id_usuario=id_usuario, id_barbero=barbero['id_barbero']) }}"
+                             class="btn-reservar">
+                             Reservar Turno
+                         </a>
                         <button class="btn-reservar">
                             Reservar Turno
                         </button>
