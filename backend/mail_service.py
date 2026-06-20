@@ -87,7 +87,7 @@ def enviar_mail(destinatario, nombre, fecha, hora, barbero, servicio, qr_token, 
     mensaje.attach(imagen)
 
     try:
-        servidor = smtplib.SMTP("smtp.gmail.com", 587)
+        servidor = smtplib.SMTP("smtp.gmail.com", 587, timeout=10)
         servidor.starttls()
         servidor.login(EMAIL_REMITENTE, CLAVE_APP)
         servidor.send_message(mensaje)
