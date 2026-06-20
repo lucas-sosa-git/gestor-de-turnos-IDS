@@ -2,9 +2,9 @@
 import os
 import requests
 import jwt
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 from urllib.error import HTTPError, URLError
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlparse
 from urllib.request import Request, urlopen
 
 from flask import Flask, g, redirect, render_template, request, session, url_for, jsonify
@@ -16,9 +16,9 @@ except ImportError:
 
 
 app = Flask(__name__, template_folder="templates", static_folder="statics")
-app.secret_key = "clave_front_tp_barberia"
+app.secret_key = os.environ.get("FLASK_SECRET_KEY") or os.urandom(32)
 
-JWT_SECRET = os.environ.get("JWT_SECRET", "clave_secreta_tp_barberia")
+JWT_SECRET = os.environ.get("JWT_SECRET")
 JWT_ALGORITHM = "HS256"
 
 ROLES_ADMIN = {"admin", "administrador"}
@@ -28,7 +28,7 @@ ROLES_BARBERO = {"barbero", "peluquero", "profesional"}
 
 def validar_token_session():
     token = session.get("token")
-    if not token:
+    if not token or not JWT_SECRET:
         return None
 
     try:
@@ -66,6 +66,19 @@ def redirigir_por_rol(usuario_actual):
     return redirect("/login")
 
 
+def es_redireccion_local(destino):
+    if not destino:
+        return False
+
+    partes = urlparse(destino)
+    return not partes.netloc and partes.path.startswith("/")
+
+
+def redirect_login_actual():
+    destino = request.full_path if request.query_string else request.path
+    return redirect(url_for("login", next=destino))
+
+
 def obtener_id_desde_path(indice):
     partes = request.path.strip("/").split("/")
 
@@ -84,15 +97,22 @@ def proteger_vistas_privadas():
         usuario_actual = validar_token_session()
         if usuario_actual:
             g.usuario_actual = usuario_actual
+            destino = request.args.get("next")
+            if request.path == "/login" and es_redireccion_local(destino):
+                return redirect(destino)
             return redirigir_por_rol(usuario_actual)
         return None
 
-    if request.path in {"/register", "/logout"}:
+    if (
+        request.path in {"/register", "/logout"}
+        or request.path.startswith("/confirmar/")
+        or request.path.startswith("/cancelar/")
+    ):
         return None
 
     usuario_actual = validar_token_session()
     if not usuario_actual:
-        return redirect("/login")
+        return redirect_login_actual()
 
     g.usuario_actual = usuario_actual
     path = request.path
@@ -116,7 +136,7 @@ def proteger_vistas_privadas():
             return redirigir_por_rol(usuario_actual)
         return None
 
-    if path == "/agenda":
+    if path.startswith("/qr/"):
         if rol not in ROLES_BARBERO:
             return redirigir_por_rol(usuario_actual)
         return None
@@ -248,25 +268,41 @@ def obtener_servicios_cliente(id_usuario):
     )
 
 
+def obtener_horarios_barbero(id_barbero):
+    return obtener_json_backend(
+        f"/clientes/barberos/{id_barbero}/horarios",
+        "No se pudieron cargar los horarios del barbero"
+    )
+
+
 def obtener_info_cliente(id_usuario):
     return obtener_json_backend(
         f"/clientes/acerca-de/{id_usuario}",
         "No se pudo cargar la informacion del cliente"
     )
 
+
+def obtener_mensaje_turno():
+    if request.args.get("turno") == "cancelado":
+        return "Turno cancelado correctamente."
+
+    return None
+
 @app.route("/")
 def inicio():
-    return render_template("base.html")
+    return redirect(url_for("login"))
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
+    next_url = request.args.get("next") or request.form.get("next")
+
     if request.method == "GET":
         exito = None
 
         if request.args.get("registro") == "ok":
             exito = "Cuenta creada correctamente. Ya podés iniciar sesión."
 
-        return render_template("login.html", exito=exito)
+        return render_template("login.html", exito=exito, next_url=next_url)
 
     email = request.form.get("email", "").strip()
     clave = request.form.get("clave", "").strip()
@@ -274,13 +310,19 @@ def login():
     if not email or not clave:
         return render_template(
             "login.html",
-            error="Complete email y contraseña."
+            error="Complete email y contraseña.",
+            next_url=next_url
         )
 
     ok, usuario, token, error = login_en_backend(email, clave)
 
     if not ok:
-        return render_template("login.html", error=error, email=email)
+        return render_template(
+            "login.html",
+            error=error,
+            email=email,
+            next_url=next_url
+        )
 
     session["token"] = token
     session["usuario"] = usuario
@@ -288,6 +330,9 @@ def login():
     session["rol"] = usuario.get("rol")
 
     rol = usuario.get("rol", "").lower()
+
+    if es_redireccion_local(next_url):
+        return redirect(next_url)
 
     if rol in ["admin", "administrador"]:
         return redirect("/admin")
@@ -302,7 +347,8 @@ def login():
 
     return render_template(
         "login.html",
-        error=f"Rol no reconocido: {rol}"
+        error=f"Rol no reconocido: {rol}",
+        next_url=next_url
     )
 
 
@@ -325,7 +371,8 @@ def clientes_panel(id_usuario):
         usuario=usuario,
         id_usuario=id_usuario,
         turnos=data.get("turnos", []) if data else [],
-        error=error
+        error=error or request.args.get("error"),
+        exito=obtener_mensaje_turno()
     )
 
 
@@ -380,13 +427,92 @@ def clientes_info(id_usuario):
         turnos=data.get("turnos", []) if data else [],
         error=error
     )
-@app.route("/clientes/<int:id_usuario>/reservar/<int:id_barbero>")
+@app.route("/clientes/<int:id_usuario>/reservar/<int:id_barbero>", methods=["GET", "POST"])
 def reservar_turno_form(id_usuario, id_barbero):
+    usuario = session.get("usuario")
+
+    if request.method == "GET":
+        data, error = obtener_servicios_cliente(id_usuario)
+        horarios_data, horarios_error = obtener_horarios_barbero(id_barbero)
+        servicios = data.get("servicios", []) if data else []
+
+        return render_template(
+            "feature_clientes/reservar_turno.html",
+            usuario=usuario,
+            id_usuario=id_usuario,
+            id_barbero=id_barbero,
+            servicios=servicios,
+            disponibilidad=horarios_data.get("disponibilidad", []) if horarios_data else [],
+            citas_ocupadas=horarios_data.get("citas_ocupadas", []) if horarios_data else [],
+            fecha_min=datetime.now().strftime("%Y-%m-%d"),
+            error=error or horarios_error
+        )
+
+    payload = {
+        "id_usuario": id_usuario,
+        "id_barbero": id_barbero,
+        "id_servicio": request.form.get("id_servicio"),
+        "fecha": request.form.get("fecha"),
+        "hora_inicio": request.form.get("hora_inicio"),
+    }
+
+    try:
+        respuesta = requests.post(
+            f"{get_backend_url()}/clientes/turnos",
+            json=payload,
+            timeout=10
+        )
+        data = respuesta.json()
+    except requests.RequestException:
+        servicios_data, _ = obtener_servicios_cliente(id_usuario)
+        horarios_data, _ = obtener_horarios_barbero(id_barbero)
+        return render_template(
+            "feature_clientes/reservar_turno.html",
+            usuario=usuario,
+            id_usuario=id_usuario,
+            id_barbero=id_barbero,
+            servicios=servicios_data.get("servicios", []) if servicios_data else [],
+            disponibilidad=horarios_data.get("disponibilidad", []) if horarios_data else [],
+            citas_ocupadas=horarios_data.get("citas_ocupadas", []) if horarios_data else [],
+            fecha_min=datetime.now().strftime("%Y-%m-%d"),
+            error="No se pudo conectar con el backend."
+        )
+    except ValueError:
+        servicios_data, _ = obtener_servicios_cliente(id_usuario)
+        horarios_data, _ = obtener_horarios_barbero(id_barbero)
+        return render_template(
+            "feature_clientes/reservar_turno.html",
+            usuario=usuario,
+            id_usuario=id_usuario,
+            id_barbero=id_barbero,
+            servicios=servicios_data.get("servicios", []) if servicios_data else [],
+            disponibilidad=horarios_data.get("disponibilidad", []) if horarios_data else [],
+            citas_ocupadas=horarios_data.get("citas_ocupadas", []) if horarios_data else [],
+            fecha_min=datetime.now().strftime("%Y-%m-%d"),
+            error="El backend devolvio una respuesta invalida."
+        )
+
+    if respuesta.status_code >= 400:
+        servicios_data, _ = obtener_servicios_cliente(id_usuario)
+        horarios_data, _ = obtener_horarios_barbero(id_barbero)
+        return render_template(
+            "feature_clientes/reservar_turno.html",
+            usuario=usuario,
+            id_usuario=id_usuario,
+            id_barbero=id_barbero,
+            servicios=servicios_data.get("servicios", []) if servicios_data else [],
+            disponibilidad=horarios_data.get("disponibilidad", []) if horarios_data else [],
+            citas_ocupadas=horarios_data.get("citas_ocupadas", []) if horarios_data else [],
+            fecha_min=datetime.now().strftime("%Y-%m-%d"),
+            error=data.get("error") or "No se pudo reservar el turno."
+        )
 
     return render_template(
-        "feature_clientes/reservar_turno.html",
+        "feature_clientes/reserva_confirmada.html",
+        usuario=usuario,
         id_usuario=id_usuario,
-        id_barbero=id_barbero
+        reserva=data,
+        mail_enviado=data.get("mail_enviado")
     )
 @app.route("/procesar_reserva_frontend", methods=['POST'])
 def crear_reserva_proxy():
@@ -447,6 +573,38 @@ def crear_resenia_proxy():
         return jsonify({"error": "El servidor Backend (puerto 5000) no responde."}), 500
     
 
+
+@app.route("/clientes/<int:id_usuario>/turnos/<int:id_cita>/cancelar", methods=["POST"])
+def cancelar_turno_front(id_usuario, id_cita):
+    try:
+        respuesta = requests.delete(
+            f"{get_backend_url()}/clientes/turnos/{id_cita}",
+            json={"id_usuario": id_usuario},
+            timeout=10
+        )
+        data = respuesta.json()
+    except requests.RequestException:
+        return redirect(url_for(
+            "clientes_panel",
+            id_usuario=id_usuario,
+            error="No se pudo conectar con el backend."
+        ))
+    except ValueError:
+        return redirect(url_for(
+            "clientes_panel",
+            id_usuario=id_usuario,
+            error="El backend devolvio una respuesta invalida."
+        ))
+
+    if respuesta.status_code >= 400:
+        return redirect(url_for(
+            "clientes_panel",
+            id_usuario=id_usuario,
+            error=data.get("error") or "No se pudo cancelar el turno."
+        ))
+
+    return redirect(url_for("clientes_panel", id_usuario=id_usuario, turno="cancelado"))
+
 def obtener_panel_peluqueros(id_usuario):
     return obtener_json_backend(
         f"/profesionales/peluqueros/{id_usuario}",
@@ -463,6 +621,21 @@ def normalizar_fecha(fecha_objeto_o_cadena):
         except ValueError:
             continue
     return fecha_limpia
+
+
+def formatear_hora(hora):
+    if not hora:
+        return ""
+
+    return str(hora).split(".")[0][:5]
+
+
+def formatear_horas_turnos(turnos):
+    for turno in turnos:
+        turno["hora_inicio_label"] = formatear_hora(turno.get("hora_inicio"))
+
+    return turnos
+
 
 @app.route("/panel_peluquero/<int:id_usuario>")
 def panel_peluquero(id_usuario):
@@ -490,6 +663,7 @@ def panel_peluquero(id_usuario):
     data, error= obtener_panel_peluqueros(id_usuario)
 
     lista_total_citas = data.get("turnos", []) if data else []
+    lista_total_citas = formatear_horas_turnos(lista_total_citas)
     usuario_datos = data.get("usuario", usuario) if data else usuario
     turnos_dia = []
     dias_semana = []
@@ -523,7 +697,8 @@ def panel_peluquero(id_usuario):
         id_usuario = id_usuario,
         turnos = turnos_dia,
         dias_semana= dias_semana,
-        error = error,
+        error = error or request.args.get("error"),
+        exito = "Turno completado correctamente." if request.args.get("turno") == "completado" else None,
         vista = vista_actual,
         fecha_str = fecha_str_actual,
         fecha_anterior = fecha_anterior,
@@ -531,6 +706,155 @@ def panel_peluquero(id_usuario):
         fecha_label = fecha_label,
         semana_inicio_label = semana_inicio_label,
         semana_fin_label = semana_fin_label
+    )
+
+
+@app.route("/panel_peluquero/<int:id_usuario>/turnos/<int:id_cita>/finalizar", methods=["POST"])
+def finalizar_turno_front(id_usuario, id_cita):
+    try:
+        respuesta = requests.patch(
+            f"{get_backend_url()}/profesionales/turnos/{id_cita}/finalizar",
+            json={"id_usuario_barbero": id_usuario},
+            timeout=10
+        )
+        data = respuesta.json()
+    except requests.RequestException:
+        return redirect(url_for(
+            "panel_peluquero",
+            id_usuario=id_usuario,
+            error="No se pudo conectar con el backend."
+        ))
+    except ValueError:
+        return redirect(url_for(
+            "panel_peluquero",
+            id_usuario=id_usuario,
+            error="El backend devolvio una respuesta invalida."
+        ))
+
+    if respuesta.status_code >= 400:
+        return redirect(url_for(
+            "panel_peluquero",
+            id_usuario=id_usuario,
+            error=data.get("error") or "No se pudo finalizar el turno."
+        ))
+
+    return redirect(url_for(
+        "panel_peluquero",
+        id_usuario=id_usuario,
+        turno="completado"
+    ))
+
+
+@app.route("/qr/<qr_token>")
+def validar_qr(qr_token):
+    id_usuario = session.get("id_usuario")
+
+    try:
+        respuesta = requests.post(
+            f"{get_backend_url()}/profesionales/check_in",
+            json={
+                "qr_token": qr_token,
+                "id_usuario_barbero": id_usuario
+            },
+            timeout=10
+        )
+        data = respuesta.json()
+    except requests.RequestException:
+        return render_template(
+            "qr_resultado.html",
+            ok=False,
+            mensaje="No se pudo conectar con el backend."
+        )
+    except ValueError:
+        return render_template(
+            "qr_resultado.html",
+            ok=False,
+            mensaje="El backend devolvio una respuesta invalida."
+        )
+
+    if respuesta.status_code >= 400:
+        return render_template(
+            "qr_resultado.html",
+            ok=False,
+            mensaje=data.get("error") or "No se pudo validar el QR."
+        )
+
+    cita = data.get("cita", {})
+    cita["hora_inicio_label"] = formatear_hora(cita.get("hora_inicio"))
+
+    return render_template(
+        "qr_resultado.html",
+        ok=True,
+        mensaje=data.get("mensaje") or "Turno completado",
+        cita=cita,
+        id_usuario=id_usuario
+    )
+
+
+@app.route("/confirmar/<qr_token>")
+def confirmar_turno_mail(qr_token):
+    try:
+        respuesta = requests.get(
+            f"{get_backend_url()}/clientes/turnos/confirmar/{qr_token}",
+            timeout=10
+        )
+        data = respuesta.json()
+    except requests.RequestException:
+        return render_template(
+            "confirmacion_turno.html",
+            ok=False,
+            mensaje="No se pudo conectar con el backend."
+        )
+    except ValueError:
+        return render_template(
+            "confirmacion_turno.html",
+            ok=False,
+            mensaje="El backend devolvio una respuesta invalida."
+        )
+
+    if respuesta.status_code >= 400:
+        return render_template(
+            "confirmacion_turno.html",
+            ok=False,
+            mensaje=data.get("error") or "No se pudo confirmar el turno."
+        )
+
+    cita = data.get("cita", {})
+    cita["hora_inicio_label"] = formatear_hora(cita.get("hora_inicio"))
+
+    return render_template(
+        "confirmacion_turno.html",
+        ok=True,
+        mensaje=data.get("mensaje") or "Turno confirmado correctamente",
+        cita=cita
+    )
+
+
+@app.route("/cancelar/<int:id_cita>")
+def cancelar_turno_mail(id_cita):
+    try:
+        respuesta = requests.get(
+            f"{get_backend_url()}/cancelar/{id_cita}",
+            timeout=10
+        )
+    except requests.RequestException:
+        return render_template(
+            "cancelacion_exitosa.html",
+            ok=False,
+            mensaje="No se pudo conectar con el backend."
+        )
+
+    if respuesta.status_code >= 400:
+        return render_template(
+            "cancelacion_exitosa.html",
+            ok=False,
+            mensaje="No se pudo cancelar el turno."
+        )
+
+    return render_template(
+        "cancelacion_exitosa.html",
+        ok=True,
+        mensaje="Turno cancelado correctamente."
     )
 
 @app.route("/register", methods=["GET", "POST"])
@@ -832,165 +1156,6 @@ def eliminar_barbero_front(id_barbero):
         return redirect_admin_error("backend")
 
     return redirect("/admin")
-
-#  AGENDA BARBERO
-
-
-def parsear_fecha(fecha_str):
-    """Convierte 'YYYY-MM-DD' a date. Si falla, devuelve hoy."""
-    try:
-        return date.fromisoformat(fecha_str)
-    except (ValueError, TypeError):
-        return date.today()
-
-
-def inicio_de_semana(d):
-    """Devuelve el lunes de la semana que contiene d."""
-    return d - timedelta(days=d.weekday())
-
-
-DIAS_ES   = ["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"]
-DIAS_CORTOS = ["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"]
-MESES_ES  = ["","enero","febrero","marzo","abril","mayo","junio",
-             "julio","agosto","septiembre","octubre","noviembre","diciembre"]
-
-
-def formatear_fecha_larga(d):
-    """ej: 'domingo, 7 de junio de 2026'"""
-    nombre_dia = DIAS_ES[d.weekday()]
-    return f"{nombre_dia}, {d.day} de {MESES_ES[d.month]} de {d.year}"
-
-
-def formatear_fecha_corta(d):
-    """ej: '7 jun 2026'  o  '7 jun' (sin año si es el mismo año)"""
-    anio = f" {d.year}" if d.year != date.today().year else ""
-    return f"{d.day} {MESES_ES[d.month][:3]}{anio}"
-
-def hacer_request(url, method="GET", payload=None, token=None):
-    """
-    Wrapper genérico para llamadas al backend.
-    Devuelve (data_dict_or_list, error_str_or_None).
-    """
-    headers = {"Content-Type": "application/json"}
-    if token:
-        headers["Authorization"] = f"Bearer {token}"
-
-    data = json.dumps(payload).encode("utf-8") if payload else None
-    req = Request(url, data=data, headers=headers, method=method)
-
-    try:
-        with urlopen(req, timeout=5) as response:
-            return json.loads(response.read().decode("utf-8")), None
-
-    except HTTPError as error:
-        mensaje = "Error en el servidor."
-        try:
-            body = json.loads(error.read().decode("utf-8"))
-            mensaje = body.get("error") or body.get("mensaje") or mensaje
-        except (json.JSONDecodeError, UnicodeDecodeError):
-            pass
-        return None, mensaje
-
-    except (URLError, TimeoutError):
-        return None, "No se pudo conectar con el backend."
-
-# Llamadas al backend
-
-def obtener_citas_dia(id_barbero, fecha_str, token):
-    """
-    GET /barberos/<id>/agenda?fecha=YYYY-MM-DD
-    Espera lista de citas:
-      [{ cliente_nombre, cliente_email, hora, servicio }, ...]
-    """
-    url = f"{get_backend_url()}/barberos/{id_barbero}/agenda?fecha={fecha_str}"
-    data, error = hacer_request(url, token=token)
-    if error or not isinstance(data, list):
-        return []
-    return data
-
-
-def obtener_citas_semana(id_barbero, lunes_str, token):
-    """
-    GET /barberos/<id>/agenda/semana?inicio=YYYY-MM-DD
-    Espera dict: { "YYYY-MM-DD": [ {cita}, ... ], ... }
-    """
-    url = f"{get_backend_url()}/barberos/{id_barbero}/agenda/semana?inicio={lunes_str}"
-    data, error = hacer_request(url, token=token)
-    if error or not isinstance(data, dict):
-        return {}
-    return data
-
-@app.route("/agenda")
-def agenda():
-    id_barbero    = session.get("id_usuario")
-    barbero_nombre = session.get("usuario", {}).get("nombre", "Barbero")
-    token         = session.get("token")
-
-    # Parámetros de la URL
-    vista     = request.args.get("vista", "dia")          # 'dia' | 'semana'
-    fecha_str = request.args.get("fecha", date.today().isoformat())
-    fecha_actual = parsear_fecha(fecha_str)
-
-    # VISTA DÍA
-    if vista == "dia":
-        fecha_anterior  = (fecha_actual - timedelta(days=1)).isoformat()
-        fecha_siguiente = (fecha_actual + timedelta(days=1)).isoformat()
-        fecha_label     = formatear_fecha_larga(fecha_actual)
-
-        citas = obtener_citas_dia(id_barbero, fecha_str, token)
-
-        return render_template(
-            "peluqueros/agenda.html",
-            barbero_nombre   = barbero_nombre,
-            vista            = "dia",
-            fecha_str        = fecha_str,
-            fecha_anterior   = fecha_anterior,
-            fecha_siguiente  = fecha_siguiente,
-            fecha_label      = fecha_label,
-            # semana (no usadas en vista día pero evitan error de template)
-            semana_inicio_label = "",
-            semana_fin_label    = "",
-            dias_semana         = [],
-            citas               = citas,
-        )
-
-    # VISTA SEMANA
-    lunes        = inicio_de_semana(fecha_actual)
-    domingo      = lunes + timedelta(days=6)
-    lunes_str    = lunes.isoformat()
-
-    fecha_anterior  = (lunes - timedelta(weeks=1)).isoformat()
-    fecha_siguiente = (lunes + timedelta(weeks=1)).isoformat()
-
-    semana_inicio_label = formatear_fecha_corta(lunes)
-    semana_fin_label    = formatear_fecha_corta(domingo)
-
-    citas_por_dia = obtener_citas_semana(id_barbero, lunes_str, token)
-
-    # Armar lista de 7 días con sus citas
-    dias_semana = []
-    for i in range(7):
-        dia = lunes + timedelta(days=i)
-        dias_semana.append({
-            "nombre_corto": DIAS_CORTOS[dia.weekday()],
-            "fecha_label":  f"{dia.day} de {MESES_ES[dia.month]}",
-            "citas":        citas_por_dia.get(dia.isoformat(), []),
-        })
-
-    return render_template(
-        "peluqueros/agenda.html",
-        barbero_nombre      = barbero_nombre,
-        vista               = "semana",
-        fecha_str           = lunes_str,
-        fecha_anterior      = fecha_anterior,
-        fecha_siguiente     = fecha_siguiente,
-        semana_inicio_label = semana_inicio_label,
-        semana_fin_label    = semana_fin_label,
-        dias_semana         = dias_semana,
-        fecha_label = "",
-        citas       = [],
-    )
-
 
 if __name__ == "__main__":
     app.run(debug=True, port=5001)

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Peluquería Elegance</title>
     <link rel="icon" href="{{ url_for('static', filename='css/tijeras.png') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/elegance.css') }}">
 </head>
 <body>
     <nav class="navbar">
@@ -34,6 +34,10 @@
             {% endif %}
 
             <form method="post" class="login-form">
+                {% if next_url %}
+                    <input type="hidden" name="next" value="{{ next_url }}">
+                {% endif %}
+
                 <div class="field">
                     <label for="email">Email</label>
                     <input
@@ -58,7 +62,7 @@
                     >
                 </div>
 
-                <button type="submit">Ingresar</button>
+                <button type="submit" class="btn-primary">Ingresar</button>
             </form>
 
             <p class="form-link">
