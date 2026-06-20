@@ -413,11 +413,11 @@ def estadisticas():
     } for fila in filas_citas]
 
     filas_barberos = cursor.execute('''
-        SELECT u.nombre,
+        SELECT b.id_barbero, u.nombre,
                COUNT(c.id_cita) AS citas,
                COALESCE(SUM(s.precio), 0) AS ingresos,
                ROUND(COALESCE(AVG(r.calificacion), 0), 1) AS rating,
-               b.activo
+               b.activo, b.img_barbero
         FROM barberos b
         JOIN usuarios u ON b.id_usuario = u.id_usuario
         LEFT JOIN citas c ON b.id_barbero = c.id_barbero
@@ -431,12 +431,14 @@ def estadisticas():
 
     max_ingresos = max((fila["ingresos"] for fila in filas_barberos), default=1) or 1
     barberos_top = [{
+        "id_barbero": fila["id_barbero"],
         "nombre": fila["nombre"],
         "citas": fila["citas"] or 0,
         "rating": fila["rating"] or 0,
         "ingresos": int(fila["ingresos"] or 0),
         "pct": round((fila["ingresos"] or 0) / max_ingresos * 100),
         "activo": bool(fila["activo"]),
+        "img_barbero": fila["img_barbero"],
     } for fila in filas_barberos]
 
     barberos = barberos_top

@@ -1,18 +1,127 @@
 ﻿import json
 import os
 import requests
-from datetime import date, timedelta
+import jwt
+from datetime import date, datetime, timedelta
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
-from collections import defaultdict
-from datetime import datetime,timedelta
 
-from flask import Flask, redirect, render_template, request, session, url_for
+from flask import Flask, g, redirect, render_template, request, session, url_for
+
+try:
+    from jwt import ExpiredSignatureError, InvalidTokenError
+except ImportError:
+    from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 
 
 app = Flask(__name__, template_folder="templates", static_folder="statics")
 app.secret_key = "clave_front_tp_barberia"
+
+JWT_SECRET = os.environ.get("JWT_SECRET", "clave_secreta_tp_barberia")
+JWT_ALGORITHM = "HS256"
+
+ROLES_ADMIN = {"admin", "administrador"}
+ROLES_CLIENTE = {"cliente"}
+ROLES_BARBERO = {"barbero", "peluquero", "profesional"}
+
+
+def validar_token_session():
+    token = session.get("token")
+    if not token:
+        return None
+
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        usuario_id = int(payload["usuario_id"])
+        rol = str(payload["rol"]).lower()
+    except (ExpiredSignatureError, InvalidTokenError, KeyError, TypeError, ValueError):
+        session.clear()
+        return None
+
+    session["id_usuario"] = usuario_id
+    session["rol"] = rol
+
+    return {
+        "id_usuario": usuario_id,
+        "rol": rol,
+        "usuario": session.get("usuario", {})
+    }
+
+
+def redirigir_por_rol(usuario_actual):
+    rol = usuario_actual.get("rol")
+    id_usuario = usuario_actual.get("id_usuario")
+
+    if rol in ROLES_ADMIN:
+        return redirect("/admin")
+
+    if rol in ROLES_CLIENTE:
+        return redirect(f"/clientes/{id_usuario}")
+
+    if rol in ROLES_BARBERO:
+        return redirect(f"/panel_peluquero/{id_usuario}")
+
+    session.clear()
+    return redirect("/login")
+
+
+def obtener_id_desde_path(indice):
+    partes = request.path.strip("/").split("/")
+
+    try:
+        return int(partes[indice])
+    except (IndexError, TypeError, ValueError):
+        return None
+
+
+@app.before_request
+def proteger_vistas_privadas():
+    if request.endpoint == "static":
+        return None
+
+    if request.path in {"/", "/login"}:
+        usuario_actual = validar_token_session()
+        if usuario_actual:
+            g.usuario_actual = usuario_actual
+            return redirigir_por_rol(usuario_actual)
+        return None
+
+    if request.path in {"/register", "/logout"}:
+        return None
+
+    usuario_actual = validar_token_session()
+    if not usuario_actual:
+        return redirect("/login")
+
+    g.usuario_actual = usuario_actual
+    path = request.path
+    rol = usuario_actual["rol"]
+    id_usuario_token = usuario_actual["id_usuario"]
+
+    if path.startswith("/admin"):
+        if rol not in ROLES_ADMIN:
+            return redirigir_por_rol(usuario_actual)
+        return None
+
+    if path.startswith("/clientes/"):
+        id_usuario_url = obtener_id_desde_path(1)
+        if rol not in ROLES_CLIENTE or id_usuario_url != id_usuario_token:
+            return redirigir_por_rol(usuario_actual)
+        return None
+
+    if path.startswith("/panel_peluquero/"):
+        id_usuario_url = obtener_id_desde_path(1)
+        if rol not in ROLES_BARBERO or id_usuario_url != id_usuario_token:
+            return redirigir_por_rol(usuario_actual)
+        return None
+
+    if path == "/agenda":
+        if rol not in ROLES_BARBERO:
+            return redirigir_por_rol(usuario_actual)
+        return None
+
+    return None
 
 
 def get_backend_url():
@@ -41,12 +150,12 @@ def login_en_backend(email, clave):
             usuario = data.get("usuario")
 
             if not token or not usuario:
-                return False, None, None, "El backend no devolviÃ³ token o datos del usuario."
+                return False, None, None, "El backend no devolvió token o datos del usuario."
 
             return True, usuario, token, None
 
     except HTTPError as error:
-        mensaje = "Email o contraseÃ±a incorrectos."
+        mensaje = "Email o contraseña incorrectos."
 
         try:
             data = json.loads(error.read().decode("utf-8"))
@@ -57,7 +166,7 @@ def login_en_backend(email, clave):
         return False, None, None, mensaje
 
     except (URLError, TimeoutError):
-        return False, None, None, "No se pudo conectar con el backend. Verifique que estes levantado en el puerto 5000."
+        return False, None, None, "No se pudo conectar con el backend. Verificá que esté levantado en el puerto 5000."
 
 
 def registrar_en_backend(nombre, email, clave):
@@ -132,6 +241,13 @@ def obtener_barberos_cliente(id_usuario):
     )
 
 
+def obtener_servicios_cliente(id_usuario):
+    return obtener_json_backend(
+        f"/clientes/servicios/{id_usuario}",
+        "No se pudieron cargar los servicios"
+    )
+
+
 def obtener_info_cliente(id_usuario):
     return obtener_json_backend(
         f"/clientes/acerca-de/{id_usuario}",
@@ -148,7 +264,7 @@ def login():
         exito = None
 
         if request.args.get("registro") == "ok":
-            exito = "Cuenta creada correctamente. Ya podes iniciar sesión."
+            exito = "Cuenta creada correctamente. Ya podés iniciar sesión."
 
         return render_template("login.html", exito=exito)
 
@@ -189,12 +305,16 @@ def login():
         error=f"Rol no reconocido: {rol}"
     )
 
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("login"))
+
+
 @app.route("/clientes/<int:id_usuario>")
 def clientes_panel(id_usuario):
     usuario = session.get("usuario")
-
-    if not usuario:
-        return redirect("/login")
 
     data, error = obtener_panel_cliente(id_usuario)
     if data:
@@ -213,9 +333,6 @@ def clientes_panel(id_usuario):
 def clientes_barberos(id_usuario):
     usuario = session.get("usuario")
 
-    if not usuario:
-        return redirect("/login")
-
     data, error = obtener_barberos_cliente(id_usuario)
     if data:
         usuario = data.get("usuario", usuario)
@@ -230,12 +347,27 @@ def clientes_barberos(id_usuario):
     )
 
 
+@app.route("/clientes/<int:id_usuario>/servicios")
+def clientes_servicios(id_usuario):
+    usuario = session.get("usuario")
+
+    data, error = obtener_servicios_cliente(id_usuario)
+    if data:
+        usuario = data.get("usuario", usuario)
+
+    return render_template(
+        "feature_clientes/servicios.html",
+        usuario=usuario,
+        id_usuario=id_usuario,
+        servicios=data.get("servicios", []) if data else [],
+        turnos=data.get("turnos", []) if data else [],
+        error=error
+    )
+
+
 @app.route("/clientes/<int:id_usuario>/info")
 def clientes_info(id_usuario):
     usuario = session.get("usuario")
-
-    if not usuario:
-        return redirect("/login")
 
     data, error = obtener_info_cliente(id_usuario)
     if data:
@@ -248,10 +380,18 @@ def clientes_info(id_usuario):
         turnos=data.get("turnos", []) if data else [],
         error=error
     )
+@app.route("/clientes/<int:id_usuario>/reservar/<int:id_barbero>")
+def reservar_turno_form(id_usuario, id_barbero):
+
+    return render_template(
+        "feature_clientes/reservar_turno.html",
+        id_usuario=id_usuario,
+        id_barbero=id_barbero
+    )
 
 def obtener_panel_peluqueros(id_usuario):
     return obtener_json_backend(
-        f"/peluqueros/{id_usuario}",
+        f"/profesionales/peluqueros/{id_usuario}",
         "No se pudieron cargar los datos del cliente"
     )
 def normalizar_fecha(fecha_objeto_o_cadena):
@@ -265,6 +405,7 @@ def normalizar_fecha(fecha_objeto_o_cadena):
         except ValueError:
             continue
     return fecha_limpia
+
 @app.route("/panel_peluquero/<int:id_usuario>")
 def panel_peluquero(id_usuario):
     usuario = session.get("usuario")
@@ -344,7 +485,7 @@ def register():
         clave = request.form.get("clave", "")
 
         if not nombre or not email or not clave:
-            error = "CompletÃ¡ todos los campos."
+            error = "Completá todos los campos."
         else:
             registro_ok, error = registrar_en_backend(nombre, email, clave)
 
@@ -370,9 +511,9 @@ def obtener_dashboard_admin():
     except HTTPError as error:
         try:
             data = json.loads(error.read().decode("utf-8"))
-            return None, data.get("error") or "Error al obtener estadÃ­sticas."
+            return None, data.get("error") or "Error al obtener estadísticas."
         except Exception:
-            return None, "Error al obtener estadÃ­sticas."
+            return None, "Error al obtener estadísticas."
 
     except (URLError, TimeoutError):
         return None, "No se pudo conectar con el backend."
@@ -397,6 +538,9 @@ ADMIN_ERROR_MESSAGES = {
     "crear_servicio": "No se pudo crear el servicio.",
     "editar_servicio": "No se pudo editar el servicio.",
     "eliminar_servicio": "No se pudo eliminar el servicio.",
+    "crear_barbero": "No se pudo crear el barbero.",
+    "editar_barbero": "No se pudo editar el barbero",
+    "eliminar_barbero": "No se pudo eliminar el barbero.",
 }
 
 
@@ -544,6 +688,93 @@ def eliminar_servicio_front(id_servicio):
 
     return redirect("/admin")
 
+# ABM BARBERO
+
+@app.route("/admin/barberos/crear", methods=["POST"])
+def crear_barbero_front():
+    nombre = request.form.get("nombre", "").strip()
+    email  = request.form.get("email", "").strip()
+    clave  = request.form.get("clave", "").strip()
+    imagen = request.files.get("imagen")
+
+    data = {
+        "nombre": nombre,
+        "email":  email,
+        "clave":  clave
+    }
+
+    files = None
+    if imagen and imagen.filename:
+        files = {
+            "imagen": (imagen.filename, imagen.stream, imagen.mimetype)
+        }
+
+    try:
+        response = requests.post(
+            f"{get_backend_url()}/admin/barberos",
+            data=data,
+            files=files,
+            timeout=10
+        )
+
+        if response.status_code >= 400:
+            mensaje = mensaje_error_backend(response, "No se pudo crear el barbero.")
+            return redirect_admin_error(mensaje)
+
+    except requests.RequestException:
+        return redirect_admin_error("backend")
+
+    return redirect("/admin")
+
+
+@app.route("/admin/barberos/<int:id_barbero>/editar", methods=["POST"])
+def editar_barbero_front(id_barbero):
+    nombre = request.form.get("nombre", "").strip()
+    imagen = request.files.get("imagen")
+
+    data = {"nombre": nombre}
+
+    files = None
+    if imagen and imagen.filename:
+        files = {
+            "imagen": (imagen.filename, imagen.stream, imagen.mimetype)
+        }
+
+    try:
+        response = requests.patch(
+            f"{get_backend_url()}/admin/barberos/{id_barbero}",
+            data=data,
+            files=files,
+            timeout=10
+        )
+
+        if response.status_code >= 400:
+            mensaje = mensaje_error_backend(response, "No se pudo editar el barbero.")
+            return redirect_admin_error(mensaje)
+
+    except requests.RequestException:
+        return redirect_admin_error("backend")
+
+    return redirect("/admin")
+
+
+@app.route("/admin/barberos/<int:id_barbero>/eliminar", methods=["POST"])
+def eliminar_barbero_front(id_barbero):
+    try:
+        response = requests.delete(
+            f"{get_backend_url()}/admin/barberos/{id_barbero}",
+            timeout=10
+        )
+
+        if response.status_code >= 400:
+            mensaje = mensaje_error_backend(response, "No se pudo eliminar el barbero.")
+            return redirect_admin_error(mensaje)
+
+    except requests.RequestException:
+        return redirect_admin_error("backend")
+
+    return redirect("/admin")
+
 #  AGENDA BARBERO
 
 
@@ -560,8 +791,8 @@ def inicio_de_semana(d):
     return d - timedelta(days=d.weekday())
 
 
-DIAS_ES   = ["Lunes","Martes","MiÃ©rcoles","Jueves","Viernes","SÃ¡bado","Domingo"]
-DIAS_CORTOS = ["Lun","Mar","MiÃ©","Jue","Vie","SÃ¡b","Dom"]
+DIAS_ES   = ["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"]
+DIAS_CORTOS = ["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"]
 MESES_ES  = ["","enero","febrero","marzo","abril","mayo","junio",
              "julio","agosto","septiembre","octubre","noviembre","diciembre"]
 
@@ -573,13 +804,13 @@ def formatear_fecha_larga(d):
 
 
 def formatear_fecha_corta(d):
-    """ej: '7 jun 2026'  o  '7 jun' (sin aÃ±o si es el mismo aÃ±o)"""
+    """ej: '7 jun 2026'  o  '7 jun' (sin año si es el mismo año)"""
     anio = f" {d.year}" if d.year != date.today().year else ""
     return f"{d.day} {MESES_ES[d.month][:3]}{anio}"
 
 def hacer_request(url, method="GET", payload=None, token=None):
     """
-    Wrapper genÃ©rico para llamadas al backend.
+    Wrapper genérico para llamadas al backend.
     Devuelve (data_dict_or_list, error_str_or_None).
     """
     headers = {"Content-Type": "application/json"}
@@ -633,20 +864,16 @@ def obtener_citas_semana(id_barbero, lunes_str, token):
 
 @app.route("/agenda")
 def agenda():
-    # Verificar sesiÃ³n
-    if not session.get("token"):
-        return redirect(url_for("login"))
-
     id_barbero    = session.get("id_usuario")
     barbero_nombre = session.get("usuario", {}).get("nombre", "Barbero")
     token         = session.get("token")
 
-    # ParÃ¡metros de la URL
+    # Parámetros de la URL
     vista     = request.args.get("vista", "dia")          # 'dia' | 'semana'
     fecha_str = request.args.get("fecha", date.today().isoformat())
     fecha_actual = parsear_fecha(fecha_str)
 
-    # â”€â”€ VISTA DÃA â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    # VISTA DÍA
     if vista == "dia":
         fecha_anterior  = (fecha_actual - timedelta(days=1)).isoformat()
         fecha_siguiente = (fecha_actual + timedelta(days=1)).isoformat()
@@ -662,7 +889,7 @@ def agenda():
             fecha_anterior   = fecha_anterior,
             fecha_siguiente  = fecha_siguiente,
             fecha_label      = fecha_label,
-            # semana (no usadas en vista dÃ­a pero evitan error de template)
+            # semana (no usadas en vista día pero evitan error de template)
             semana_inicio_label = "",
             semana_fin_label    = "",
             dias_semana         = [],
@@ -682,7 +909,7 @@ def agenda():
 
     citas_por_dia = obtener_citas_semana(id_barbero, lunes_str, token)
 
-    # Armar lista de 7 dÃ­as con sus citas
+    # Armar lista de 7 días con sus citas
     dias_semana = []
     for i in range(7):
         dia = lunes + timedelta(days=i)

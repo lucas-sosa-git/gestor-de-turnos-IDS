@@ -21,7 +21,7 @@
                 </div>
             </div>
             <div class="logout-container">
-                <a href="/"><button class="logout-btn">Salir</button></a>
+                <a href="{{ url_for('logout') }}" class="logout-btn">Salir</a>
             </div>
         </header>
 
@@ -96,7 +96,9 @@
 
                         <div class="card-bottom">
                             <p class="card-note">Contacto: {{ turno['cliente_email'] }}</p>
-                            <button class="btn-cancel btn-success-action">
+                            <button 
+                                class="btn-cancel btn-success-action"
+                                onclick="finalizarTurno({{ turno['id_cita'] }})">
                                 <span>✅</span> Finalizar Turno
                             </button>
                         </div>
@@ -140,5 +142,38 @@
         {% endif %}
 
     </div>
+    <script>
+
+async function finalizarTurno(idCita){
+
+    if(!confirm("¿Finalizar este turno?")){
+        return;
+    }
+
+    try{
+
+        const respuesta = await fetch(
+            `http://127.0.0.1:5000/profesionales/turnos/${idCita}/finalizar`,
+            {
+                method: "PATCH"
+            }
+        );
+
+        const data = await respuesta.json();
+
+        if(respuesta.ok){
+            alert("Turno finalizado correctamente");
+            location.reload();
+        }else{
+            alert(data.error);
+        }
+
+    }catch(error){
+        alert("Error al conectar con el servidor");
+    }
+
+}
+
+</script>
 </body>
 </html>
