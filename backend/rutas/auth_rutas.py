@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta
 import hashlib
-import os
 
 import jwt
 from flask import Blueprint, jsonify, request
@@ -10,14 +9,11 @@ from db import get_db_connection
 
 auth_bp = Blueprint('auth', __name__)
 
-JWT_SECRET = os.environ.get("JWT_SECRET")
+JWT_SECRET = "clave_secreta_tp_barberia"
 JWT_ALGORITHM = "HS256"
 
 
 def generar_token(usuario_id, rol):
-    if not JWT_SECRET:
-        raise RuntimeError("Falta configurar JWT_SECRET")
-
     payload = {
         "usuario_id": usuario_id,
         "rol": rol,

@@ -16,9 +16,9 @@ except ImportError:
 
 
 app = Flask(__name__, template_folder="templates", static_folder="statics")
-app.secret_key = os.environ.get("FLASK_SECRET_KEY") or os.urandom(32)
+app.secret_key = "clave_front_tp_barberia"
 
-JWT_SECRET = os.environ.get("JWT_SECRET")
+JWT_SECRET = os.environ.get("JWT_SECRET", "clave_secreta_tp_barberia")
 JWT_ALGORITHM = "HS256"
 
 ROLES_ADMIN = {"admin", "administrador"}
@@ -28,7 +28,7 @@ ROLES_BARBERO = {"barbero", "peluquero", "profesional"}
 
 def validar_token_session():
     token = session.get("token")
-    if not token or not JWT_SECRET:
+    if not token:
         return None
 
     try:

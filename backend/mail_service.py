@@ -1,5 +1,4 @@
 import io
-import os
 import smtplib
 from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart
@@ -7,21 +6,12 @@ from email.mime.text import MIMEText
 
 import qrcode
 
-EMAIL_REMITENTE = os.environ.get("MAIL_USERNAME")
-CLAVE_APP = os.environ.get("MAIL_APP_PASSWORD")
-SMTP_HOST = os.environ.get("MAIL_SMTP_HOST", "smtp.gmail.com")
-SMTP_PORT = int(os.environ.get("MAIL_SMTP_PORT", "587"))
-FRONTEND_URL = os.environ.get(
-    "FRONTEND_URL",
-    "https://frontend-gestor-de-turnos-ids.onrender.com"
-).rstrip("/")
+EMAIL_REMITENTE = "barberia.fiuba@gmail.com"
+CLAVE_APP = "ydxh pvav yktv lnoy"
+FRONTEND_URL = "https://frontend-gestor-de-turnos-ids.onrender.com"
 
 
 def enviar_mail(destinatario, nombre, fecha, hora, barbero, servicio, qr_token, id_cita):
-    if not EMAIL_REMITENTE or not CLAVE_APP:
-        print("Mail no configurado: faltan MAIL_USERNAME o MAIL_APP_PASSWORD")
-        return False
-
     asunto = "Confirma tu turno"
     confirmar_url = f"{FRONTEND_URL}/confirmar/{qr_token}"
     cancelar_url = f"{FRONTEND_URL}/cancelar/{id_cita}"
@@ -97,7 +87,7 @@ def enviar_mail(destinatario, nombre, fecha, hora, barbero, servicio, qr_token, 
     mensaje.attach(imagen)
 
     try:
-        servidor = smtplib.SMTP(SMTP_HOST, SMTP_PORT)
+        servidor = smtplib.SMTP("smtp.gmail.com", 587)
         servidor.starttls()
         servidor.login(EMAIL_REMITENTE, CLAVE_APP)
         servidor.send_message(mensaje)
