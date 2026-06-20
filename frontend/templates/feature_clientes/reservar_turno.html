@@ -1,76 +1,107 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="{{ url_for('static', filename='css/tijeras.png') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
     <title>Reservar Turno</title>
 </head>
 <body>
+<div class="app-container">
+    <header class="main-header">
+        <h1 class="salon-title">Reservar Turno</h1>
+    </header>
 
-<h1>Reservar Turno</h1>
+    <input type="hidden" id="id_usuario" value="{{ id_usuario }}">
+    <input type="hidden" id="id_barbero" value="{{ id_barbero }}">
 
-<form id="formReserva">
+    <div class="reserva-card form-card">
+        <form id="formReserva">
+            
+            <div class="form-group">
+                <label class="form-label">Servicio:</label>
+                <select id="id_servicio" class="form-control">
+                    <option value="1">Corte pelo de hombre</option>
+                    <option value="2">Corte pelo de mujer</option>
+                    <option value="3">Barba</option>
+                    <option value="4">Cejas</option>
+                    <option value="5">Tintura</option>
+                </select>
+            </div>
 
-    <label>Servicio:</label>
-    <select id="id_servicio">
-        <option value="1">Corte pelo de hombre</option>
-        <option value="2">Corte pelo de mujer</option>
-        <option value="3">Barba</option>
-        <option value="4">Cejas</option>
-        <option value="5">Tintura</option>
-    </select>
+            <div class="form-group">
+                <label class="form-label">Fecha:</label>
+                <input type="date" id="fecha" class="form-control" required>
+            </div>
 
-    <br><br>
+            <div class="form-group-last">
+                <label class="form-label">Hora:</label>
+                <input type="time" id="hora_inicio" class="form-control" required>
+            </div>
 
-    <label>Fecha:</label>
-    <input type="date" id="fecha">
+            <button type="submit" class="btn-submit">
+                Confirmar Reserva
+            </button>
+        </form>
 
-    <br><br>
-
-    <label>Hora:</label>
-    <input type="time" id="hora_inicio">
-
-    <br><br>
-
-    <button type="submit">
-        Confirmar Reserva
-    </button>
-
-</form>
-
-<p id="mensaje"></p>
+        <p id="mensaje" class="form-mensaje"></p>
+    </div>
+</div>
 
 <script>
-
 document.getElementById("formReserva").addEventListener("submit", async function(e){
-
     e.preventDefault();
+    
+    const mensajeEl = document.getElementById("mensaje");
+    mensajeEl.innerText = "Procesando reserva...";
+    mensajeEl.style.color = "#1f2937";
 
-    const respuesta = await fetch("http://127.0.0.1:5000/clientes/turnos", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            id_usuario: {{ id_usuario }},
-            id_barbero: {{ id_barbero }},
-            id_servicio: document.getElementById("id_servicio").value,
-            fecha: document.getElementById("fecha").value,
-            hora_inicio: document.getElementById("hora_inicio").value
-        })
-    });
+    const inputUsuario = document.getElementById("id_usuario");
+    const inputBarbero = document.getElementById("id_barbero");
 
-    const data = await respuesta.json();
-
-    if(respuesta.ok){
-        document.getElementById("mensaje").innerText =
-            "Turno reservado correctamente";
-    }
-    else{
-        document.getElementById("mensaje").innerText =
-            data.error;
+    if (!inputUsuario || !inputBarbero || !inputUsuario.value || !inputBarbero.value) {
+        mensajeEl.innerText = "Error interno: No se detectó la sesión del usuario o barbero.";
+        mensajeEl.style.color = "#dc2626";
+        return;
     }
 
+    const payload = {
+        id_usuario: parseInt(inputUsuario.value),
+        id_barbero: parseInt(inputBarbero.value),
+        id_servicio: parseInt(document.getElementById("id_servicio").value),
+        fecha: document.getElementById("fecha").value,
+        hora_inicio: document.getElementById("hora_inicio").value
+    };
+
+    try {
+        const respuesta = await fetch("/turnos", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await respuesta.json();
+
+        if (respuesta.ok) {
+            mensajeEl.innerText = "¡Turno reservado correctamente! Redireccionando...";
+            mensajeEl.style.color = "#16a34a";
+            
+            setTimeout(() => {
+                window.location.href = `/clientes/${payload.id_usuario}`; 
+            }, 2000);
+        } else {
+            mensajeEl.innerText = "Error: " + (data.error || "No se pudo agendar.");
+            mensajeEl.style.color = "#dc2626";
+        }
+    } catch (error) {
+        mensajeEl.innerText = "Error de red o servidor no disponible.";
+        mensajeEl.style.color = "#dc2626";
+        console.error(error);
+    }
 });
-
 </script>
 
 </body>

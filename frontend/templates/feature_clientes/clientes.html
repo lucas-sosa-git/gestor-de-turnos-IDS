@@ -90,10 +90,20 @@
                     <hr class="card-divider">
 
                     <div class="card-bottom">
-                        <p class="card-note">Te esperamos en tu cita. Recuerda llegar 5 minutos antes.</p>
-                        <button class="btn-cancel">
-                            <span>🗑️</span> Cancelar Turno
-                        </button>
+                        {% if turno['estado'].lower() == 'completada' %}
+                            <p class="card-note">¡Esperamos que hayas disfrutado tu corte!</p>
+                            <button class="btn-resenia">
+                                <a href="{{ url_for('dejar_resenia_form', id_usuario=id_usuario, id_cita=turno['id_cita'], id_barbero=turno['id_barbero']) }}" class="text-resenia">
+                                    ⭐ Dejar Reseña
+                                </a>
+                            </button>
+                            
+                        {% elif turno['estado'].lower() == 'confirmada' %}
+                            <p class="card-note">Te esperamos en tu cita. Recuerda llegar 5 minutos antes.</p>
+                            <button class="btn-cancel">
+                                <span>🗑️</span> Cancelar Turno
+                            </button>
+                        {% endif %}
                     </div>
 
                 </div>

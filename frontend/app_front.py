@@ -7,7 +7,7 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
-from flask import Flask, g, redirect, render_template, request, session, url_for
+from flask import Flask, g, redirect, render_template, request, session, url_for, jsonify
 
 try:
     from jwt import ExpiredSignatureError, InvalidTokenError
@@ -388,6 +388,64 @@ def reservar_turno_form(id_usuario, id_barbero):
         id_usuario=id_usuario,
         id_barbero=id_barbero
     )
+@app.route("/procesar_reserva_frontend", methods=['POST'])
+def crear_reserva_proxy():
+    data = request.get_json()
+    url_backend = "http://127.0.0.1:5000/clientes/turnos" 
+    try:
+        print("\n" + "="*50)
+        print(">>> 1. ENVIANDO DATOS AL BACKEND:", data)
+        
+        respuesta_backend = requests.post(url_backend, json=data)
+        
+        print(f">>> 2. EL BACKEND RESPONDIÓ CON CÓDIGO: {respuesta_backend.status_code}")
+        
+        try:
+            json_response = respuesta_backend.json()
+            print(">>> 3. LECTURA EXITOSA. Devolviendo al navegador...")
+            print("="*50 + "\n")
+            return jsonify(json_response), respuesta_backend.status_code
+            
+        except ValueError:
+            print(">>> ¡ALERTA ROJA! El backend no devolvió JSON. Devolvió este código de error:")
+            print(respuesta_backend.text)
+            print("="*50 + "\n")
+            return jsonify({
+                "error": f"Falla en el backend (Código {respuesta_backend.status_code}). Revisá la consola negra del Frontend para leer el problema real."
+            }), 500
+    except requests.exceptions.RequestException as e:
+        print(">>> ERROR CRÍTICO DE CONEXIÓN:", e)
+        return jsonify({"error": "El servidor Backend (puerto 5000) está apagado o no responde."}), 500
+
+
+# ─── RUTA PARA MOSTRAR LA PANTALLA DE RESEÑA ───
+@app.route("/clientes/<int:id_usuario>/resenia/<int:id_cita>/<int:id_barbero>")
+def dejar_resenia_form(id_usuario, id_cita, id_barbero):
+    return render_template(
+        "feature_clientes/dejar_resenia.html",
+        id_usuario=id_usuario,
+        id_cita=id_cita,
+        id_barbero=id_barbero
+    )
+@app.route("/procesar_resenia_frontend", methods=['POST'])
+def crear_resenia_proxy():
+    data = request.get_json()
+    url_backend = "http://127.0.0.1:5000/clientes/resenias" 
+    
+    try:
+        respuesta_backend = requests.post(url_backend, json=data)
+        
+        try:
+            return jsonify(respuesta_backend.json()), respuesta_backend.status_code
+        except ValueError:
+            print(">>> ERROR: El backend devolvió HTML en vez de JSON.")
+            return jsonify({
+                "error": f"Falla en el backend (Código {respuesta_backend.status_code}). Revisá la consola."
+            }), 500
+            
+    except requests.exceptions.RequestException as e:
+        return jsonify({"error": "El servidor Backend (puerto 5000) no responde."}), 500
+    
 
 def obtener_panel_peluqueros(id_usuario):
     return obtener_json_backend(

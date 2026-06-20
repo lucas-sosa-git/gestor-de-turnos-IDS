@@ -20,8 +20,8 @@ VALUES
 -- Barberos (los IDs cambiaron porque ahora el admin es el id 1)
 INSERT INTO barberos (id_usuario, img_barbero)
 VALUES
-(7, 'https://cstrkukbiiodroebybcv.supabase.co/storage/v1/object/public/gestor-imagenes/6ca320f4f4194d8e9bf2ddc872750963.png'),
-(8, 'https://cstrkukbiiodroebybcv.supabase.co/storage/v1/object/public/gestor-imagenes/9e62a088d91c4da383c0a2674dcf3bbb.jpg'),
+(7, 'https://cstrkukbiiodroebybcv.supabase.co/storage/v1/render/image/public/gestor-imagenes/6ca320f4f4194d8e9bf2ddc872750963.png?width=300&height=300&resize=cover'),
+(8, 'https://cstrkukbiiodroebybcv.supabase.co/storage/v1/render/image/public/gestor-imagenes/9e62a088d91c4da383c0a2674dcf3bbb.jpg?width=300&height=300&resize=cover'),
 (9, NULL);
 
 INSERT INTO disponibilidad_barberos (id_barbero, dia_semana, hora_inicio, hora_fin)
@@ -90,7 +90,7 @@ VALUES
 (5, 9, 5, 'Rapido y prolijo');
 INSERT INTO citas (id_usuario, id_barbero, id_servicio, fecha, hora_inicio, hora_fin, estado)
 VALUES
-(1,1,1,'2026-05-20','10:00:00','10:30:00','pendiente'),
+(2,1,1,'2026-05-20','10:00:00','10:30:00','completada'),
 (1,1,5, '2026-05-22', '10:00:00','11:30:00', 'confirmada'),
 (2,2,2,'2026-05-20','11:00:00','11:45:00','pendiente'),
 (3,1,3,'2026-05-21','12:00:00','12:25:00','confirmada'),

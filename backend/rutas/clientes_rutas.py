@@ -129,6 +129,7 @@ def panel_cliente(id_usuario):
     query = '''
         SELECT 
             c.id_cita,
+            c.id_barbero,
             c.fecha,
             c.hora_inicio,
             c.estado,
@@ -329,8 +330,8 @@ def reservar_turno():
     id_usuario  = data.get('id_usuario')
     id_barbero  = data.get('id_barbero')
     id_servicio = data.get('id_servicio')
-    fecha       = data.get('fecha')
-    hora_inicio = data.get('hora_inicio')
+    fecha       = str(data.get('fecha', '')).strip()
+    hora_inicio = str(data.get('hora_inicio', '')).strip()
 
     if not id_usuario or not id_barbero or not id_servicio or not fecha or not hora_inicio:
         return jsonify({"error": "Faltan campos obligatorios"}), 400
@@ -362,15 +363,23 @@ def reservar_turno():
         conn.close()
         return jsonify({"error": "Servicio no encontrado"}), 404
 
-    hora_fin = (
-        datetime.strptime(hora_inicio, "%H:%M") +
-        timedelta(minutes=servicio['duracion'])
-    ).strftime("%H:%M")
+    try:
+        hora_fin = (
+            datetime.strptime(hora_inicio, "%H:%M") +
+            timedelta(minutes=int(servicio['duracion']))
+        ).strftime("%H:%M")
+    except Exception as e:
+        conn.close()
+        return jsonify({"error": f"Error al procesar el formato de hora: {str(e)}"}), 400
 
     if fecha < datetime.now().strftime("%Y-%m-%d"):
         conn.close()
         return jsonify({"error": "No se puede reservar en una fecha pasada"}), 400
-
+    print("--- DEBUG DE TIPOS ---")
+    print("id_barbero:", type(id_barbero))
+    print("fecha:", type(fecha))
+    print("hora_fin:", type(hora_fin))
+    print("hora_inicio:", type(hora_inicio))
     conflicto = cursor.execute('''
         SELECT id_cita FROM citas
         WHERE id_barbero = ?
@@ -407,19 +416,19 @@ def reservar_turno():
     ''', (id_cita,)).fetchone()
 
     conn.close()
-
-    enviar_mail(
-        destinatario=cita['cliente_email'],
-        nombre=cita['cliente'],
-        fecha=cita['fecha'],
-        hora=cita['hora_inicio'],
-        barbero=cita['barbero'],
-        servicio=cita['servicio'],
-        qr_token=qr_token,
-        id_cita=id_cita
-    )
-
-    
+    try:
+        enviar_mail(
+            destinatario=cita['cliente_email'],
+            nombre=cita['cliente'],
+            fecha=cita['fecha'],
+            hora=cita['hora_inicio'],
+            barbero=cita['barbero'],
+            servicio=cita['servicio'],
+            qr_token=qr_token,
+            id_cita=id_cita
+        )
+    except Exception as e:
+        print(f"Advertencia: No se pudo enviar el correo de prueba: {e}")
     return jsonify(dict(cita)), 201
 
 

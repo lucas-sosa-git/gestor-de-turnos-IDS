@@ -231,3 +231,15 @@ body {
     margin-top: 50px;
     color: #ddd;
 }
+.btn-reservar {
+    background: #793df0;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 10px;
+    font-weight: bold;
+    cursor: pointer;
+}
+.text-reserva{
+    color: white;
+}
