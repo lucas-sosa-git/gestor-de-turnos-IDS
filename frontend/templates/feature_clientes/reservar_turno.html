@@ -3,106 +3,186 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reservar Turno - Peluqueria Elegance</title>
     <link rel="icon" href="{{ url_for('static', filename='css/tijeras.png') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
-    <title>Reservar Turno</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/elegance.css') }}">
 </head>
 <body>
-<div class="app-container">
-    <header class="main-header">
-        <h1 class="salon-title">Reservar Turno</h1>
-    </header>
+    <nav class="navbar">
+        <div class="container navbar-row">
+            <a class="navbar-brand" href="{{ url_for('clientes_panel', id_usuario=id_usuario) }}">
+                Peluqueria Elegance
+            </a>
+        </div>
+    </nav>
 
-    <input type="hidden" id="id_usuario" value="{{ id_usuario }}">
-    <input type="hidden" id="id_barbero" value="{{ id_barbero }}">
-
-    <div class="reserva-card form-card">
-        <form id="formReserva">
-            
-            <div class="form-group">
-                <label class="form-label">Servicio:</label>
-                <select id="id_servicio" class="form-control">
-                    <option value="1">Corte pelo de hombre</option>
-                    <option value="2">Corte pelo de mujer</option>
-                    <option value="3">Barba</option>
-                    <option value="4">Cejas</option>
-                    <option value="5">Tintura</option>
-                </select>
+    <main class="reserve-page">
+        <section class="reserve-card" aria-labelledby="reserva-title">
+            <div class="brand-icon" aria-hidden="true">PE</div>
+            <div class="reserve-header">
+                <p class="eyebrow">Nueva reserva</p>
+                <h1 id="reserva-title">Reservar turno</h1>
+                <p class="subtitle">Elegi servicio, fecha y horario para confirmar tu cita.</p>
             </div>
 
-            <div class="form-group">
-                <label class="form-label">Fecha:</label>
-                <input type="date" id="fecha" class="form-control" required>
-            </div>
+            {% if error %}
+                <p class="alert" role="alert">{{ error }}</p>
+            {% endif %}
 
-            <div class="form-group-last">
-                <label class="form-label">Hora:</label>
-                <input type="time" id="hora_inicio" class="form-control" required>
-            </div>
+            <form method="post" class="login-form">
+                <div class="field">
+                    <label for="id_servicio">Servicio</label>
+                    <select id="id_servicio" name="id_servicio" required>
+                        <option value="">Selecciona un servicio</option>
+                        {% for servicio in servicios %}
+                            <option value="{{ servicio['id_servicio'] }}" data-duracion="{{ servicio['duracion'] }}">
+                                {{ servicio['nombre'] }} - {{ servicio['duracion'] }} min
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
 
-            <button type="submit" class="btn-submit">
-                Confirmar Reserva
-            </button>
-        </form>
+                <div class="field">
+                    <label for="fecha">Fecha</label>
+                    <input type="date" id="fecha" name="fecha" min="{{ fecha_min }}" required>
+                    <p class="field-hint" id="fecha-legible">Selecciona una fecha.</p>
+                </div>
 
-        <p id="mensaje" class="form-mensaje"></p>
-    </div>
-</div>
+                <div class="field">
+                    <label for="hora_inicio">Hora</label>
+                    <select id="hora_inicio" name="hora_inicio" required disabled>
+                        <option value="">Selecciona servicio y fecha</option>
+                    </select>
+                    <p class="field-hint" id="horario-ayuda">Los horarios se muestran segun la disponibilidad del barbero.</p>
+                </div>
 
-<script>
-document.getElementById("formReserva").addEventListener("submit", async function(e){
-    e.preventDefault();
-    
-    const mensajeEl = document.getElementById("mensaje");
-    mensajeEl.innerText = "Procesando reserva...";
-    mensajeEl.style.color = "#1f2937";
+                <button type="submit" class="btn-primary">
+                    Confirmar Reserva
+                </button>
+            </form>
 
-    const inputUsuario = document.getElementById("id_usuario");
-    const inputBarbero = document.getElementById("id_barbero");
+            <p class="form-link">
+                <a href="{{ url_for('clientes_barberos', id_usuario=id_usuario) }}">Elegir otro peluquero</a>
+            </p>
+        </section>
+    </main>
 
-    if (!inputUsuario || !inputBarbero || !inputUsuario.value || !inputBarbero.value) {
-        mensajeEl.innerText = "Error interno: No se detectó la sesión del usuario o barbero.";
-        mensajeEl.style.color = "#dc2626";
-        return;
-    }
+    <footer>
+        <p>&copy; 2026 Peluqueria Elegance</p>
+    </footer>
 
-    const payload = {
-        id_usuario: parseInt(inputUsuario.value),
-        id_barbero: parseInt(inputBarbero.value),
-        id_servicio: parseInt(document.getElementById("id_servicio").value),
-        fecha: document.getElementById("fecha").value,
-        hora_inicio: document.getElementById("hora_inicio").value
-    };
+    <script>
+        const disponibilidad = {{ disponibilidad | tojson }};
+        const citasOcupadas = {{ citas_ocupadas | tojson }};
+        const fechaMinima = "{{ fecha_min }}";
+        const servicioSelect = document.getElementById("id_servicio");
+        const fechaInput = document.getElementById("fecha");
+        const horaSelect = document.getElementById("hora_inicio");
+        const fechaLegible = document.getElementById("fecha-legible");
+        const horarioAyuda = document.getElementById("horario-ayuda");
 
-    try {
-        const respuesta = await fetch("/turnos", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(payload)
-        });
-
-        const data = await respuesta.json();
-
-        if (respuesta.ok) {
-            mensajeEl.innerText = "¡Turno reservado correctamente! Redireccionando...";
-            mensajeEl.style.color = "#16a34a";
-            
-            setTimeout(() => {
-                window.location.href = `/clientes/${payload.id_usuario}`; 
-            }, 2000);
-        } else {
-            mensajeEl.innerText = "Error: " + (data.error || "No se pudo agendar.");
-            mensajeEl.style.color = "#dc2626";
+        function minutos(hora) {
+            const partes = String(hora || "").split(":").map(Number);
+            return (partes[0] * 60) + partes[1];
         }
-    } catch (error) {
-        mensajeEl.innerText = "Error de red o servidor no disponible.";
-        mensajeEl.style.color = "#dc2626";
-        console.error(error);
-    }
-});
-</script>
 
+        function horaDesdeMinutos(total) {
+            const horas = String(Math.floor(total / 60)).padStart(2, "0");
+            const mins = String(total % 60).padStart(2, "0");
+            return `${horas}:${mins}`;
+        }
+
+        function fechaArgentina(fechaIso) {
+            if (!fechaIso) {
+                return "Selecciona una fecha.";
+            }
+
+            const [anio, mes, dia] = fechaIso.split("-");
+            return `Fecha seleccionada: ${dia}/${mes}/${anio}`;
+        }
+
+        function diaSemanaBd(fechaIso) {
+            const fecha = new Date(`${fechaIso}T00:00:00`);
+            return fecha.getDay();
+        }
+
+        function estaOcupado(fechaIso, inicio, fin) {
+            const inicioMin = minutos(inicio);
+            const finMin = minutos(fin);
+
+            return citasOcupadas.some((cita) => {
+                if (cita.fecha !== fechaIso || ["cancelada", "completada"].includes(cita.estado)) {
+                    return false;
+                }
+
+                return minutos(cita.hora_inicio) < finMin && minutos(cita.hora_fin) > inicioMin;
+            });
+        }
+
+        function yaPaso(fechaIso, inicio) {
+            if (fechaIso !== fechaMinima) {
+                return false;
+            }
+
+            const ahora = new Date();
+            const minutosAhora = (ahora.getHours() * 60) + ahora.getMinutes();
+            return minutos(inicio) <= minutosAhora;
+        }
+
+        function actualizarHorarios() {
+            const opcionServicio = servicioSelect.selectedOptions[0];
+            const duracion = Number(opcionServicio?.dataset.duracion || 0);
+            const fechaIso = fechaInput.value;
+
+            fechaLegible.textContent = fechaArgentina(fechaIso);
+            horaSelect.innerHTML = "";
+
+            if (!duracion || !fechaIso) {
+                horaSelect.disabled = true;
+                horaSelect.innerHTML = '<option value="">Selecciona servicio y fecha</option>';
+                horarioAyuda.textContent = "Los horarios se muestran segun la disponibilidad del barbero.";
+                return;
+            }
+
+            const dia = diaSemanaBd(fechaIso);
+            const bloques = disponibilidad.filter((bloque) => Number(bloque.dia_semana) === dia);
+            const opciones = [];
+
+            bloques.forEach((bloque) => {
+                const desde = minutos(bloque.hora_inicio);
+                const hasta = minutos(bloque.hora_fin);
+
+                for (let inicio = desde; inicio + duracion <= hasta; inicio += 15) {
+                    const hora = horaDesdeMinutos(inicio);
+                    const fin = horaDesdeMinutos(inicio + duracion);
+
+                    if (!estaOcupado(fechaIso, hora, fin) && !yaPaso(fechaIso, hora)) {
+                        opciones.push(hora);
+                    }
+                }
+            });
+
+            if (!opciones.length) {
+                horaSelect.disabled = true;
+                horaSelect.innerHTML = '<option value="">No hay horarios disponibles</option>';
+                horarioAyuda.textContent = "Ese dia no tiene horarios libres para el servicio elegido.";
+                return;
+            }
+
+            horaSelect.disabled = false;
+            horaSelect.innerHTML = '<option value="">Selecciona un horario</option>';
+            opciones.forEach((hora) => {
+                const option = document.createElement("option");
+                option.value = hora;
+                option.textContent = `${hora} hs`;
+                horaSelect.appendChild(option);
+            });
+            horarioAyuda.textContent = "Estos horarios respetan la agenda configurada del barbero.";
+        }
+
+        servicioSelect.addEventListener("change", actualizarHorarios);
+        fechaInput.addEventListener("change", actualizarHorarios);
+        actualizarHorarios();
+    </script>
 </body>
 </html>
