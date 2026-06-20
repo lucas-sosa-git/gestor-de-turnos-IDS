@@ -454,6 +454,7 @@ def reservar_turno_form(id_usuario, id_barbero):
         "id_servicio": request.form.get("id_servicio"),
         "fecha": request.form.get("fecha"),
         "hora_inicio": request.form.get("hora_inicio"),
+        "frontend_url": request.host_url.rstrip("/"),
     }
 
     try:
@@ -826,7 +827,8 @@ def confirmar_turno_mail(qr_token):
         "confirmacion_turno.html",
         ok=True,
         mensaje=data.get("mensaje") or "Turno confirmado correctamente",
-        cita=cita
+        cita=cita,
+        id_usuario=cita.get("id_usuario")
     )
 
 

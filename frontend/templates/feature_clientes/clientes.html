@@ -34,7 +34,7 @@
             </a>
 
             <a href="#" class="nav-link active">
-                Mis Reservas
+                Mis Turnos
                 {% if turnos | length > 0 %}
                     <span class="indicador-numero">{{ turnos|length }}</span>
                 {% endif %}
@@ -59,8 +59,8 @@
 
         <div class="section-header">
             <div>
-                <h2 class="section-title">Mis Reservas Activas</h2>
-                <p class="section-subtitle">Gestiona tus citas pendientes y reserva nuevos turnos.</p>
+                <h2 class="section-title">Mis Turnos</h2>
+                <p class="section-subtitle">Gestiona tus citas pendientes, confirmadas y completadas.</p>
             </div>
             <a href="{{ url_for('clientes_barberos', id_usuario=id_usuario) }}" class="btn-history">
                 Nuevo Turno
@@ -121,7 +121,7 @@
             {% endfor %}
         {% else %}
             <div class="estado-vacio">
-                <p>No tienes reservas activas en este momento.</p>
+                <p>No tienes turnos en este momento.</p>
             </div>
         {% endif %}
     </div>

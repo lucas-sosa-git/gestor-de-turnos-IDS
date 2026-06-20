@@ -8,14 +8,15 @@ import qrcode
 
 EMAIL_REMITENTE = "barberia.fiuba@gmail.com"
 CLAVE_APP = "ydxh pvav yktv lnoy"
-FRONTEND_URL = "https://frontend-gestor-de-turnos-ids.onrender.com"
+DEFAULT_FRONTEND_URL = "https://frontend-gestor-de-turnos-ids.onrender.com"
 
 
-def enviar_mail(destinatario, nombre, fecha, hora, barbero, servicio, qr_token, id_cita):
+def enviar_mail(destinatario, nombre, fecha, hora, barbero, servicio, qr_token, id_cita, frontend_url=None):
     asunto = "Confirma tu turno"
-    confirmar_url = f"{FRONTEND_URL}/confirmar/{qr_token}"
-    cancelar_url = f"{FRONTEND_URL}/cancelar/{id_cita}"
-    qr_url = f"{FRONTEND_URL}/qr/{qr_token}"
+    frontend_url = (frontend_url or DEFAULT_FRONTEND_URL).rstrip("/")
+    confirmar_url = f"{frontend_url}/confirmar/{qr_token}"
+    cancelar_url = f"{frontend_url}/cancelar/{id_cita}"
+    qr_url = f"{frontend_url}/qr/{qr_token}"
 
     cuerpo = f"""
     <html>

@@ -35,6 +35,14 @@
                     <p><strong>Estado:</strong> {{ cita['estado'].capitalize() }}</p>
                 </div>
             {% endif %}
+
+            {% if ok and id_usuario %}
+                <p class="form-link">
+                    <a class="btn-primary" href="{{ url_for('clientes_panel', id_usuario=id_usuario) }}">
+                        Volver a mis turnos
+                    </a>
+                </p>
+            {% endif %}
         </section>
     </main>
 

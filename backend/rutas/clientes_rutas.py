@@ -162,8 +162,11 @@ def panel_cliente(id_usuario):
         JOIN usuarios ub ON b.id_usuario = ub.id_usuario
         JOIN servicios s ON c.id_servicio = s.id_servicio
         WHERE c.id_usuario = ?
-          AND c.estado NOT IN ('cancelada', 'completada')
-        ORDER BY c.fecha ASC, c.hora_inicio ASC
+          AND c.estado != 'cancelada'
+        ORDER BY
+          CASE WHEN c.estado = 'completada' THEN 1 ELSE 0 END,
+          c.fecha ASC,
+          c.hora_inicio ASC
     ''', (id_usuario,)).fetchall()
     conn.close()
 
@@ -273,6 +276,9 @@ def reservar_turno():
     id_servicio = data.get('id_servicio')
     fecha = str(data.get('fecha', '')).strip()
     hora_inicio = str(data.get('hora_inicio', '')).strip()
+    frontend_url = str(data.get('frontend_url') or '').strip().rstrip("/")
+    if frontend_url and not frontend_url.startswith(("http://", "https://")):
+        frontend_url = ""
 
     if not id_usuario or not id_barbero or not id_servicio or not fecha or not hora_inicio:
         return jsonify({"error": "Faltan campos obligatorios"}), 400
@@ -395,7 +401,8 @@ def reservar_turno():
         barbero=cita['barbero'],
         servicio=cita['servicio'],
         qr_token=qr_token,
-        id_cita=id_cita
+        id_cita=id_cita,
+        frontend_url=frontend_url
     )
 
     respuesta = dict(cita)
@@ -504,7 +511,7 @@ def confirmar_turno(qr_token):
 
     if cita["estado"] == "confirmada":
         cita_confirmada = cursor.execute('''
-            SELECT c.id_cita, c.fecha, c.hora_inicio, c.hora_fin, c.estado,
+            SELECT c.id_cita, c.id_usuario, c.fecha, c.hora_inicio, c.hora_fin, c.estado,
                    u.nombre AS cliente,
                    ub.nombre AS barbero,
                    s.nombre AS servicio
@@ -528,7 +535,7 @@ def confirmar_turno(qr_token):
     conn.commit()
 
     cita_confirmada = cursor.execute('''
-        SELECT c.id_cita, c.fecha, c.hora_inicio, c.hora_fin, c.estado,
+        SELECT c.id_cita, c.id_usuario, c.fecha, c.hora_inicio, c.hora_fin, c.estado,
                u.nombre AS cliente,
                ub.nombre AS barbero,
                s.nombre AS servicio

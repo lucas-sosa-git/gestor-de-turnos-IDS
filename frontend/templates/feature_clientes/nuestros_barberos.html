@@ -32,7 +32,7 @@
                 Servicios
             </a>
             <a href="{{ url_for('clientes_panel', id_usuario=id_usuario) }}" class="nav-link">
-                Mis Reservas
+                Mis Turnos
                 {% if turnos and turnos | length > 0 %}
                     <span class="indicador-numero">{{ turnos | length }}</span>
                 {% endif %}
