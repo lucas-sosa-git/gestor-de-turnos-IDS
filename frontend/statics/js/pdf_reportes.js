@@ -1,10 +1,14 @@
 /*
  * Generación de reportes PDF del panel administrativo.
  *
- * Esta versión no utiliza html2pdf.js para construir el archivo.
- * Primero captura la sección con html2canvas y después arma cada
- * página con jsPDF. De esta manera se evita el problema de los
- * archivos que se descargaban correctamente pero quedaban blancos.
+ * Captura una copia temporal de la sección con html2canvas
+ * y luego arma el PDF con jsPDF.
+ *
+ * Corrección importante:
+ * Cuando la dashboard usa tablas, las celdas heredan el color
+ * blanco del modo oscuro. En el PDF el fondo es blanco, entonces
+ * el texto quedaba invisible. Por eso acá se fuerzan estilos claros
+ * sobre la copia que se exporta al PDF.
  */
 
 (function () {
@@ -104,6 +108,246 @@
         );
     }
 
+    function forzarEstilosTablasParaPDF(contenedor) {
+        const tablas = contenedor.querySelectorAll(
+            "table.tabla-dashboard, table.tabla-admin"
+        );
+
+        tablas.forEach(function (tabla) {
+            tabla.style.setProperty(
+                "width",
+                "100%",
+                "important"
+            );
+
+            tabla.style.setProperty(
+                "border-collapse",
+                "collapse",
+                "important"
+            );
+
+            tabla.style.setProperty(
+                "table-layout",
+                "fixed",
+                "important"
+            );
+
+            tabla.style.setProperty(
+                "margin-top",
+                "14px",
+                "important"
+            );
+
+            tabla.style.setProperty(
+                "background",
+                "#ffffff",
+                "important"
+            );
+
+            tabla.style.setProperty(
+                "color",
+                "#111827",
+                "important"
+            );
+
+            tabla.querySelectorAll("thead, tbody").forEach(function (grupo) {
+                grupo.style.setProperty(
+                    "background",
+                    "#ffffff",
+                    "important"
+                );
+
+                grupo.style.setProperty(
+                    "color",
+                    "#111827",
+                    "important"
+                );
+            });
+
+            tabla.querySelectorAll("tr").forEach(function (fila) {
+                fila.style.setProperty(
+                    "background",
+                    "#ffffff",
+                    "important"
+                );
+
+                fila.style.setProperty(
+                    "color",
+                    "#111827",
+                    "important"
+                );
+            });
+
+            tabla.querySelectorAll("th").forEach(function (celda) {
+                celda.style.setProperty(
+                    "background",
+                    "#ffffff",
+                    "important"
+                );
+
+                celda.style.setProperty(
+                    "color",
+                    "#6b7280",
+                    "important"
+                );
+
+                celda.style.setProperty(
+                    "border-bottom",
+                    "1px solid #d1d5db",
+                    "important"
+                );
+
+                celda.style.setProperty(
+                    "font-size",
+                    "11px",
+                    "important"
+                );
+
+                celda.style.setProperty(
+                    "font-weight",
+                    "700",
+                    "important"
+                );
+
+                celda.style.setProperty(
+                    "text-transform",
+                    "uppercase",
+                    "important"
+                );
+
+                celda.style.setProperty(
+                    "letter-spacing",
+                    "0.04em",
+                    "important"
+                );
+
+                celda.style.setProperty(
+                    "padding",
+                    "9px 10px",
+                    "important"
+                );
+
+                celda.style.setProperty(
+                    "text-align",
+                    "left",
+                    "important"
+                );
+
+                celda.style.setProperty(
+                    "visibility",
+                    "visible",
+                    "important"
+                );
+
+                celda.style.setProperty(
+                    "opacity",
+                    "1",
+                    "important"
+                );
+            });
+
+            tabla.querySelectorAll("td").forEach(function (celda) {
+                celda.style.setProperty(
+                    "background",
+                    "#ffffff",
+                    "important"
+                );
+
+                celda.style.setProperty(
+                    "color",
+                    "#111827",
+                    "important"
+                );
+
+                celda.style.setProperty(
+                    "border-bottom",
+                    "1px solid #e5e7eb",
+                    "important"
+                );
+
+                celda.style.setProperty(
+                    "font-size",
+                    "12px",
+                    "important"
+                );
+
+                celda.style.setProperty(
+                    "font-weight",
+                    "500",
+                    "important"
+                );
+
+                celda.style.setProperty(
+                    "padding",
+                    "10px",
+                    "important"
+                );
+
+                celda.style.setProperty(
+                    "text-align",
+                    "left",
+                    "important"
+                );
+
+                celda.style.setProperty(
+                    "line-height",
+                    "1.35",
+                    "important"
+                );
+
+                celda.style.setProperty(
+                    "word-break",
+                    "break-word",
+                    "important"
+                );
+
+                celda.style.setProperty(
+                    "visibility",
+                    "visible",
+                    "important"
+                );
+
+                celda.style.setProperty(
+                    "opacity",
+                    "1",
+                    "important"
+                );
+            });
+
+            tabla
+                .querySelectorAll("th *, td *")
+                .forEach(function (elementoInterno) {
+                    elementoInterno.style.setProperty(
+                        "visibility",
+                        "visible",
+                        "important"
+                    );
+
+                    elementoInterno.style.setProperty(
+                        "opacity",
+                        "1",
+                        "important"
+                    );
+                });
+
+            tabla
+                .querySelectorAll(".tabla-vacia")
+                .forEach(function (celdaVacia) {
+                    celdaVacia.style.setProperty(
+                        "color",
+                        "#6b7280",
+                        "important"
+                    );
+
+                    celdaVacia.style.setProperty(
+                        "text-align",
+                        "center",
+                        "important"
+                    );
+                });
+        });
+    }
+
     function limpiarCopia(copia) {
         SELECTORES_EXCLUIDOS.forEach(function (selector) {
             copia
@@ -113,15 +357,17 @@
                 });
         });
 
-        /*
-         * Evita IDs duplicados mientras existe la copia temporal.
-         * Los IDs no son necesarios para dibujar el reporte.
-         */
         copia
             .querySelectorAll("[id]")
             .forEach(function (elemento) {
                 elemento.removeAttribute("id");
             });
+
+        /*
+         * Corrección para las tablas nuevas del dashboard.
+         * Sin esto, el texto queda blanco sobre fondo blanco.
+         */
+        forzarEstilosTablasParaPDF(copia);
     }
 
     function crearContenedorTemporal(
@@ -178,13 +424,13 @@
     }
 
     function calcularEscala(ancho, alto) {
-        /*
-         * Evita superar los límites máximos del canvas del
-         * navegador cuando un reporte tiene mucho contenido.
-         */
         const dimensionMaxima = 14000;
-        const escalaPorAncho = dimensionMaxima / ancho;
-        const escalaPorAlto = dimensionMaxima / alto;
+
+        const escalaPorAncho =
+            dimensionMaxima / ancho;
+
+        const escalaPorAlto =
+            dimensionMaxima / alto;
 
         return Math.max(
             1,
@@ -210,8 +456,16 @@
 
         const ancho = canvas.width;
         const alto = canvas.height;
-        const pasoX = Math.max(1, Math.floor(ancho / 40));
-        const pasoY = Math.max(1, Math.floor(alto / 40));
+
+        const pasoX = Math.max(
+            1,
+            Math.floor(ancho / 40)
+        );
+
+        const pasoY = Math.max(
+            1,
+            Math.floor(alto / 40)
+        );
 
         for (let y = 0; y < alto; y += pasoY) {
             for (let x = 0; x < ancho; x += pasoX) {
@@ -227,7 +481,8 @@
                     pixel[1] > 248 &&
                     pixel[2] > 248;
 
-                const esTransparente = pixel[3] === 0;
+                const esTransparente =
+                    pixel[3] === 0;
 
                 if (!esBlanco && !esTransparente) {
                     return true;
@@ -249,19 +504,19 @@
         });
 
         const margen = 8;
+
         const anchoPagina =
             pdf.internal.pageSize.getWidth();
 
         const altoPagina =
             pdf.internal.pageSize.getHeight();
 
-        const anchoUtil = anchoPagina - margen * 2;
-        const altoUtil = altoPagina - margen * 2;
+        const anchoUtil =
+            anchoPagina - margen * 2;
 
-        /*
-         * Cantidad de píxeles del canvas que entran en una
-         * página A4 manteniendo la proporción.
-         */
+        const altoUtil =
+            altoPagina - margen * 2;
+
         const altoPaginaEnPixeles = Math.max(
             1,
             Math.floor(
@@ -289,6 +544,7 @@
                 paginaCanvas.getContext("2d");
 
             contexto.fillStyle = "#ffffff";
+
             contexto.fillRect(
                 0,
                 0,
@@ -404,10 +660,11 @@
                     contenedorTemporal
                 );
 
-            const escala = calcularEscala(
-                dimensiones.ancho,
-                dimensiones.alto
-            );
+            const escala =
+                calcularEscala(
+                    dimensiones.ancho,
+                    dimensiones.alto
+                );
 
             const canvas = await window.html2canvas(
                 contenedorTemporal,
@@ -455,12 +712,19 @@
                         );
 
                         contenedorClonado
-                            .querySelectorAll(
-                                ".tab-pane-content"
-                            )
+                            .querySelectorAll(".tab-pane-content")
                             .forEach(function (pestana) {
                                 hacerVisible(pestana);
                             });
+
+                        /*
+                         * html2canvas vuelve a clonar el DOM internamente.
+                         * Por eso se fuerzan otra vez los estilos de tabla
+                         * dentro de ese clon.
+                         */
+                        forzarEstilosTablasParaPDF(
+                            contenedorClonado
+                        );
                     }
                 }
             );
