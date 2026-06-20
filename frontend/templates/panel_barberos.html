@@ -2,21 +2,20 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/peluqueros.css') }}">
-    <link rel="icon" href="{{ url_for('static', filename='css/tijeras.png') }}">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vista - Panel Barbero</title>
+    <title>Panel Barbero - Peluqueria Elegance</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/elegance.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='css/tijeras.png') }}">
 </head>
 <body>
-    <div class="app-container">    
-        
+    <div class="app-container">
         <header class="main-header">
             <div class="user-profile">
                 <div class="avatar">
-                    <span>{{ usuario['nombre'][0].upper() }}</span> 
+                    <span>{{ usuario['nombre'][0].upper() }}</span>
                 </div>
                 <div>
-                    <h1 class="salon-title">Peluquería Elegance</h1>
+                    <h1 class="salon-title">Peluqueria Elegance</h1>
                     <p class="welcome-text">Bienvenido, {{ usuario['nombre'] }}</p>
                 </div>
             </div>
@@ -26,17 +25,21 @@
         </header>
 
         <nav class="nav-bar">
-            <a href="/panel_peluquero/{{ id_usuario }}?vista=dia&fecha={{ fecha_str }}" 
-            class="nav-link {% if vista == 'dia' %}active{% endif %}">
-                <span>📅</span> Vista Diaria
+            <a
+                href="/panel_peluquero/{{ id_usuario }}?vista=dia&fecha={{ fecha_str }}"
+                class="nav-link {% if vista == 'dia' %}active{% endif %}"
+            >
+                Vista Diaria
                 {% if vista == 'dia' and turnos | length > 0 %}
                     <span class="indicador-numero">{{ turnos|length }}</span>
                 {% endif %}
             </a>
-            
-            <a href="/panel_peluquero/{{ id_usuario }}?vista=semana&fecha={{ fecha_str }}" 
-            class="nav-link {% if vista == 'semana' %}active{% endif %}">
-                <span>📊</span> Vista Semanal
+
+            <a
+                href="/panel_peluquero/{{ id_usuario }}?vista=semana&fecha={{ fecha_str }}"
+                class="nav-link {% if vista == 'semana' %}active{% endif %}"
+            >
+                Vista Semanal
             </a>
         </nav>
 
@@ -46,17 +49,17 @@
                     {% if vista == 'semana' %}
                         Semana: {{ semana_inicio_label }} al {{ semana_fin_label }}
                     {% else %}
-                        Agenda del Día: {{ fecha_label }}
+                        Agenda del Dia: {{ fecha_label }}
                     {% endif %}
                 </h2>
-                <p class="section-subtitle">Gestioná tus citas asignadas y controlá el estado de los servicios programados</p>
+                <p class="section-subtitle">Gestiona tus citas asignadas y controla el estado de los servicios programados.</p>
             </div>
             <div class="nav-buttons-group">
-                <a href="/panel_peluquero/{{ id_usuario }}?vista={{ vista }}&fecha={{ fecha_anterior }}" style="text-decoration: none;">
-                    <button class="btn-history"><span>◀</span> Anterior</button>
+                <a href="/panel_peluquero/{{ id_usuario }}?vista={{ vista }}&fecha={{ fecha_anterior }}" class="btn-history">
+                    Anterior
                 </a>
-                <a href="/panel_peluquero/{{ id_usuario }}?vista={{ vista }}&fecha={{ fecha_siguiente }}" style="text-decoration: none;">
-                    <button class="btn-history">Siguiente <span>▶</span></button>
+                <a href="/panel_peluquero/{{ id_usuario }}?vista={{ vista }}&fecha={{ fecha_siguiente }}" class="btn-history">
+                    Siguiente
                 </a>
             </div>
         </div>
@@ -65,52 +68,54 @@
             <div class="estado-vacio">
                 <p>{{ error }}</p>
             </div>
-        
-        {% elif vista == 'dia' %}
+        {% endif %}
+
+        {% if exito %}
+            <div class="estado-vacio">
+                <p>{{ exito }}</p>
+            </div>
+        {% endif %}
+
+        {% if vista == 'dia' %}
             {% if turnos and turnos|length > 0 %}
                 {% for turno in turnos %}
                     <div class="reserva-card">
-                        
                         <div class="card-top">
                             <div>
                                 <h3 class="card-title">{{ turno['cliente_nombre'] }}</h3>
-                                <p class="card-service">
-                                    <span>✂️</span> {{ turno['servicio_nombre'] }}
-                                </p>
+                                <p class="card-service">{{ turno['servicio_nombre'] }}</p>
                             </div>
                             <div class="status-badge">
-                                <span>ℹ️</span> {{ turno['estado'].capitalize() }}
+                                {{ turno['estado'].capitalize() }}
                             </div>
                         </div>
 
                         <div class="card-meta">
-                            <div class="meta-item">
-                                <span>📅</span> {{ turno['fecha'] }}
-                            </div>
-                            <div class="meta-item">
-                                <span>🕒</span> {{ turno['hora_inicio'] }} hs
-                            </div>
+                            <div class="meta-item">{{ turno['fecha'] }}</div>
+                            <div class="meta-item">{{ turno['hora_inicio_label'] }} hs</div>
                         </div>
 
                         <hr class="card-divider">
 
                         <div class="card-bottom">
                             <p class="card-note">Contacto: {{ turno['cliente_email'] }}</p>
-                            <button 
-                                class="btn-cancel btn-success-action"
-                                onclick="finalizarTurno({{ turno['id_cita'] }})">
-                                <span>✅</span> Finalizar Turno
-                            </button>
+                            <form
+                                method="post"
+                                action="{{ url_for('finalizar_turno_front', id_usuario=id_usuario, id_cita=turno['id_cita']) }}"
+                                onsubmit="return confirm('Finalizar este turno?');"
+                            >
+                                <button class="btn-cancel btn-success-action" type="submit">
+                                    Finalizar Turno
+                                </button>
+                            </form>
                         </div>
-
                     </div>
                 {% endfor %}
             {% else %}
                 <div class="estado-vacio">
-                    <p>No tenés citas programadas para esta fecha.</p>
+                    <p>No tenes citas programadas para esta fecha.</p>
                 </div>
             {% endif %}
-
         {% elif vista == 'semana' %}
             {% for dia in dias_semana %}
                 <div class="semana-dia-contenedor">
@@ -124,56 +129,22 @@
                                 <div>
                                     <h3 class="card-title" style="font-size: 16px;">{{ turno['cliente_nombre'] }}</h3>
                                     <p class="card-service" style="margin-top: 4px;">
-                                        <span>✂️</span> {{ turno['servicio_nombre'] }}
+                                        {{ turno['servicio_nombre'] }}
                                     </p>
                                 </div>
-                                <div class="meta-item" style="font-size: 15px; font-weight: 600; color: var(--primary-color);">
-                                    <span>🕒</span> {{ turno['hora_inicio'] }} hs
+                                <div class="meta-item" style="font-size: 15px; font-weight: 600; color: var(--primary);">
+                                    {{ turno['hora_inicio_label'] }} hs
                                 </div>
                             </div>
                         </div>
                     {% endfor %}
                 {% else %}
-                    <div class="reserva-card card-compacta" style="opacity: 0.6; background-color: #fafafa;">
-                        <p class="card-note">Sin turnos asignados para este día.</p>
+                    <div class="reserva-card card-compacta" style="opacity: 0.72;">
+                        <p class="card-note">Sin turnos asignados para este dia.</p>
                     </div>
                 {% endif %}
             {% endfor %}
         {% endif %}
-
     </div>
-    <script>
-
-async function finalizarTurno(idCita){
-
-    if(!confirm("¿Finalizar este turno?")){
-        return;
-    }
-
-    try{
-
-        const respuesta = await fetch(
-            `http://127.0.0.1:5000/profesionales/turnos/${idCita}/finalizar`,
-            {
-                method: "PATCH"
-            }
-        );
-
-        const data = await respuesta.json();
-
-        if(respuesta.ok){
-            alert("Turno finalizado correctamente");
-            location.reload();
-        }else{
-            alert(data.error);
-        }
-
-    }catch(error){
-        alert("Error al conectar con el servidor");
-    }
-
-}
-
-</script>
 </body>
 </html>

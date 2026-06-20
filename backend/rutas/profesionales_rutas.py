@@ -4,167 +4,22 @@ from db import get_db_connection
 profesionales_bp = Blueprint("profesionales", __name__)
 
 
-# --- EN TU FRONTEND ---
-@profesionales_bp.route('/peluqueros/<int:id_usuario>', methods=['GET'])
-def agenda_peluquero(id_usuario):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    # Buscamos los datos básicos del usuario
-    usuario = cursor.execute(
-        'SELECT nombre, id_usuario FROM usuarios WHERE id_usuario = ?', (id_usuario,)
-    ).fetchone()
-    #Buscamos qué id_barbero tiene asignado este usuario
-    barbero_reg = cursor.execute(
-        'SELECT id_barbero FROM barberos WHERE id_usuario = ?', (id_usuario,)
-    ).fetchone()
-    id_barbero_destino = barbero_reg['id_barbero'] if barbero_reg else id_usuario
-    query = '''
-            SELECT c.id_cita, c.fecha, c.hora_inicio, c.estado,
-                uc.nombre as cliente_nombre, uc.email as cliente_email, s.nombre as servicio_nombre
-            FROM citas c JOIN usuarios uc ON c.id_usuario = uc.id_usuario
-            JOIN servicios s ON c.id_servicio = s.id_servicio
-            WHERE c.id_barbero = ?
-            ORDER BY c.fecha ASC, c.hora_inicio ASC
-        '''
-    turnos = cursor.execute(query, (id_barbero_destino,)).fetchall()
-    turnos_lista = [dict(turno) for turno in turnos]
-
-    # Mandamos el id_barbero al HTML para que JavaScript pueda hacer la consulta al backend
-    return jsonify({
-        "usuario": dict(usuario) if usuario else {"nombre": "Profesional"}, 
-        "id_usuario": id_usuario,
-        "turnos": turnos_lista
-    }), 200
-
-# GET /profesionales/1/turnos?desde=2026-05-01&hasta=2026-05-31
-@profesionales_bp.route("/<int:id_barbero>/turnos", methods=["GET"])
-def ver_turnos_periodo(id_barbero):
-    desde = request.args.get("desde")
-    hasta = request.args.get("hasta")
-
-    if not desde or not hasta:
-        return jsonify({
-            "error": "Tenés que enviar los parámetros 'desde' y 'hasta'. Ejemplo: /profesionales/1/turnos?desde=2026-05-01&hasta=2026-05-31"
-        }), 400
-    
-    conn = get_db_connection()
-    cursor = conn.cursor()
-
-    barbero = cursor.execute(
-        'SELECT id_barbero FROM barberos WHERE id_barbero = ?', (id_barbero,)
-    ).fetchone()
-    if not barbero:
-        conn.close()
-        return jsonify({"error": "Barbero no encontrado"}), 404
-
-    turnos = cursor.execute('''
-        SELECT c.id_cita, c.fecha, c.hora_inicio, c.hora_fin, c.estado,
-               u.nombre AS cliente, s.nombre AS servicio
-        FROM citas c
-        JOIN usuarios u  ON c.id_usuario  = u.id_usuario
-        JOIN servicios s ON c.id_servicio = s.id_servicio
-        WHERE c.id_barbero = ?
-          AND DATE(c.fecha) BETWEEN DATE(?) AND DATE(?)
-        ORDER BY c.fecha ASC, c.hora_inicio ASC
-    ''', (id_barbero, desde, hasta)).fetchall()
-
-    conn.close()
-
-    return jsonify([dict(turno) for turno in turnos]), 200
-
-
-# GET /profesionales/1/turnos/5/cliente
-@profesionales_bp.route("/<int:id_barbero>/turnos/<int:id_cita>/cliente", methods=["GET"])
-def ver_cliente(id_barbero, id_cita):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-
-    cliente = cursor.execute(
-        """
-        SELECT 
-            u.id_usuario,
-            u.nombre,
-            u.email
-        FROM citas c
-        JOIN usuarios u ON c.id_usuario = u.id_usuario
-        WHERE c.id_cita = ?
-        AND c.id_barbero = ?
-        """,
-        (id_cita, id_barbero)
+def obtener_barbero_por_usuario(cursor, id_usuario):
+    return cursor.execute(
+        'SELECT id_barbero FROM barberos WHERE id_usuario = ? AND activo = 1',
+        (id_usuario,)
     ).fetchone()
 
-    conn.close()
 
-    if cliente is None:
-        return jsonify({
-            "error": "Cliente no encontrado o el turno no pertenece a este peluquero"
-        }), 404
+def finalizar_cita(cursor, cita):
+    if cita["estado"] == "pendiente":
+        return "Este turno todavia no fue confirmado por el cliente", 409
 
-    return jsonify(dict(cliente)), 200
-
-
-@profesionales_bp.route("/check_in", methods=["POST"])
-def check_in():
-    data = request.get_json()
-    qr_token = data.get("qr_token")
-    id_barbero = data.get("id_barbero")
-
-    if not qr_token or not id_barbero:
-        return jsonify({"error": "Faltan los campos qr_token o id_barbero"}), 400
-    
-    conn = get_db_connection()
-    cursor = conn.cursor()
-
-    barbero = cursor.execute('SELECT id_barbero FROM barberos WHERE id_barbero = ? AND activo = 1', (id_barbero,)).fetchone()
-    if not barbero:
-        conn.close()
-        return jsonify({"error": "Barbero no encontrado"}), 404
-    
-    cita = cursor.execute('SELECT * FROM citas WHERE qr_token = ?', (qr_token,)).fetchone()
-    if not cita:
-        conn.close()
-        return jsonify({"error": "Código QR no válido"}), 404
-    
-    if cita["id_barbero"] != id_barbero:
-        conn.close()
-        return jsonify({"error": "Este código QR no corresponde a un turno de este barbero"}), 403
-    
     if cita["estado"] == "cancelada":
-        conn.close()
-        return jsonify({"error": "Este turno fue cancelado"}), 400
-    
+        return "Este turno fue cancelado", 409
+
     if cita["estado"] == "completada":
-        conn.close()
-        return jsonify({"error": "Este turno ya fue completado"}), 400
-    
-    cursor.execute('UPDATE citas SET estado = "completada" WHERE qr_token = ?', (qr_token,))
-    conn.commit()
-
-    cita_actualizada = cursor.execute('''
-    SELECT c.id_cita, c.fecha, c.hora_inicio, c.hora_fin, c.estado, u.nombre AS cliente, s.nombre AS servicio
-    FROM citas c
-    JOIN usuarios u ON c.id_usuario = u.id_usuario
-    JOIN servicios s ON c.id_servicio = s.id_servicio
-    WHERE c.qr_token = ?
-''', (qr_token,)).fetchone()
-    conn.close()
-
-    return jsonify({"mensaje": "Asistencia confirmada", "cita": dict(cita_actualizada)}), 200
-
-@profesionales_bp.route("/turnos/<int:id_cita>/finalizar", methods=["PATCH"])
-def finalizar_turno(id_cita):
-
-    conn = get_db_connection()
-    cursor = conn.cursor()
-
-    cita = cursor.execute(
-        "SELECT * FROM citas WHERE id_cita = ?",
-        (id_cita,)
-    ).fetchone()
-
-    if not cita:
-        conn.close()
-        return jsonify({"error": "Turno no encontrado"}), 404
+        return "Este turno ya fue completado", 409
 
     cursor.execute(
         """
@@ -172,8 +27,132 @@ def finalizar_turno(id_cita):
         SET estado = 'completada'
         WHERE id_cita = ?
         """,
-        (id_cita,)
+        (cita["id_cita"],)
     )
+    return None, None
+
+
+@profesionales_bp.route('/peluqueros/<int:id_usuario>', methods=['GET'])
+def agenda_peluquero(id_usuario):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    usuario = cursor.execute(
+        'SELECT nombre, id_usuario FROM usuarios WHERE id_usuario = ?',
+        (id_usuario,)
+    ).fetchone()
+
+    barbero_reg = cursor.execute(
+        'SELECT id_barbero FROM barberos WHERE id_usuario = ?',
+        (id_usuario,)
+    ).fetchone()
+    id_barbero_destino = barbero_reg['id_barbero'] if barbero_reg else id_usuario
+
+    turnos = cursor.execute('''
+        SELECT c.id_cita, c.fecha, c.hora_inicio, c.estado,
+               uc.nombre AS cliente_nombre,
+               uc.email AS cliente_email,
+               s.nombre AS servicio_nombre
+        FROM citas c
+        JOIN usuarios uc ON c.id_usuario = uc.id_usuario
+        JOIN servicios s ON c.id_servicio = s.id_servicio
+        WHERE c.id_barbero = ?
+          AND c.estado = 'confirmada'
+        ORDER BY c.fecha ASC, c.hora_inicio ASC
+    ''', (id_barbero_destino,)).fetchall()
+
+    conn.close()
+
+    return jsonify({
+        "usuario": dict(usuario) if usuario else {"nombre": "Profesional"},
+        "id_usuario": id_usuario,
+        "id_barbero": id_barbero_destino,
+        "turnos": [dict(turno) for turno in turnos]
+    }), 200
+
+
+@profesionales_bp.route("/check_in", methods=["POST"])
+def check_in():
+    data = request.get_json() or {}
+    qr_token = data.get("qr_token")
+    id_usuario_barbero = data.get("id_usuario_barbero")
+
+    if not qr_token or not id_usuario_barbero:
+        return jsonify({"error": "Faltan qr_token y el barbero autenticado"}), 400
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    barbero = obtener_barbero_por_usuario(cursor, id_usuario_barbero)
+    if not barbero:
+        conn.close()
+        return jsonify({"error": "Barbero no encontrado"}), 404
+
+    cita = cursor.execute(
+        'SELECT * FROM citas WHERE qr_token = ?',
+        (qr_token,)
+    ).fetchone()
+    if not cita:
+        conn.close()
+        return jsonify({"error": "Codigo QR no valido"}), 404
+
+    if cita["id_barbero"] != barbero["id_barbero"]:
+        conn.close()
+        return jsonify({"error": "Este codigo QR no corresponde a un turno de este barbero"}), 403
+
+    error, status = finalizar_cita(cursor, cita)
+    if error:
+        conn.close()
+        return jsonify({"error": error}), status
+
+    conn.commit()
+
+    cita_actualizada = cursor.execute('''
+        SELECT c.id_cita, c.fecha, c.hora_inicio, c.hora_fin, c.estado,
+               u.nombre AS cliente,
+               s.nombre AS servicio
+        FROM citas c
+        JOIN usuarios u ON c.id_usuario = u.id_usuario
+        JOIN servicios s ON c.id_servicio = s.id_servicio
+        WHERE c.qr_token = ?
+    ''', (qr_token,)).fetchone()
+    conn.close()
+
+    return jsonify({"mensaje": "Turno completado", "cita": dict(cita_actualizada)}), 200
+
+
+@profesionales_bp.route("/turnos/<int:id_cita>/finalizar", methods=["PATCH"])
+def finalizar_turno(id_cita):
+    data = request.get_json() or {}
+    id_usuario_barbero = data.get("id_usuario_barbero")
+
+    if not id_usuario_barbero:
+        return jsonify({"error": "Falta el barbero autenticado"}), 400
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    barbero = obtener_barbero_por_usuario(cursor, id_usuario_barbero)
+    if not barbero:
+        conn.close()
+        return jsonify({"error": "Barbero no encontrado"}), 404
+
+    cita = cursor.execute(
+        "SELECT * FROM citas WHERE id_cita = ?",
+        (id_cita,)
+    ).fetchone()
+    if not cita:
+        conn.close()
+        return jsonify({"error": "Turno no encontrado"}), 404
+
+    if cita["id_barbero"] != barbero["id_barbero"]:
+        conn.close()
+        return jsonify({"error": "Este turno no pertenece a este barbero"}), 403
+
+    error, status = finalizar_cita(cursor, cita)
+    if error:
+        conn.close()
+        return jsonify({"error": error}), status
 
     conn.commit()
     conn.close()

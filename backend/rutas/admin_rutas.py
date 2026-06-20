@@ -328,8 +328,8 @@ def estadisticas():
     def get_kpis(inicio, fin):
         return cursor.execute('''
             SELECT
-                COALESCE(SUM(CASE WHEN c.estado = 'confirmada' THEN s.precio ELSE 0 END), 0) AS ingresos,
-                COUNT(CASE WHEN c.estado = 'confirmada' THEN 1 END) AS citas,
+                COALESCE(SUM(CASE WHEN c.estado = 'completada' THEN s.precio ELSE 0 END), 0) AS ingresos,
+                COUNT(CASE WHEN c.estado = 'completada' THEN 1 END) AS citas,
                 COUNT(DISTINCT c.id_usuario) AS clientes,
                 ROUND(COALESCE(AVG(r.calificacion), 0), 1) AS rating
             FROM citas c
@@ -351,7 +351,7 @@ def estadisticas():
                 SELECT COALESCE(SUM(s.precio), 0) AS monto
                 FROM citas c
                 JOIN servicios s ON c.id_servicio = s.id_servicio
-                WHERE c.estado = 'confirmada'
+                WHERE c.estado = 'completada'
                   AND DATE(c.fecha) BETWEEN DATE(?) AND DATE(?)
             ''', (cursor_dia.isoformat(), fin_semana.isoformat())).fetchone()
             semanas.append({
@@ -400,7 +400,8 @@ def estadisticas():
     ''', (desde, hasta)).fetchall()
 
     estado_map = {
-        "confirmada": "Completada",
+        "confirmada": "Confirmada",
+        "completada": "Completada",
         "pendiente": "Pendiente",
         "cancelada": "Cancelada",
     }
@@ -421,7 +422,7 @@ def estadisticas():
         FROM barberos b
         JOIN usuarios u ON b.id_usuario = u.id_usuario
         LEFT JOIN citas c ON b.id_barbero = c.id_barbero
-                          AND c.estado = 'confirmada'
+                          AND c.estado = 'completada'
                           AND DATE(c.fecha) BETWEEN DATE(?) AND DATE(?)
         LEFT JOIN servicios s ON c.id_servicio = s.id_servicio
         LEFT JOIN resenias r ON c.id_cita = r.id_cita

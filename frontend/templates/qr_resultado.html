@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Validacion QR - Peluqueria Elegance</title>
+    <link rel="icon" href="{{ url_for('static', filename='css/tijeras.png') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/elegance.css') }}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container navbar-row">
+            <a class="navbar-brand" href="{{ url_for('inicio') }}">Peluqueria Elegance</a>
+        </div>
+    </nav>
+
+    <main class="reserve-page">
+        <section class="reserve-card" aria-labelledby="qr-title">
+            <div class="brand-icon" aria-hidden="true">PE</div>
+            <div class="reserve-header">
+                <p class="eyebrow">Codigo QR</p>
+                <h1 id="qr-title">
+                    {% if ok %}Turno completado{% else %}No se pudo validar{% endif %}
+                </h1>
+                <p class="{% if ok %}success{% else %}alert{% endif %}" role="status">{{ mensaje }}</p>
+            </div>
+
+            {% if ok and cita %}
+                <div class="reserva-summary">
+                    <p><strong>Cliente:</strong> {{ cita['cliente'] }}</p>
+                    <p><strong>Servicio:</strong> {{ cita['servicio'] }}</p>
+                    <p><strong>Fecha:</strong> {{ cita['fecha'] }}</p>
+                    <p><strong>Hora:</strong> {{ cita['hora_inicio_label'] }} hs</p>
+                    <p><strong>Estado:</strong> {{ cita['estado'].capitalize() }}</p>
+                </div>
+            {% endif %}
+
+            {% if id_usuario %}
+                <p class="form-link">
+                    <a href="{{ url_for('panel_peluquero', id_usuario=id_usuario) }}">Volver al panel</a>
+                </p>
+            {% endif %}
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 Peluqueria Elegance</p>
+    </footer>
+</body>
+</html>
