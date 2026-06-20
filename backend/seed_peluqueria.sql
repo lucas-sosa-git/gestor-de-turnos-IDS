@@ -18,7 +18,11 @@ VALUES
 ('Martín Silva', 'martin.silva@peluqueria.com', '5ac0852e770506dcd80f1a36d20ba7878bf82244b836d9324593bd14bc56dcb5', 'barbero');
 
 -- Barberos (los IDs cambiaron porque ahora el admin es el id 1)
-INSERT INTO barberos (id_usuario) VALUES (7), (8), (9);
+INSERT INTO barberos (id_usuario, img_barbero)
+VALUES
+(7, 'https://cstrkukbiiodroebybcv.supabase.co/storage/v1/object/public/gestor-imagenes/6ca320f4f4194d8e9bf2ddc872750963.png'),
+(8, 'https://cstrkukbiiodroebybcv.supabase.co/storage/v1/object/public/gestor-imagenes/9e62a088d91c4da383c0a2674dcf3bbb.jpg'),
+(9, NULL);
 
 INSERT INTO disponibilidad_barberos (id_barbero, dia_semana, hora_inicio, hora_fin)
 VALUES
@@ -43,13 +47,13 @@ VALUES
 (3, 5, '11:00:00', '20:00:00'),
 (3, 6, '11:00:00', '20:00:00');
 
-INSERT INTO servicios (nombre, descripcion, duracion, precio)
+INSERT INTO servicios (nombre, descripcion, duracion, precio, img_servicio)
 VALUES
-('Corte pelo de hombre', 'Corte clásico o moderno para hombre', 30, 15000.00),
-('Corte pelo de mujer', 'Corte y terminación para mujer', 45, 45000.00),
-('Barba', 'Recorte y perfilado de barba', 25, 20000.00),
-('Cejas', 'Perfilado y limpieza de cejas', 15, 4000.00),
-('Tintura', 'Aplicación de tintura completa', 90, 80000.00);
+('Corte pelo de hombre', 'Corte clásico o moderno para hombre', 30, 15000.00, 'https://cstrkukbiiodroebybcv.supabase.co/storage/v1/object/public/gestor-imagenes/8d1aaf567e86412aae29bb862937692d.jpeg'),
+('Corte pelo de mujer', 'Corte y terminación para mujer', 45, 45000.00, 'https://cstrkukbiiodroebybcv.supabase.co/storage/v1/object/public/gestor-imagenes/83aacaf513d14922b91ad3a6bca0f844.png'),
+('Barba', 'Recorte y perfilado de barba', 25, 20000.00, 'https://cstrkukbiiodroebybcv.supabase.co/storage/v1/object/public/gestor-imagenes/c910af5c4648404e9dc4422c9c41ebc4.jpeg'),
+('Cejas', 'Perfilado y limpieza de cejas', 15, 4000.00, NULL),
+('Tintura', 'Aplicación de tintura completa', 90, 80000.00, NULL);
 
 INSERT INTO citas (id_usuario, id_barbero, id_servicio, fecha, hora_inicio, hora_fin, estado, qr_token)
 VALUES

@@ -150,12 +150,12 @@ def login_en_backend(email, clave):
             usuario = data.get("usuario")
 
             if not token or not usuario:
-                return False, None, None, "El backend no devolviÃ³ token o datos del usuario."
+                return False, None, None, "El backend no devolvió token o datos del usuario."
 
             return True, usuario, token, None
 
     except HTTPError as error:
-        mensaje = "Email o contraseÃ±a incorrectos."
+        mensaje = "Email o contraseña incorrectos."
 
         try:
             data = json.loads(error.read().decode("utf-8"))
@@ -166,7 +166,7 @@ def login_en_backend(email, clave):
         return False, None, None, mensaje
 
     except (URLError, TimeoutError):
-        return False, None, None, "No se pudo conectar con el backend. VerificÃ¡ que estÃ© levantado en el puerto 5000."
+        return False, None, None, "No se pudo conectar con el backend. Verificá que esté levantado en el puerto 5000."
 
 
 def registrar_en_backend(nombre, email, clave):
@@ -261,7 +261,7 @@ def login():
         exito = None
 
         if request.args.get("registro") == "ok":
-            exito = "Cuenta creada correctamente. Ya podÃ©s iniciar sesiÃ³n."
+            exito = "Cuenta creada correctamente. Ya podés iniciar sesión."
 
         return render_template("login.html", exito=exito)
 
@@ -271,7 +271,7 @@ def login():
     if not email or not clave:
         return render_template(
             "login.html",
-            error="CompletÃ¡ email y contraseÃ±a."
+            error="Completá email y contraseña."
         )
 
     ok, usuario, token, error = login_en_backend(email, clave)
@@ -482,7 +482,7 @@ def register():
         clave = request.form.get("clave", "")
 
         if not nombre or not email or not clave:
-            error = "CompletÃ¡ todos los campos."
+            error = "Completá todos los campos."
         else:
             registro_ok, error = registrar_en_backend(nombre, email, clave)
 
@@ -508,9 +508,9 @@ def obtener_dashboard_admin():
     except HTTPError as error:
         try:
             data = json.loads(error.read().decode("utf-8"))
-            return None, data.get("error") or "Error al obtener estadÃ­sticas."
+            return None, data.get("error") or "Error al obtener estadísticas."
         except Exception:
-            return None, "Error al obtener estadÃ­sticas."
+            return None, "Error al obtener estadísticas."
 
     except (URLError, TimeoutError):
         return None, "No se pudo conectar con el backend."
@@ -788,8 +788,8 @@ def inicio_de_semana(d):
     return d - timedelta(days=d.weekday())
 
 
-DIAS_ES   = ["Lunes","Martes","MiÃ©rcoles","Jueves","Viernes","SÃ¡bado","Domingo"]
-DIAS_CORTOS = ["Lun","Mar","MiÃ©","Jue","Vie","SÃ¡b","Dom"]
+DIAS_ES   = ["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"]
+DIAS_CORTOS = ["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"]
 MESES_ES  = ["","enero","febrero","marzo","abril","mayo","junio",
              "julio","agosto","septiembre","octubre","noviembre","diciembre"]
 
@@ -801,13 +801,13 @@ def formatear_fecha_larga(d):
 
 
 def formatear_fecha_corta(d):
-    """ej: '7 jun 2026'  o  '7 jun' (sin aÃ±o si es el mismo aÃ±o)"""
+    """ej: '7 jun 2026'  o  '7 jun' (sin año si es el mismo año)"""
     anio = f" {d.year}" if d.year != date.today().year else ""
     return f"{d.day} {MESES_ES[d.month][:3]}{anio}"
 
 def hacer_request(url, method="GET", payload=None, token=None):
     """
-    Wrapper genÃ©rico para llamadas al backend.
+    Wrapper genérico para llamadas al backend.
     Devuelve (data_dict_or_list, error_str_or_None).
     """
     headers = {"Content-Type": "application/json"}
@@ -865,12 +865,12 @@ def agenda():
     barbero_nombre = session.get("usuario", {}).get("nombre", "Barbero")
     token         = session.get("token")
 
-    # ParÃ¡metros de la URL
+    # Parámetros de la URL
     vista     = request.args.get("vista", "dia")          # 'dia' | 'semana'
     fecha_str = request.args.get("fecha", date.today().isoformat())
     fecha_actual = parsear_fecha(fecha_str)
 
-    # â”€â”€ VISTA DÃA â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    # VISTA DÍA
     if vista == "dia":
         fecha_anterior  = (fecha_actual - timedelta(days=1)).isoformat()
         fecha_siguiente = (fecha_actual + timedelta(days=1)).isoformat()
@@ -886,7 +886,7 @@ def agenda():
             fecha_anterior   = fecha_anterior,
             fecha_siguiente  = fecha_siguiente,
             fecha_label      = fecha_label,
-            # semana (no usadas en vista dÃ­a pero evitan error de template)
+            # semana (no usadas en vista día pero evitan error de template)
             semana_inicio_label = "",
             semana_fin_label    = "",
             dias_semana         = [],
@@ -906,7 +906,7 @@ def agenda():
 
     citas_por_dia = obtener_citas_semana(id_barbero, lunes_str, token)
 
-    # Armar lista de 7 dÃ­as con sus citas
+    # Armar lista de 7 días con sus citas
     dias_semana = []
     for i in range(7):
         dia = lunes + timedelta(days=i)
