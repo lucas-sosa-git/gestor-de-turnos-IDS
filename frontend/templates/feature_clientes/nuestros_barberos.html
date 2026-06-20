@@ -1,17 +1,18 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-    <title>Nuestros Barberos</title>
+    <link rel="icon" href="{{ url_for('static', filename='css/tijeras.png') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/peluqueros.css') }}">
+    <title>Nuestros Peluqueros</title>
 </head>
 <body>
     <div class="app-container">    
         <header class="main-header">
             <div class="user-profile">
                 <div class="avatar">
-                    <span>L</span> 
+                    <span>PE</span> 
                 </div>
                 <div>
                     <h1 class="salon-title">Peluquería Elegance</h1>
@@ -24,7 +25,7 @@
         </header>
         <nav class="nav-bar">
             <a href="#" class="nav-link active">
-                <span>👤</span> Nuestros Estilistas
+                <span>👤</span> Nuestros Peluqueros
             </a>
             <a href="{{ url_for('clientes_panel', id_usuario=id_usuario) }}" class="nav-link">
                 <span>📅</span> Mis Reservas

@@ -1,0 +1,201 @@
+@font-face {
+    font-family: "Raleway";
+    src: url(fonts/Raleway-Italic.ttf);
+}
+
+  * {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Raleway, Georgia, serif;
+    background-color: #2c2447;
+    color: white;
+}
+
+  /* CONTENEDOR PRINCIPAL */
+.app-container {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+  /* HEADER */
+.main-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #d8ccff;
+    padding: 10px 25px;
+    color: #5420c9;
+}
+
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.avatar {
+    width: 45px;
+    height: 45px;
+    background: #793df0;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+}
+
+.salon-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.welcome-text {
+    margin: 0;
+    font-size: 13px;
+}
+
+  /* BOTÓN SALIR */
+.logout-btn {
+    background: #793df0;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 10px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.logout-btn:hover {
+    background: #6422d8;
+}
+
+  /* NAVBAR */
+.nav-bar {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    background: #2c2447;
+    padding: 15px;
+}
+
+.nav-link {
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+    padding: 8px 12px;
+    border-radius: 10px;
+}
+
+.nav-link:hover,
+.nav-link.active {
+    background: #793df0;
+}
+
+  /* INDICADOR */
+.indicador-numero {
+    background: #793df0;
+    color: white;
+    border-radius: 50%;
+    padding: 2px 8px;
+    font-size: 12px;
+    margin-left: 5px;
+}
+
+  /* SECCIÓN */
+.contenedor-principal {
+    padding-bottom: 40px;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+}
+
+.section-title {
+    margin: 0;
+    font-size: 24px;
+}
+
+.section-subtitle {
+    margin: 5px 0 0 0;
+    font-size: 14px;
+    color: #ddd;
+}
+
+  /* ESTADO VACÍO */
+.estado-vacio {
+    text-align: center;
+    margin-top: 30px;
+    color: #ddd;
+}
+
+  /* GRID DE ESTILISTAS */
+.estilistas-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+    width: 80%;
+    margin: 30px auto;
+}
+
+  /* CARD ESTILISTA */
+.estilista-card {
+    background: linear-gradient(135deg, #ddd3ff, #c3b5ff);
+    color: #2c2447;
+    border-radius: 18px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 0 25px rgba(255,255,255,0.2),
+                0 10px 25px rgba(120,80,220,0.25);
+    transition: transform 0.2s ease;
+}
+
+.estilista-card:hover {
+    transform: translateY(-5px);
+}
+
+  /* AVATAR */
+.avatar-placeholder {
+    margin-bottom: 10px;
+}
+
+  /* TEXTO CARD */
+.card-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.card-role {
+    margin: 5px 0 10px 0;
+    font-size: 14px;
+    color: #4b2bb0;
+}
+
+  /* ESTRELLAS */
+.estrellas {
+    margin-bottom: 15px;
+}
+
+  /* BOTÓN RESERVAR */
+.btn-reservar {
+    background: #793df0;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 10px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.btn-reservar:hover {
+    background: #6422d8;
+}

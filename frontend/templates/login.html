@@ -3,18 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Salon Elegance</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <title>Login - Peluquería Elegance</title>
+    <link rel="icon" href="{{ url_for('static', filename='css/tijeras.png') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
 </head>
 <body>
+    <nav class="navbar">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('inicio') }}">
+                Peluquería Elegance
+            </a>
+        </div>
+    </nav>
     <main class="login-page">
         <section class="login-card" aria-labelledby="login-title">
-            <div class="brand-icon" aria-hidden="true">SE</div>
+            <div class="brand-icon" aria-hidden="true">PE</div>
 
             <div class="login-header">
-                <p class="eyebrow">Salon Elegance</p>
-                <h1 id="login-title">Iniciar sesion</h1>
-                <p class="subtitle">Ingresa con tu cuenta para gestionar tus turnos y servicios.</p>
+                <p class="eyebrow">Peluquería Elegance</p>
+                <h1 id="login-title">Iniciar sesión</h1>
+                <p class="subtitle">Ingrese con su cuenta para gestionar sus turnos y servicios.</p>
             </div>
 
             {% if error %}
@@ -33,19 +41,19 @@
                         name="email"
                         type="email"
                         autocomplete="email"
-                        placeholder="usuario@salonelegance.com"
+                        placeholder="usuario@peluqueriaelegance.com"
                         required
                     >
                 </div>
 
                 <div class="field">
-                    <label for="clave">Contrasena</label>
+                    <label for="clave">Contraseña</label>
                     <input
                         id="clave"
                         name="clave"
                         type="password"
                         autocomplete="current-password"
-                        placeholder="Tu contrasena"
+                        placeholder="Tu contraseña"
                         required
                     >
                 </div>
@@ -58,5 +66,8 @@
             </p>
         </section>
     </main>
+    <footer>
+        © 2026 Peluquería Elegance
+    </footer>
 </body>
 </html>

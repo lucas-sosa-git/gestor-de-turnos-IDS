@@ -57,7 +57,7 @@ def login_en_backend(email, clave):
         return False, None, None, mensaje
 
     except (URLError, TimeoutError):
-        return False, None, None, "No se pudo conectar con el backend. VerificÃ¡ que estÃ© levantado en el puerto 5000."
+        return False, None, None, "No se pudo conectar con el backend. Verifique que estes levantado en el puerto 5000."
 
 
 def registrar_en_backend(nombre, email, clave):
@@ -138,14 +138,17 @@ def obtener_info_cliente(id_usuario):
         "No se pudo cargar la informacion del cliente"
     )
 
-@app.route("/", methods=["GET", "POST"])
+@app.route("/")
+def inicio():
+    return render_template("base.html")
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "GET":
         exito = None
 
         if request.args.get("registro") == "ok":
-            exito = "Cuenta creada correctamente. Ya podÃ©s iniciar sesiÃ³n."
+            exito = "Cuenta creada correctamente. Ya podes iniciar sesión."
 
         return render_template("login.html", exito=exito)
 
@@ -155,7 +158,7 @@ def login():
     if not email or not clave:
         return render_template(
             "login.html",
-            error="CompletÃ¡ email y contraseÃ±a."
+            error="Complete email y contraseña."
         )
 
     ok, usuario, token, error = login_en_backend(email, clave)

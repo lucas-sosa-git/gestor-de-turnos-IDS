@@ -2,7 +2,8 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/peluqueros.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='css/tijeras.png') }}">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vista - Panel Barbero</title>
 </head>
@@ -26,7 +27,7 @@
 
         <nav class="nav-bar">
             <a href="/panel_peluquero/{{ id_usuario }}?vista=dia&fecha={{ fecha_str }}" 
-               class="nav-link {% if vista == 'dia' %}active{% endif %}">
+            class="nav-link {% if vista == 'dia' %}active{% endif %}">
                 <span>📅</span> Vista Diaria
                 {% if vista == 'dia' and turnos | length > 0 %}
                     <span class="indicador-numero">{{ turnos|length }}</span>
@@ -34,7 +35,7 @@
             </a>
             
             <a href="/panel_peluquero/{{ id_usuario }}?vista=semana&fecha={{ fecha_str }}" 
-               class="nav-link {% if vista == 'semana' %}active{% endif %}">
+            class="nav-link {% if vista == 'semana' %}active{% endif %}">
                 <span>📊</span> Vista Semanal
             </a>
         </nav>
