@@ -926,6 +926,10 @@ ADMIN_ERROR_MESSAGES = {
     "editar_barbero": "No se pudo editar el barbero",
     "eliminar_barbero": "No se pudo eliminar el barbero.",
 }
+ADMIN_SUCCESS_MESSAGES = {
+    "barbero_eliminado": "Se eliminó correctamente el barbero.",
+    "servicio_eliminado": "Se eliminó correctamente el servicio.",
+}
 
 
 def mensaje_error_admin():
@@ -934,6 +938,13 @@ def mensaje_error_admin():
         return None
 
     return ADMIN_ERROR_MESSAGES.get(error, error)
+
+def mensaje_exito_admin():
+    exito = request.args.get("exito")
+    if not exito:
+        return None
+
+    return ADMIN_SUCCESS_MESSAGES.get(exito, exito)
 
 
 def mensaje_error_backend(response, mensaje_default):
@@ -946,6 +957,9 @@ def mensaje_error_backend(response, mensaje_default):
 
 def redirect_admin_error(mensaje):
     return redirect("/admin?" + urlencode({"error": mensaje}))
+
+def redirect_admin_success(mensaje):
+    return redirect("/admin?" + urlencode({"exito": mensaje}))
 
 
 @app.route("/admin")
