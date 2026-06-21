@@ -966,29 +966,34 @@ def redirect_admin_success(mensaje):
 def admin_panel():
     data, error = obtener_dashboard_admin()
     error_admin = mensaje_error_admin()
+    exito_admin = mensaje_exito_admin()
 
     if error:
         return render_template(
             "admin/dashboard.html",
-            stats=stats_admin_vacias(),
-            citas=[],
+            stats=STATS_ADMIN_DEFAULT,
+            ingresos_chart=[],
+            servicios_chart=[],
             barberos=[],
             barberos_top=[],
             servicios=[],
             servicios_top=[],
-            error=error
+            error=error,
+            exito=None
         )
 
-    return render_template(
-        "admin/dashboard.html",
-        stats=data.get("stats", stats_admin_vacias()),
-        citas=data.get("citas", []),
-        barberos=data.get("barberos", []),
-        barberos_top=data.get("barberos_top", []),
-        servicios=data.get("servicios", []),
-        servicios_top=data.get("servicios_top", []),
-        error=error_admin
-    )
+        return render_template(
+            "admin/dashboard.html",
+            stats=data.get("stats", STATS_ADMIN_DEFAULT),
+            ingresos_chart=data.get("ingresos_chart", []),
+            servicios_chart=data.get("servicios_chart", []),
+            barberos=data.get("barberos", []),
+            barberos_top=data.get("barberos_top", []),
+            servicios=data.get("servicios", []),
+            servicios_top=data.get("servicios_top", []),
+            error=error_admin,
+            exito=exito_admin
+        )
 
 @app.route("/admin/servicios/crear", methods=["POST"])
 def crear_servicio_front():
@@ -1027,7 +1032,7 @@ def crear_servicio_front():
     except requests.RequestException:
         return redirect_admin_error("backend")
 
-    return redirect("/admin")
+    return redirect_admin_success("servicio_eliminado")
 
 @app.route("/admin/servicios/<int:id_servicio>/editar", methods=["POST"])
 def editar_servicio_front(id_servicio):
@@ -1066,7 +1071,7 @@ def editar_servicio_front(id_servicio):
     except requests.RequestException:
         return redirect_admin_error("backend")
 
-    return redirect("/admin")
+    return redirect_admin_success("barbero_eliminado")
 
 
 @app.route("/admin/servicios/<int:id_servicio>/eliminar", methods=["POST"])
