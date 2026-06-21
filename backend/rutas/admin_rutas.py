@@ -60,35 +60,41 @@ def crear_barbero():
 
 @admin_bp.route('/barberos/<int:id_barbero>', methods=['PATCH'])
 def editar_barbero(id_barbero):
-    nombre = request.form.get('nombre')
+    nombre = request.form.get('nombre', '').strip()
     archivo = request.files.get('imagen')
 
     conn = get_db_connection()
     cursor = conn.cursor()
-    
-    barbero = cursor.execute('SELECT * FROM barberos WHERE id_barbero = ?', (id_barbero,)).fetchone()
+
+    barbero = cursor.execute(
+        'SELECT id_barbero, id_usuario, img_barbero FROM barberos WHERE id_barbero = ?',
+        (id_barbero,)
+    ).fetchone()
+
     if not barbero:
         conn.close()
         return jsonify({"error": "Barbero no encontrado"}), 404
 
     img_barbero = barbero['img_barbero']
-    if archivo:
-        nueva_url = subir_imagen(archivo)
+
+    if archivo and archivo.filename:
+        try:
+            nueva_url = subir_imagen(archivo)
+        except RuntimeError as error:
+            conn.close()
+            return jsonify({"error": str(error)}), 500
+
         if not nueva_url:
             conn.close()
             return jsonify({"error": "Error al subir la imagen"}), 500
-        img_barbero = nueva_url
 
+        img_barbero = nueva_url
 
     if nombre:
         cursor.execute('''
-        UPDATE usuarios
-        SET nombre = ?
-        WHERE id_usuario = (
-            SELECT id_usuario
-            FROM barberos
-            WHERE id_barbero = ?
-        )
+            UPDATE usuarios
+            SET nombre = ?
+            WHERE id_usuario = ?
         ''', (nombre, barbero['id_usuario']))
 
     cursor.execute('''
@@ -96,7 +102,7 @@ def editar_barbero(id_barbero):
         SET img_barbero = ?
         WHERE id_barbero = ?
     ''', (img_barbero, id_barbero))
-    
+
     conn.commit()
 
     actualizado = cursor.execute('''
@@ -105,9 +111,9 @@ def editar_barbero(id_barbero):
         JOIN usuarios u ON b.id_usuario = u.id_usuario
         WHERE b.id_barbero = ?
     ''', (id_barbero,)).fetchone()
+
     conn.close()
     return jsonify({"mensaje": "Barbero actualizado", "barbero": dict(actualizado)}), 200
-
 
 @admin_bp.route('/barberos/<int:id_barbero>', methods=['DELETE'])
 def eliminar_barbero(id_barbero):
