@@ -518,7 +518,7 @@ def reservar_turno_form(id_usuario, id_barbero):
 @app.route("/procesar_reserva_frontend", methods=['POST'])
 def crear_reserva_proxy():
     data = request.get_json()
-    url_backend = "http://127.0.0.1:5000/clientes/turnos" 
+    url_backend = f"{get_backend_url()}/clientes/turnos"
     try:
         print("\n" + "="*50)
         print(">>> 1. ENVIANDO DATOS AL BACKEND:", data)
@@ -557,7 +557,7 @@ def dejar_resenia_form(id_usuario, id_cita, id_barbero):
 @app.route("/procesar_resenia_frontend", methods=['POST'])
 def crear_resenia_proxy():
     data = request.get_json()
-    url_backend = "http://127.0.0.1:5000/clientes/resenias" 
+    url_backend = f"{get_backend_url()}/clientes/resenias"
     
     try:
         respuesta_backend = requests.post(url_backend, json=data)
@@ -926,6 +926,10 @@ ADMIN_ERROR_MESSAGES = {
     "editar_barbero": "No se pudo editar el barbero",
     "eliminar_barbero": "No se pudo eliminar el barbero.",
 }
+ADMIN_SUCCESS_MESSAGES = {
+    "barbero_eliminado": "Se eliminó correctamente el barbero.",
+    "servicio_eliminado": "Se eliminó correctamente el servicio.",
+}
 
 
 def mensaje_error_admin():
@@ -934,6 +938,13 @@ def mensaje_error_admin():
         return None
 
     return ADMIN_ERROR_MESSAGES.get(error, error)
+
+def mensaje_exito_admin():
+    exito = request.args.get("exito")
+    if not exito:
+        return None
+
+    return ADMIN_SUCCESS_MESSAGES.get(exito, exito)
 
 
 def mensaje_error_backend(response, mensaje_default):
@@ -947,34 +958,42 @@ def mensaje_error_backend(response, mensaje_default):
 def redirect_admin_error(mensaje):
     return redirect("/admin?" + urlencode({"error": mensaje}))
 
+def redirect_admin_success(mensaje):
+    return redirect("/admin?" + urlencode({"exito": mensaje}))
+
 
 @app.route("/admin")
 def admin_panel():
     data, error = obtener_dashboard_admin()
     error_admin = mensaje_error_admin()
+    exito_admin = mensaje_exito_admin()
 
     if error:
         return render_template(
             "admin/dashboard.html",
-            stats=stats_admin_vacias(),
-            citas=[],
+            stats=STATS_ADMIN_DEFAULT,
+            ingresos_chart=[],
+            servicios_chart=[],
             barberos=[],
             barberos_top=[],
             servicios=[],
             servicios_top=[],
-            error=error
+            error=error,
+            exito=None
         )
 
-    return render_template(
-        "admin/dashboard.html",
-        stats=data.get("stats", stats_admin_vacias()),
-        citas=data.get("citas", []),
-        barberos=data.get("barberos", []),
-        barberos_top=data.get("barberos_top", []),
-        servicios=data.get("servicios", []),
-        servicios_top=data.get("servicios_top", []),
-        error=error_admin
-    )
+        return render_template(
+            "admin/dashboard.html",
+            stats=data.get("stats", STATS_ADMIN_DEFAULT),
+            ingresos_chart=data.get("ingresos_chart", []),
+            servicios_chart=data.get("servicios_chart", []),
+            barberos=data.get("barberos", []),
+            barberos_top=data.get("barberos_top", []),
+            servicios=data.get("servicios", []),
+            servicios_top=data.get("servicios_top", []),
+            error=error_admin,
+            exito=exito_admin
+        )
 
 @app.route("/admin/servicios/crear", methods=["POST"])
 def crear_servicio_front():
@@ -1013,7 +1032,7 @@ def crear_servicio_front():
     except requests.RequestException:
         return redirect_admin_error("backend")
 
-    return redirect("/admin")
+    return redirect_admin_success("servicio_eliminado")
 
 @app.route("/admin/servicios/<int:id_servicio>/editar", methods=["POST"])
 def editar_servicio_front(id_servicio):
@@ -1052,7 +1071,7 @@ def editar_servicio_front(id_servicio):
     except requests.RequestException:
         return redirect_admin_error("backend")
 
-    return redirect("/admin")
+    return redirect_admin_success("barbero_eliminado")
 
 
 @app.route("/admin/servicios/<int:id_servicio>/eliminar", methods=["POST"])

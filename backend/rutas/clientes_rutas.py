@@ -48,26 +48,28 @@ def registrar_cliente():
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    existe = cursor.execute(
-        'SELECT id_usuario FROM usuarios WHERE email = ?',
+    cursor.execute(
+        'SELECT id_usuario FROM usuarios WHERE email = %s',
         (email,)
-    ).fetchone()
+    )
+    existe = cursor.fetchone()
     if existe:
         conn.close()
         return jsonify({"error": "Ya existe un usuario con ese email"}), 409
 
     try:
         cursor.execute(
-            'INSERT INTO usuarios (nombre, email, clave, rol) VALUES (?, ?, ?, ?)',
+            'INSERT INTO usuarios (nombre, email, clave, rol) VALUES (%s, %s, %s, %s)',
             (nombre, email, hashlib.sha256(clave.encode()).hexdigest(), "cliente")
         )
         id_usuario = cursor.lastrowid
         conn.commit()
 
-        cliente = cursor.execute(
-            'SELECT id_usuario, nombre, email, rol FROM usuarios WHERE id_usuario = ?',
+        cursor.execute(
+            'SELECT id_usuario, nombre, email, rol FROM usuarios WHERE id_usuario = %s',
             (id_usuario,)
-        ).fetchone()
+        )
+        cliente = cursor.fetchone()
         return jsonify(dict(cliente)), 201
     except Exception as exc:
         return jsonify({"error": str(exc)}), 400
@@ -78,25 +80,29 @@ def registrar_cliente():
 @clientes_bp.route('/servicios/<int:id_usuario>', methods=['GET'])
 def mostrar_servicios_cliente(id_usuario):
     conn = get_db_connection()
-    usuario = conn.execute(
-        'SELECT * FROM usuarios WHERE id_usuario = ?',
+    cursor = conn.cursor()
+    cursor.execute(
+        'SELECT * FROM usuarios WHERE id_usuario = %s',
         (id_usuario,)
-    ).fetchone()
+    )
+    usuario = cursor.fetchone()
     if not usuario:
         conn.close()
         return jsonify({"error": "Usuario no encontrado"}), 404
 
-    turnos = conn.execute('''
+    cursor.execute('''
         SELECT id_cita
         FROM citas
-        WHERE id_usuario = ?
+        WHERE id_usuario = %s
           AND estado NOT IN ('cancelada', 'completada')
-    ''', (id_usuario,)).fetchall()
-    servicios = conn.execute('''
+    ''', (id_usuario,))
+    turnos = cursor.fetchall()
+    cursor.execute('''
         SELECT id_servicio, nombre, descripcion, duracion, precio, img_servicio
         FROM servicios
         ORDER BY nombre ASC
-    ''').fetchall()
+    ''')
+    servicios = cursor.fetchall()
     conn.close()
 
     return jsonify({
@@ -110,26 +116,30 @@ def mostrar_servicios_cliente(id_usuario):
 @clientes_bp.route('/barberos/<int:id_usuario>', methods=['GET'])
 def mostrar_barberos(id_usuario):
     conn = get_db_connection()
-    usuario = conn.execute(
-        'SELECT * FROM usuarios WHERE id_usuario = ?',
+    cursor = conn.cursor()
+    cursor.execute(
+        'SELECT * FROM usuarios WHERE id_usuario = %s',
         (id_usuario,)
-    ).fetchone()
+    )
+    usuario = cursor.fetchone()
     if not usuario:
         conn.close()
         return jsonify({"error": "Usuario no encontrado"}), 404
 
-    barberos = conn.execute('''
+    cursor.execute('''
         SELECT b.id_barbero, u.nombre, u.email, b.activo, b.img_barbero
         FROM barberos b
         JOIN usuarios u ON b.id_usuario = u.id_usuario
         WHERE b.activo = 1
-    ''').fetchall()
-    turnos = conn.execute('''
+    ''')
+    barberos = cursor.fetchall()
+    cursor.execute('''
         SELECT id_cita
         FROM citas
-        WHERE id_usuario = ?
+        WHERE id_usuario = %s
           AND estado NOT IN ('cancelada', 'completada')
-    ''', (id_usuario,)).fetchall()
+    ''', (id_usuario,))
+    turnos = cursor.fetchall()
     conn.close()
 
     return jsonify({
@@ -145,15 +155,16 @@ def panel_cliente(id_usuario):
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    usuario = cursor.execute(
-        'SELECT nombre, id_usuario FROM usuarios WHERE id_usuario = ?',
+    cursor.execute(
+        'SELECT nombre, id_usuario FROM usuarios WHERE id_usuario = %s',
         (id_usuario,)
-    ).fetchone()
+    )
+    usuario = cursor.fetchone()
     if not usuario:
         conn.close()
         return jsonify({"error": "Usuario no encontrado"}), 404
 
-    turnos = cursor.execute('''
+    cursor.execute('''
         SELECT c.id_cita, c.id_barbero, c.fecha, c.hora_inicio, c.estado,
                ub.nombre AS barbero_nombre,
                s.nombre AS servicio_nombre
@@ -161,13 +172,14 @@ def panel_cliente(id_usuario):
         JOIN barberos b ON c.id_barbero = b.id_barbero
         JOIN usuarios ub ON b.id_usuario = ub.id_usuario
         JOIN servicios s ON c.id_servicio = s.id_servicio
-        WHERE c.id_usuario = ?
+        WHERE c.id_usuario = %s
           AND c.estado != 'cancelada'
         ORDER BY
           CASE WHEN c.estado = 'completada' THEN 1 ELSE 0 END,
           c.fecha ASC,
           c.hora_inicio ASC
-    ''', (id_usuario,)).fetchall()
+    ''', (id_usuario,))
+    turnos = cursor.fetchall()
     conn.close()
 
     return jsonify({
@@ -180,20 +192,23 @@ def panel_cliente(id_usuario):
 @clientes_bp.route('/acerca-de/<int:id_usuario>', methods=['GET'])
 def acerca_de(id_usuario):
     conn = get_db_connection()
-    usuario = conn.execute(
-        'SELECT * FROM usuarios WHERE id_usuario = ?',
+    cursor = conn.cursor()
+    cursor.execute(
+        'SELECT * FROM usuarios WHERE id_usuario = %s',
         (id_usuario,)
-    ).fetchone()
+    )
+    usuario = cursor.fetchone()
     if not usuario:
         conn.close()
         return jsonify({"error": "Usuario no encontrado"}), 404
 
-    turnos = conn.execute('''
+    cursor.execute('''
         SELECT id_cita
         FROM citas
-        WHERE id_usuario = ?
+        WHERE id_usuario = %s
           AND estado NOT IN ('cancelada', 'completada')
-    ''', (id_usuario,)).fetchall()
+    ''', (id_usuario,))
+    turnos = cursor.fetchall()
     conn.close()
 
     return jsonify({
@@ -208,27 +223,30 @@ def mostrar_horarios_barbero(id_barbero):
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    barbero = cursor.execute(
-        'SELECT id_barbero FROM barberos WHERE id_barbero = ? AND activo = 1',
+    cursor.execute(
+        'SELECT id_barbero FROM barberos WHERE id_barbero = %s AND activo = 1',
         (id_barbero,)
-    ).fetchone()
+    )
+    barbero = cursor.fetchone()
     if not barbero:
         conn.close()
         return jsonify({"error": "Barbero no encontrado"}), 404
 
-    disponibilidad = cursor.execute(
-        'SELECT * FROM disponibilidad_barberos WHERE id_barbero = ?',
+    cursor.execute(
+        'SELECT * FROM disponibilidad_barberos WHERE id_barbero = %s',
         (id_barbero,)
-    ).fetchall()
+    )
+    disponibilidad = cursor.fetchall()
 
-    citas_ocupadas = cursor.execute('''
+    cursor.execute('''
         SELECT fecha, hora_inicio, hora_fin, estado
         FROM citas
-        WHERE id_barbero = ?
-          AND fecha >= DATE('now')
+        WHERE id_barbero = %s
+          AND fecha >= CURRENT_DATE
           AND estado NOT IN ('cancelada', 'completada')
         ORDER BY fecha, hora_inicio
-    ''', (id_barbero,)).fetchall()
+    ''', (id_barbero,))
+    citas_ocupadas = cursor.fetchall()
 
     conn.close()
     return jsonify({
@@ -245,10 +263,11 @@ def cancelar_turno(id_cita):
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    cita = cursor.execute(
-        'SELECT estado FROM citas WHERE id_cita = ? AND id_usuario = ?',
+    cursor.execute(
+        'SELECT estado FROM citas WHERE id_cita = %s AND id_usuario = %s',
         (id_cita, id_usuario)
-    ).fetchone()
+    )
+    cita = cursor.fetchone()
     if not cita:
         conn.close()
         return jsonify({"error": "Turno no encontrado o no pertenece al cliente"}), 404
@@ -260,7 +279,7 @@ def cancelar_turno(id_cita):
     cursor.execute('''
         UPDATE citas
         SET estado = 'cancelada', fecha_cancelacion = CURRENT_TIMESTAMP
-        WHERE id_cita = ? AND id_usuario = ?
+        WHERE id_cita = %s AND id_usuario = %s
     ''', (id_cita, id_usuario))
     conn.commit()
     conn.close()
@@ -295,26 +314,29 @@ def reservar_turno():
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    cliente = cursor.execute(
-        'SELECT id_usuario FROM usuarios WHERE id_usuario = ? AND rol = "cliente"',
+    cursor.execute(
+        'SELECT id_usuario FROM usuarios WHERE id_usuario = %s AND rol = "cliente"',
         (id_usuario,)
-    ).fetchone()
+    )
+    cliente = cursor.fetchone()
     if not cliente:
         conn.close()
         return jsonify({"error": "Cliente no encontrado"}), 404
 
-    barbero = cursor.execute(
-        'SELECT id_barbero FROM barberos WHERE id_barbero = ? AND activo = 1',
+    cursor.execute(
+        'SELECT id_barbero FROM barberos WHERE id_barbero = %s AND activo = 1',
         (id_barbero,)
-    ).fetchone()
+    )
+    barbero = cursor.fetchone()
     if not barbero:
         conn.close()
         return jsonify({"error": "Barbero no encontrado o inactivo"}), 404
 
-    servicio = cursor.execute(
-        'SELECT id_servicio, duracion FROM servicios WHERE id_servicio = ?',
+    cursor.execute(
+        'SELECT id_servicio, duracion FROM servicios WHERE id_servicio = %s',
         (id_servicio,)
-    ).fetchone()
+    )
+    servicio = cursor.fetchone()
     if not servicio:
         conn.close()
         return jsonify({"error": "Servicio no encontrado"}), 404
@@ -338,12 +360,13 @@ def reservar_turno():
         conn.close()
         return jsonify({"error": "No se puede reservar en un horario que ya paso"}), 400
 
-    disponibilidad = cursor.execute('''
+    cursor.execute('''
         SELECT hora_inicio, hora_fin
         FROM disponibilidad_barberos
-        WHERE id_barbero = ?
-          AND dia_semana = ?
-    ''', (id_barbero, dia_semana_bd(fecha_turno))).fetchall()
+        WHERE id_barbero = %s
+          AND dia_semana = %s
+    ''', (id_barbero, dia_semana_bd(fecha_turno)))
+    disponibilidad = cursor.fetchall()
 
     turno_en_horario = any(
         hora_texto(d['hora_inicio']) <= hora_inicio and hora_fin <= hora_texto(d['hora_fin'])
@@ -354,15 +377,16 @@ def reservar_turno():
         conn.close()
         return jsonify({"error": "El barbero no atiende en ese dia u horario"}), 400
 
-    conflicto = cursor.execute('''
+    cursor.execute('''
         SELECT id_cita
         FROM citas
-        WHERE id_barbero = ?
-          AND fecha = ?
+        WHERE id_barbero = %s
+          AND fecha = %s
           AND estado NOT IN ('cancelada', 'completada')
-          AND time(hora_inicio) < time(?)
-          AND time(hora_fin) > time(?)
-    ''', (id_barbero, fecha, hora_fin, hora_inicio)).fetchone()
+          AND time(hora_inicio) < time(%s)
+          AND time(hora_fin) > time(%s)
+    ''', (id_barbero, fecha, hora_fin, hora_inicio))
+    conflicto = cursor.fetchone()
     if conflicto:
         conn.close()
         return jsonify({"error": "Ese horario ya esta ocupado para el barbero"}), 409
@@ -373,12 +397,12 @@ def reservar_turno():
 
     cursor.execute('''
         INSERT INTO citas (id_usuario, id_barbero, id_servicio, fecha, hora_inicio, hora_fin, estado, qr_token)
-        VALUES (?, ?, ?, ?, ?, ?, 'pendiente', ?)
+        VALUES (%s, %s, %s, %s, %s, %s, 'pendiente', %s)
     ''', (id_usuario, id_barbero, id_servicio, fecha, hora_inicio, hora_fin, qr_token))
     id_cita = cursor.lastrowid
     conn.commit()
 
-    cita = cursor.execute('''
+    cursor.execute('''
         SELECT c.id_cita, c.fecha, c.hora_inicio, c.hora_fin, c.estado,
                u.nombre AS cliente,
                u.email AS cliente_email,
@@ -389,8 +413,9 @@ def reservar_turno():
         JOIN barberos b ON c.id_barbero = b.id_barbero
         JOIN usuarios ub ON b.id_usuario = ub.id_usuario
         JOIN servicios s ON c.id_servicio = s.id_servicio
-        WHERE c.id_cita = ?
-    ''', (id_cita,)).fetchone()
+        WHERE c.id_cita = %s
+    ''', (id_cita,))
+    cita = cursor.fetchone()
     conn.close()
 
     mail_enviado = enviar_mail(
@@ -426,18 +451,20 @@ def dejar_resenia():
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    cliente = cursor.execute(
-        'SELECT id_usuario FROM usuarios WHERE id_usuario = ? AND rol = "cliente"',
+    cursor.execute(
+        'SELECT id_usuario FROM usuarios WHERE id_usuario = %s AND rol = "cliente"',
         (id_usuario,)
-    ).fetchone()
+    )
+    cliente = cursor.fetchone()
     if not cliente:
         conn.close()
         return jsonify({"error": "Cliente no encontrado"}), 404
 
-    barbero = cursor.execute(
-        'SELECT id_barbero FROM barberos WHERE id_barbero = ? AND activo = 1',
+    cursor.execute(
+        'SELECT id_barbero FROM barberos WHERE id_barbero = %s AND activo = 1',
         (id_barbero,)
-    ).fetchone()
+    )
+    barbero = cursor.fetchone()
     if not barbero:
         conn.close()
         return jsonify({"error": "Barbero no encontrado"}), 404
@@ -452,37 +479,40 @@ def dejar_resenia():
         conn.close()
         return jsonify({"error": "La calificacion debe ser un numero entero entre 1 y 5"}), 400
 
-    cita = cursor.execute('''
+    cursor.execute('''
         SELECT id_cita
         FROM citas
-        WHERE id_cita = ?
-          AND id_usuario = ?
-          AND id_barbero = ?
+        WHERE id_cita = %s
+          AND id_usuario = %s
+          AND id_barbero = %s
           AND estado = 'completada'
-    ''', (id_cita, id_usuario, id_barbero)).fetchone()
+    ''', (id_cita, id_usuario, id_barbero))
+    cita = cursor.fetchone()
     if not cita:
         conn.close()
         return jsonify({"error": "Cita no encontrada, no pertenece al cliente o no esta completada"}), 404
 
-    resenia_existente = cursor.execute(
-        'SELECT id_resenia FROM resenias WHERE id_usuario = ? AND id_cita = ?',
+    cursor.execute(
+        'SELECT id_resenia FROM resenias WHERE id_usuario = %s AND id_cita = %s',
         (id_usuario, id_cita)
-    ).fetchone()
+    )
+    resenia_existente = cursor.fetchone()
     if resenia_existente:
         conn.close()
         return jsonify({"error": "Ya has dejado una resenia para esta cita"}), 409
 
     cursor.execute(
-        'INSERT INTO resenias (id_usuario, id_cita, calificacion, comentario) VALUES (?, ?, ?, ?)',
+        'INSERT INTO resenias (id_usuario, id_cita, calificacion, comentario) VALUES (%s, %s, %s, %s)',
         (id_usuario, id_cita, calificacion, comentario)
     )
     id_resenia = cursor.lastrowid
     conn.commit()
 
-    resenia = cursor.execute(
-        'SELECT * FROM resenias WHERE id_resenia = ?',
+    cursor.execute(
+        'SELECT * FROM resenias WHERE id_resenia = %s',
         (id_resenia,)
-    ).fetchone()
+    )
+    resenia = cursor.fetchone()
     conn.close()
 
     return jsonify({"message": "Resenia subida correctamente", "resenia": dict(resenia)}), 201
@@ -493,10 +523,11 @@ def confirmar_turno(qr_token):
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    cita = cursor.execute(
-        'SELECT id_cita, estado FROM citas WHERE qr_token = ?',
+    cursor.execute(
+        'SELECT id_cita, estado FROM citas WHERE qr_token = %s',
         (qr_token,)
-    ).fetchone()
+    )
+    cita = cursor.fetchone()
     if not cita:
         conn.close()
         return jsonify({"error": "Turno no encontrado"}), 404
@@ -510,7 +541,7 @@ def confirmar_turno(qr_token):
         return jsonify({"error": "Este turno ya fue completado"}), 409
 
     if cita["estado"] == "confirmada":
-        cita_confirmada = cursor.execute('''
+        cursor.execute('''
             SELECT c.id_cita, c.id_usuario, c.fecha, c.hora_inicio, c.hora_fin, c.estado,
                    u.nombre AS cliente,
                    ub.nombre AS barbero,
@@ -520,8 +551,9 @@ def confirmar_turno(qr_token):
             JOIN barberos b ON c.id_barbero = b.id_barbero
             JOIN usuarios ub ON b.id_usuario = ub.id_usuario
             JOIN servicios s ON c.id_servicio = s.id_servicio
-            WHERE c.id_cita = ?
-        ''', (cita["id_cita"],)).fetchone()
+            WHERE c.id_cita = %s
+        ''', (cita["id_cita"],))
+        cita_confirmada = cursor.fetchone()
         conn.close()
         return jsonify({
             "mensaje": "El turno ya estaba confirmado",
@@ -529,12 +561,12 @@ def confirmar_turno(qr_token):
         }), 200
 
     cursor.execute(
-        "UPDATE citas SET estado = 'confirmada' WHERE qr_token = ?",
+        "UPDATE citas SET estado = 'confirmada' WHERE qr_token = %s",
         (qr_token,)
     )
     conn.commit()
 
-    cita_confirmada = cursor.execute('''
+    cursor.execute('''
         SELECT c.id_cita, c.id_usuario, c.fecha, c.hora_inicio, c.hora_fin, c.estado,
                u.nombre AS cliente,
                ub.nombre AS barbero,
@@ -544,8 +576,9 @@ def confirmar_turno(qr_token):
         JOIN barberos b ON c.id_barbero = b.id_barbero
         JOIN usuarios ub ON b.id_usuario = ub.id_usuario
         JOIN servicios s ON c.id_servicio = s.id_servicio
-        WHERE c.qr_token = ?
-    ''', (qr_token,)).fetchone()
+        WHERE c.qr_token = %s
+    ''', (qr_token,))
+    cita_confirmada = cursor.fetchone()
     conn.close()
 
     return jsonify({

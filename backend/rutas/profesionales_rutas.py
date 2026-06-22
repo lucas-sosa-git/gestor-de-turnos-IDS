@@ -5,10 +5,11 @@ profesionales_bp = Blueprint("profesionales", __name__)
 
 
 def obtener_barbero_por_usuario(cursor, id_usuario):
-    return cursor.execute(
-        'SELECT id_barbero FROM barberos WHERE id_usuario = ? AND activo = 1',
+    cursor.execute(
+        'SELECT id_barbero FROM barberos WHERE id_usuario = %s AND activo = 1',
         (id_usuario,)
-    ).fetchone()
+    )
+    return cursor.fetchone()
 
 
 def finalizar_cita(cursor, cita):
@@ -25,7 +26,7 @@ def finalizar_cita(cursor, cita):
         """
         UPDATE citas
         SET estado = 'completada'
-        WHERE id_cita = ?
+        WHERE id_cita = %s
         """,
         (cita["id_cita"],)
     )
@@ -37,18 +38,20 @@ def agenda_peluquero(id_usuario):
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    usuario = cursor.execute(
-        'SELECT nombre, id_usuario FROM usuarios WHERE id_usuario = ?',
+    cursor.execute(
+        'SELECT nombre, id_usuario FROM usuarios WHERE id_usuario = %s',
         (id_usuario,)
-    ).fetchone()
+    )
+    usuario = cursor.fetchone()
 
-    barbero_reg = cursor.execute(
-        'SELECT id_barbero FROM barberos WHERE id_usuario = ?',
+    cursor.execute(
+        'SELECT id_barbero FROM barberos WHERE id_usuario = %s',
         (id_usuario,)
-    ).fetchone()
+    )
+    barbero_reg = cursor.fetchone()
     id_barbero_destino = barbero_reg['id_barbero'] if barbero_reg else id_usuario
 
-    turnos = cursor.execute('''
+    cursor.execute('''
         SELECT c.id_cita, c.fecha, c.hora_inicio, c.estado,
                uc.nombre AS cliente_nombre,
                uc.email AS cliente_email,
@@ -56,10 +59,11 @@ def agenda_peluquero(id_usuario):
         FROM citas c
         JOIN usuarios uc ON c.id_usuario = uc.id_usuario
         JOIN servicios s ON c.id_servicio = s.id_servicio
-        WHERE c.id_barbero = ?
+        WHERE c.id_barbero = %s
           AND c.estado = 'confirmada'
         ORDER BY c.fecha ASC, c.hora_inicio ASC
-    ''', (id_barbero_destino,)).fetchall()
+    ''', (id_barbero_destino,))
+    turnos = cursor.fetchall()
 
     conn.close()
 
@@ -88,10 +92,11 @@ def check_in():
         conn.close()
         return jsonify({"error": "Barbero no encontrado"}), 404
 
-    cita = cursor.execute(
-        'SELECT * FROM citas WHERE qr_token = ?',
+    cursor.execute(
+        'SELECT * FROM citas WHERE qr_token = %s',
         (qr_token,)
-    ).fetchone()
+    )
+    cita = cursor.fetchone()
     if not cita:
         conn.close()
         return jsonify({"error": "Codigo QR no valido"}), 404
@@ -107,15 +112,16 @@ def check_in():
 
     conn.commit()
 
-    cita_actualizada = cursor.execute('''
+    cursor.execute('''
         SELECT c.id_cita, c.fecha, c.hora_inicio, c.hora_fin, c.estado,
                u.nombre AS cliente,
                s.nombre AS servicio
         FROM citas c
         JOIN usuarios u ON c.id_usuario = u.id_usuario
         JOIN servicios s ON c.id_servicio = s.id_servicio
-        WHERE c.qr_token = ?
-    ''', (qr_token,)).fetchone()
+        WHERE c.qr_token = %s
+    ''', (qr_token,))
+    cita_actualizada = cursor.fetchone()
     conn.close()
 
     return jsonify({"mensaje": "Turno completado", "cita": dict(cita_actualizada)}), 200
@@ -137,10 +143,11 @@ def finalizar_turno(id_cita):
         conn.close()
         return jsonify({"error": "Barbero no encontrado"}), 404
 
-    cita = cursor.execute(
-        "SELECT * FROM citas WHERE id_cita = ?",
+    cursor.execute(
+        "SELECT * FROM citas WHERE id_cita = %s",
         (id_cita,)
-    ).fetchone()
+    )
+    cita = cursor.fetchone()
     if not cita:
         conn.close()
         return jsonify({"error": "Turno no encontrado"}), 404

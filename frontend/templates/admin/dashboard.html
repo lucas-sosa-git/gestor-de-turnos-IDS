@@ -36,11 +36,17 @@
   <!-- Contenido -->
   <div class="admin-body">
 
-    {% if error %}
-    <div class="alert-error">
-      {{ error }}
-    </div>
-    {% endif %}
+      {% if error %}
+  <div class="alert-error" role="alert">
+    {{ error }}
+  </div>
+  {% endif %}
+
+  {% if exito %}
+  <div class="alert-success" role="status">
+    {{ exito }}
+  </div>
+  {% endif %}
 
     <!-- ==================================================
          PESTAÑA: ESTADÍSTICAS
