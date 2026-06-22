@@ -14,7 +14,7 @@ def cancelar_desde_mail(id_cita):
         UPDATE citas
         SET estado = "cancelada",
             fecha_cancelacion = CURRENT_TIMESTAMP
-        WHERE id_cita = ?
+        WHERE id_cita = %s
         ''',
         (id_cita,)
     )

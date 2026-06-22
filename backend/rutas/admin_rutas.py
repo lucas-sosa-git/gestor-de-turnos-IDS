@@ -26,7 +26,8 @@ def crear_barbero():
     cursor = conn.cursor()
 
     #validar email que sea unico
-    existe = cursor.execute('SELECT * FROM usuarios WHERE email = ?', (email,)).fetchone()
+    cursor.execute('SELECT * FROM usuarios WHERE email = %s', (email,))
+    existe = cursor.fetchone()
     if existe:
         conn.close()
         return jsonify({"error": "Email ya registrado"}), 400
@@ -40,96 +41,104 @@ def crear_barbero():
 
 
     clave_hash = hashlib.sha256(clave.encode()).hexdigest()
-    cursor.execute('INSERT INTO usuarios (nombre, email, clave, rol) VALUES (?, ?, ?, ?)', (nombre, email, clave_hash, "barbero"))
+    cursor.execute('INSERT INTO usuarios (nombre, email, clave, rol) VALUES (%s, %s, %s, %s)', (nombre, email, clave_hash, "barbero"))
     id_usuario = cursor.lastrowid
     
     #crear barbero asociado
     
-    cursor.execute('INSERT INTO barberos (id_usuario, img_barbero) values (?, ?)', (id_usuario, img_barbero))
+    cursor.execute('INSERT INTO barberos (id_usuario, img_barbero) values (%s, %s)', (id_usuario, img_barbero))
     id_barbero = cursor.lastrowid
     conn.commit()
 
-    barbero = cursor.execute('''
+    cursor.execute('''
         SELECT b.id_barbero, u.nombre, u.email, b.activo, b.img_barbero
         FROM barberos b
         JOIN usuarios u ON b.id_usuario = u.id_usuario
-        WHERE b.id_barbero = ?
-    ''', (id_barbero,)).fetchone()
+        WHERE b.id_barbero = %s
+    ''', (id_barbero,))
+    barbero = cursor.fetchone()
     conn.close()
     return jsonify({"mensaje": "Barbero creado", "barbero": dict(barbero)}), 201
 
 @admin_bp.route('/barberos/<int:id_barbero>', methods=['PATCH'])
 def editar_barbero(id_barbero):
-    nombre = request.form.get('nombre')
+    nombre = request.form.get('nombre', '').strip()
     archivo = request.files.get('imagen')
 
     conn = get_db_connection()
     cursor = conn.cursor()
-    
-    barbero = cursor.execute('SELECT * FROM barberos WHERE id_barbero = ?', (id_barbero,)).fetchone()
+
+    cursor.execute(
+        'SELECT id_barbero, id_usuario, img_barbero FROM barberos WHERE id_barbero = %s',
+        (id_barbero,)
+    )
+    barbero = cursor.fetchone()
     if not barbero:
         conn.close()
         return jsonify({"error": "Barbero no encontrado"}), 404
 
     img_barbero = barbero['img_barbero']
-    if archivo:
-        nueva_url = subir_imagen(archivo)
+
+    if archivo and archivo.filename:
+        try:
+            nueva_url = subir_imagen(archivo)
+        except RuntimeError as error:
+            conn.close()
+            return jsonify({"error": str(error)}), 500
+
         if not nueva_url:
             conn.close()
             return jsonify({"error": "Error al subir la imagen"}), 500
-        img_barbero = nueva_url
 
+        img_barbero = nueva_url
 
     if nombre:
         cursor.execute('''
-        UPDATE usuarios
-        SET nombre = ?
-        WHERE id_usuario = (
-            SELECT id_usuario
-            FROM barberos
-            WHERE id_barbero = ?
-        )
+            UPDATE usuarios
+            SET nombre = %s
+            WHERE id_usuario = %s
         ''', (nombre, barbero['id_usuario']))
 
     cursor.execute('''
         UPDATE barberos
-        SET img_barbero = ?
-        WHERE id_barbero = ?
+        SET img_barbero = %s
+        WHERE id_barbero = %s
     ''', (img_barbero, id_barbero))
-    
+
     conn.commit()
 
-    actualizado = cursor.execute('''
+    cursor.execute('''
         SELECT b.id_barbero, u.nombre, u.email, b.activo, b.img_barbero
         FROM barberos b
         JOIN usuarios u ON b.id_usuario = u.id_usuario
-        WHERE b.id_barbero = ?
-    ''', (id_barbero,)).fetchone()
+        WHERE b.id_barbero = %s
+    ''', (id_barbero,))
+    actualizado = cursor.fetchone()
     conn.close()
     return jsonify({"mensaje": "Barbero actualizado", "barbero": dict(actualizado)}), 200
-
 
 @admin_bp.route('/barberos/<int:id_barbero>', methods=['DELETE'])
 def eliminar_barbero(id_barbero):
     conn = get_db_connection()
     cursor = conn.cursor()
     # Obtener id_usuario asociado
-    usuario = cursor.execute('''
+    cursor.execute('''
         SELECT id_usuario
         FROM barberos
-        WHERE id_barbero = ?
-        ''',(id_barbero,)).fetchone()
+        WHERE id_barbero = %s
+        ''',(id_barbero,))
+    usuario = cursor.fetchone()
     if usuario is None:
         conn.close()
         return jsonify({
             "error": "Barbero no encontrado"
         }), 404
     # Eliminar barbero
-    cursor.execute('DELETE FROM barberos WHERE id_barbero = ?', (id_barbero,))
+    cursor.execute('DELETE FROM barberos WHERE id_barbero = %s', (id_barbero,))
     # Eliminar usuario
     cursor.execute('''
         DELETE FROM usuarios
-        WHERE id_usuario = ?
+        WHERE id_usuario = %s
         ''',(usuario['id_usuario'],))
     conn.commit()
     conn.close()
@@ -161,14 +170,15 @@ def crear_servicio():
     cursor = conn.cursor()
     cursor.execute('''
         INSERT INTO servicios (nombre, descripcion, duracion, precio, img_servicio)
-        VALUES (?, ?, ?, ?, ?)
+        VALUES (%s, %s, %s, %s, %s)
     ''', (nombre, descripcion, int(duracion), float(precio), img_servicio))
     id_servicio = cursor.lastrowid
     conn.commit()
 
-    servicio = cursor.execute(
-        'SELECT * FROM servicios WHERE id_servicio = ?', (id_servicio,)
-    ).fetchone()
+    cursor.execute(
+        'SELECT * FROM servicios WHERE id_servicio = %s', (id_servicio,)
+    )
+    servicio = cursor.fetchone()
     conn.close()
 
     return jsonify({"mensaje": "Servicio creado", "servicio": dict(servicio)}), 201
@@ -183,7 +193,8 @@ def actualizar_servicio(id_servicio):
 
     conn = get_db_connection()
     cursor = conn.cursor()
-    servicio = cursor.execute('SELECT * FROM servicios WHERE id_servicio = ?', (id_servicio,)).fetchone()
+    cursor.execute('SELECT * FROM servicios WHERE id_servicio = %s', (id_servicio,))
+    servicio = cursor.fetchone()
     if not servicio:
         conn.close()
         return jsonify({"error": "Servicio no encontrado"}), 404
@@ -208,12 +219,13 @@ def actualizar_servicio(id_servicio):
 
     cursor.execute('''
         UPDATE servicios
-        SET nombre = ?, descripcion = ?, duracion = ?, precio = ?, img_servicio = ?
-        WHERE id_servicio = ?
+        SET nombre = %s, descripcion = %s, duracion = %s, precio = %s, img_servicio = %s
+        WHERE id_servicio = %s
     ''', (nombre, descripcion, duracion, precio, img_servicio, id_servicio))
     conn.commit()
 
-    actualizado = cursor.execute('SELECT * FROM servicios WHERE id_servicio = ?', (id_servicio,)).fetchone()
+    cursor.execute('SELECT * FROM servicios WHERE id_servicio = %s', (id_servicio,))
+    actualizado = cursor.fetchone()
     conn.close()
     
     return jsonify({"mensaje": "Servicio actualizado", "servicio": dict(actualizado)}), 200
@@ -225,29 +237,31 @@ def eliminar_servicio(id_servicio):
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    servicio = cursor.execute(
-        'SELECT id_servicio FROM servicios WHERE id_servicio = ?', (id_servicio,)
-    ).fetchone()
+    cursor.execute(
+        'SELECT id_servicio FROM servicios WHERE id_servicio = %s', (id_servicio,)
+    )
+    servicio = cursor.fetchone()
     if not servicio:
         conn.close()
         return jsonify({"error": "Servicio no encontrado"}), 404
 
-    citas_asociadas = cursor.execute(
-        'SELECT COUNT(*) AS total FROM citas WHERE id_servicio = ?', (id_servicio,)
-    ).fetchone()
+    cursor.execute(
+        'SELECT COUNT(*) AS total FROM citas WHERE id_servicio = %s', (id_servicio,)
+    )
+    citas_asociadas = cursor.fetchone()
     if citas_asociadas["total"] > 0:
         conn.close()
         return jsonify({
             "error": "No se puede eliminar el servicio porque tiene citas asociadas."
         }), 400
 
-    cursor.execute('DELETE FROM servicios WHERE id_servicio = ?', (id_servicio,))
+    cursor.execute('DELETE FROM servicios WHERE id_servicio = %s', (id_servicio,))
     conn.commit()
     conn.close()
 
     return jsonify({"mensaje": "Servicio eliminado correctamente"}), 200
 
-# CONFIGURAR HORARIOS (Update de un barbero específico)
+# CONFIGURAR HORARIOS (Update de un barbero especifico)
 @admin_bp.route('/barberos/<int:id_barbero>/horarios', methods=['PATCH'])
 def configurar_horario(id_barbero):
     data = request.get_json()
@@ -262,19 +276,21 @@ def configurar_horario(id_barbero):
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    barbero = cursor.execute(
-        'SELECT id_barbero FROM barberos WHERE id_barbero = ?', (id_barbero,)
-    ).fetchone()
+    cursor.execute(
+        'SELECT id_barbero FROM barberos WHERE id_barbero = %s', (id_barbero,)
+    )
+    barbero = cursor.fetchone()
     if not barbero:
         conn.close()
         return jsonify({"error": "Barbero no encontrado"}), 404
     
-    cursor.execute('''INSERT INTO disponibilidad_barberos (id_barbero, dia_semana, hora_inicio, hora_fin) VALUES (?, ?, ?, ?)''', (id_barbero, dia_semana, hora_inicio, hora_fin))
+    cursor.execute('''INSERT INTO disponibilidad_barberos (id_barbero, dia_semana, hora_inicio, hora_fin) VALUES (%s, %s, %s, %s)''', (id_barbero, dia_semana, hora_inicio, hora_fin))
     id_disp = cursor.lastrowid
     conn.commit()
-    horario = cursor.execute(
-        'SELECT * FROM disponibilidad_barberos WHERE id_disp = ?', (id_disp,)
-    ).fetchone()
+    cursor.execute(
+        'SELECT * FROM disponibilidad_barberos WHERE id_disp = %s', (id_disp,)
+    )
+    horario = cursor.fetchone()
 
     conn.close()
     return jsonify({"mensaje": "Horario actualizado", "horario": dict(horario)})
@@ -326,17 +342,18 @@ def estadisticas():
         return round((actual - anterior) / anterior * 100, 1)
 
     def get_kpis(inicio, fin):
-        return cursor.execute('''
+        cursor.execute('''
             SELECT
-                COALESCE(SUM(CASE WHEN c.estado = 'confirmada' THEN s.precio ELSE 0 END), 0) AS ingresos,
-                COUNT(CASE WHEN c.estado = 'confirmada' THEN 1 END) AS citas,
+                COALESCE(SUM(CASE WHEN c.estado = 'completada' THEN s.precio ELSE 0 END), 0) AS ingresos,
+                COUNT(CASE WHEN c.estado = 'completada' THEN 1 END) AS citas,
                 COUNT(DISTINCT c.id_usuario) AS clientes,
                 ROUND(COALESCE(AVG(r.calificacion), 0), 1) AS rating
             FROM citas c
             JOIN servicios s ON c.id_servicio = s.id_servicio
             LEFT JOIN resenias r ON c.id_cita = r.id_cita
-            WHERE DATE(c.fecha) BETWEEN DATE(?) AND DATE(?)
-        ''', (inicio, fin)).fetchone()
+            WHERE DATE(c.fecha) BETWEEN DATE(%s) AND DATE(%s)
+        ''', (inicio, fin))
+        return cursor.fetchone()
 
     def get_semanas_mes(anio, mes):
         primer_dia = date(anio, mes, 1)
@@ -347,13 +364,14 @@ def estadisticas():
 
         while cursor_dia <= ultimo_dia:
             fin_semana = min(cursor_dia + timedelta(days=6), ultimo_dia)
-            row = cursor.execute('''
+            cursor.execute('''
                 SELECT COALESCE(SUM(s.precio), 0) AS monto
                 FROM citas c
                 JOIN servicios s ON c.id_servicio = s.id_servicio
-                WHERE c.estado = 'confirmada'
-                  AND DATE(c.fecha) BETWEEN DATE(?) AND DATE(?)
-            ''', (cursor_dia.isoformat(), fin_semana.isoformat())).fetchone()
+                WHERE c.estado = 'completada'
+                  AND DATE(c.fecha) BETWEEN DATE(%s) AND DATE(%s)
+            ''', (cursor_dia.isoformat(), fin_semana.isoformat()))
+            row = cursor.fetchone()
             semanas.append({
                 "label": f"Sem {semana_num}",
                 "monto": row["monto"] or 0,
@@ -384,7 +402,7 @@ def estadisticas():
         "semanas": get_semanas_mes(desde_fecha.year, desde_fecha.month),
     }
 
-    filas_citas = cursor.execute('''
+    cursor.execute('''
         SELECT c.fecha, c.hora_inicio, c.estado,
                uc.nombre AS cliente,
                ub.nombre AS barbero,
@@ -394,13 +412,15 @@ def estadisticas():
         JOIN barberos b ON c.id_barbero = b.id_barbero
         JOIN usuarios ub ON b.id_usuario = ub.id_usuario
         JOIN servicios s ON c.id_servicio = s.id_servicio
-        WHERE DATE(c.fecha) BETWEEN DATE(?) AND DATE(?)
+        WHERE DATE(c.fecha) BETWEEN DATE(%s) AND DATE(%s)
         ORDER BY DATE(c.fecha) DESC, c.hora_inicio DESC
         LIMIT 8
-    ''', (desde, hasta)).fetchall()
+    ''', (desde, hasta))
+    filas_citas = cursor.fetchall()
 
     estado_map = {
-        "confirmada": "Completada",
+        "confirmada": "Confirmada",
+        "completada": "Completada",
         "pendiente": "Pendiente",
         "cancelada": "Cancelada",
     }
@@ -412,7 +432,7 @@ def estadisticas():
         "estado": estado_map.get(fila["estado"], fila["estado"].capitalize()),
     } for fila in filas_citas]
 
-    filas_barberos = cursor.execute('''
+    cursor.execute('''
         SELECT b.id_barbero, u.nombre,
                COUNT(c.id_cita) AS citas,
                COALESCE(SUM(s.precio), 0) AS ingresos,
@@ -421,13 +441,14 @@ def estadisticas():
         FROM barberos b
         JOIN usuarios u ON b.id_usuario = u.id_usuario
         LEFT JOIN citas c ON b.id_barbero = c.id_barbero
-                          AND c.estado = 'confirmada'
-                          AND DATE(c.fecha) BETWEEN DATE(?) AND DATE(?)
+                          AND c.estado = 'completada'
+                          AND DATE(c.fecha) BETWEEN DATE(%s) AND DATE(%s)
         LEFT JOIN servicios s ON c.id_servicio = s.id_servicio
         LEFT JOIN resenias r ON c.id_cita = r.id_cita
-        GROUP BY b.id_barbero
+        GROUP BY b.id_barbero, u.nombre, b.activo, b.img_barbero
         ORDER BY ingresos DESC
-    ''', (desde, hasta)).fetchall()
+    ''', (desde, hasta))
+    filas_barberos = cursor.fetchall()
 
     max_ingresos = max((fila["ingresos"] for fila in filas_barberos), default=1) or 1
     barberos_top = [{
@@ -443,14 +464,15 @@ def estadisticas():
 
     barberos = barberos_top
 
-    filas_servicios_top = cursor.execute('''
+    cursor.execute('''
         SELECT s.nombre, s.precio, COUNT(c.id_cita) AS veces
         FROM citas c
         JOIN servicios s ON c.id_servicio = s.id_servicio
-        WHERE DATE(c.fecha) BETWEEN DATE(?) AND DATE(?)
-        GROUP BY c.id_servicio
+        WHERE DATE(c.fecha) BETWEEN DATE(%s) AND DATE(%s)
+        GROUP BY c.id_servicio, s.nombre, s.precio
         ORDER BY veces DESC
-    ''', (desde, hasta)).fetchall()
+    ''', (desde, hasta))
+    filas_servicios_top = cursor.fetchall()
 
     servicios_top = [{
         "nombre": fila["nombre"],
@@ -458,15 +480,16 @@ def estadisticas():
         "veces": fila["veces"],
     } for fila in filas_servicios_top]
 
-    filas_servicios = cursor.execute('''
+    cursor.execute('''
         SELECT s.id_servicio, s.nombre, s.descripcion, s.duracion, s.precio, s.img_servicio,
                COUNT(c.id_cita) AS veces_solicitado
         FROM servicios s
         LEFT JOIN citas c ON s.id_servicio = c.id_servicio
-                          AND DATE(c.fecha) BETWEEN DATE(?) AND DATE(?)
-        GROUP BY s.id_servicio
+                          AND DATE(c.fecha) BETWEEN DATE(%s) AND DATE(%s)
+        GROUP BY s.id_servicio, s.nombre, s.descripcion, s.duracion, s.precio, s.img_servicio
         ORDER BY veces_solicitado DESC
-    ''', (desde, hasta)).fetchall()
+    ''', (desde, hasta))
+    filas_servicios = cursor.fetchall()
 
     servicios = [{
         "id_servicio": fila["id_servicio"],

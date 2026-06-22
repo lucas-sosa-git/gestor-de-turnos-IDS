@@ -38,14 +38,15 @@ def login():
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    usuario = cursor.execute(
+    cursor.execute(
         '''
         SELECT id_usuario, nombre, email, clave, rol
         FROM usuarios
-        WHERE email = ?
+        WHERE email = %s
         ''',
         (email,)
-    ).fetchone()
+    )
+    usuario = cursor.fetchone()
 
     conn.close()
 

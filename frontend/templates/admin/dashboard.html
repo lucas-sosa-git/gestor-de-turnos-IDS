@@ -36,11 +36,17 @@
   <!-- Contenido -->
   <div class="admin-body">
 
-    {% if error %}
-    <div class="alert-error">
-      {{ error }}
-    </div>
-    {% endif %}
+      {% if error %}
+  <div class="alert-error" role="alert">
+    {{ error }}
+  </div>
+  {% endif %}
+
+  {% if exito %}
+  <div class="alert-success" role="status">
+    {{ exito }}
+  </div>
+  {% endif %}
 
     <!-- ==================================================
          PESTAÑA: ESTADÍSTICAS
@@ -368,31 +374,35 @@
 
       </div>
 
-      <!-- Servicios más solicitados -->
+<!-- Servicios -->
       <div class="panel-card mt-3">
 
         <div class="panel-card-title">
-          ✂️ Servicios Más Solicitados
+          ✂️ Servicios
         </div>
 
         <table class="tabla-admin tabla-dashboard">
           <thead>
             <tr>
               <th>Servicio</th>
-              <th>Veces</th>
+              <th>Descripción</th>
+              <th>Duración</th>
               <th>Precio</th>
+              <th>Pedidos/mes</th>
             </tr>
           </thead>
           <tbody>
-            {% for s in servicios_top %}
+            {% for s in servicios %}
             <tr>
               <td>{{ s.nombre }}</td>
-              <td>{{ s.veces }} pedidos</td>
+              <td>{{ s.descripcion or '—' }}</td>
+              <td>{{ s.duracion_min }} min</td>
               <td>${{ "{:,.0f}".format(s.precio) }}</td>
+              <td>{{ s.veces_solicitado }}</td>
             </tr>
             {% else %}
             <tr>
-              <td colspan="3" class="tabla-vacia">
+              <td colspan="5" class="tabla-vacia">
                 No hay servicios para mostrar.
               </td>
             </tr>

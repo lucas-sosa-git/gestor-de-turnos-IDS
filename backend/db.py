@@ -1,12 +1,30 @@
-import sqlite3
-from pathlib import Path
+import os
 
-# Buscamos la ruta de la base de datos que crea tu init_db.py
-BASE_DIR = Path(__file__).resolve().parent
-DB_PATH = BASE_DIR / "gestor_de_turnos.db"
+import pymysql
+from pymysql.constants import FIELD_TYPE
+from pymysql.converters import conversions
+from pymysql.cursors import DictCursor
+
 
 def get_db_connection():
-    conn = sqlite3.connect(DB_PATH)
-    # Esto sirve para que los resultados parezcan diccionarios de Python
-    conn.row_factory = sqlite3.Row 
-    return conn
+    text_value = lambda value: value.decode("utf-8") if isinstance(value, bytes) else value
+
+    conv = conversions.copy()
+    conv[FIELD_TYPE.DATE] = text_value
+    conv[FIELD_TYPE.TIME] = text_value
+    conv[FIELD_TYPE.DATETIME] = text_value
+    conv[FIELD_TYPE.TIMESTAMP] = text_value
+    conv[FIELD_TYPE.DECIMAL] = float
+    conv[FIELD_TYPE.NEWDECIMAL] = float
+
+    return pymysql.connect(
+        host=os.environ["DB_HOST"],
+        port=int(os.environ["DB_PORT"]),
+        user=os.environ["DB_USER"],
+        password=os.environ["DB_PASSWORD"],
+        database=os.environ["DB_NAME"],
+        charset="utf8mb4",
+        conv=conv,
+        cursorclass=DictCursor,
+        autocommit=False,
+    )

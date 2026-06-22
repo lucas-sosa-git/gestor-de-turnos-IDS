@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reserva Pendiente - Peluqueria Elegance</title>
+    <link rel="icon" href="{{ url_for('static', filename='css/tijeras.png') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/elegance.css') }}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container navbar-row">
+            <a class="navbar-brand" href="{{ url_for('clientes_panel', id_usuario=id_usuario) }}">
+                Peluqueria Elegance
+            </a>
+        </div>
+    </nav>
+
+    <main class="reserve-page">
+        <section class="reserve-card" aria-labelledby="confirmacion-title">
+            <div class="brand-icon" aria-hidden="true">PE</div>
+            <div class="reserve-header">
+                <p class="eyebrow">Reserva pendiente</p>
+                <h1 id="confirmacion-title">Turno reservado</h1>
+                <p class="subtitle">
+                    Te enviamos un mail para confirmar el turno. El dia del turno tenes que presentar el QR enviado por mail.
+                </p>
+            </div>
+
+            <div class="success" role="status">
+                {% if mail_enviado %}
+                    Revisa tu mail y toca "Confirmar turno" para dejarlo activo.
+                {% else %}
+                    El turno quedo pendiente, pero no se pudo confirmar el envio del mail.
+                {% endif %}
+            </div>
+
+            <div class="reserva-summary">
+                <p><strong>Servicio:</strong> {{ reserva['servicio'] }}</p>
+                <p><strong>Peluquero:</strong> {{ reserva['barbero'] }}</p>
+                <p><strong>Fecha:</strong> {{ reserva['fecha'] }}</p>
+                <p><strong>Hora:</strong> {{ reserva['hora_inicio'] }}</p>
+                <p><strong>Estado:</strong> {{ reserva['estado'].capitalize() }}</p>
+            </div>
+
+            <p class="form-link">
+                <a class="btn-primary" href="{{ url_for('clientes_panel', id_usuario=id_usuario) }}">
+                    Volver a mis turnos
+                </a>
+            </p>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 Peluqueria Elegance</p>
+    </footer>
+</body>
+</html>

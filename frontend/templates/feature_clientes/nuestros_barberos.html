@@ -4,18 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="{{ url_for('static', filename='css/tijeras.png') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/peluqueros.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/elegance.css') }}">
     <title>Nuestros Peluqueros</title>
 </head>
 <body>
-    <div class="app-container">    
+    <div class="app-container">
         <header class="main-header">
             <div class="user-profile">
                 <div class="avatar">
-                    <span>PE</span> 
+                    <span>PE</span>
                 </div>
                 <div>
-                    <h1 class="salon-title">Peluquería Elegance</h1>
+                    <h1 class="salon-title">Peluqueria Elegance</h1>
                     <p class="welcome-text"></p>
                 </div>
             </div>
@@ -23,35 +23,39 @@
                 <a href="{{ url_for('logout') }}" class="logout-btn">Salir</a>
             </div>
         </header>
+
         <nav class="nav-bar">
             <a href="#" class="nav-link active">
-                <span>👤</span> Nuestros Peluqueros
+                Nuestros Peluqueros
             </a>
             <a href="{{ url_for('clientes_servicios', id_usuario=id_usuario) }}" class="nav-link">
-                <span>&#9986;&#65039;</span> Servicios
+                Servicios
             </a>
             <a href="{{ url_for('clientes_panel', id_usuario=id_usuario) }}" class="nav-link">
-                <span>📅</span> Mis Reservas
-                {% if turnos and turnos | length > 0%}
-                <span class="indicador-numero">{{turnos | length}}</span>
+                Mis Turnos
+                {% if turnos and turnos | length > 0 %}
+                    <span class="indicador-numero">{{ turnos | length }}</span>
                 {% endif %}
             </a>
             <a href="{{ url_for('clientes_info', id_usuario=id_usuario) }}" class="nav-link">
-                <span>ℹ</span> Acerca de Nosotros
+                Acerca de Nosotros
             </a>
         </nav>
+
         <div class="contenedor-principal">
             <div class="section-header">
                 <div>
                     <h2 class="section-title">Nuestros Peluqueros</h2>
-                    <p class="section-subtitle">Conoce a los expertos que transformarán tu estilo</p>
+                    <p class="section-subtitle">Conoce a los expertos que transformaran tu estilo.</p>
                 </div>
             </div>
+
             {% if error %}
                 <div class="estado-vacio">
                     <p>{{ error }}</p>
                 </div>
             {% endif %}
+
             <div class="estilistas-grid">
                 {% for barbero in barberos %}
                     <div class="estilista-card">
@@ -62,20 +66,17 @@
                                 alt="Foto de {{ barbero['nombre'] }}"
                             >
                         {% else %}
-                        <div class="avatar-placeholder">
-                            <span style="font-size: 40px;">🧔🏻‍♂️</span>
-                        </div>    
+                            <div class="avatar-placeholder">
+                                <span>PE</span>
+                            </div>
                         {% endif %}
+
                         <h3 class="card-title">{{ barbero['nombre'] }}</h3>
                         <p class="card-role">Peluquero Profesional</p>
-                        <div class="estrellas">⭐⭐⭐⭐⭐</div>
-                         <a href="{{ url_for('reservar_turno_form', id_usuario=id_usuario, id_barbero=barbero['id_barbero']) }}"
-                             class="btn-reservar">
-                             Reservar Turno
-                         </a>
-                        <button class="btn-reservar">
+                        <div class="estrellas">★★★★★</div>
+                        <a href="{{ url_for('reservar_turno_form', id_usuario=id_usuario, id_barbero=barbero['id_barbero']) }}" class="btn-reservar">
                             Reservar Turno
-                        </button>
+                        </a>
                     </div>
                 {% endfor %}
             </div>

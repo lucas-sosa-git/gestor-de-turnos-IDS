@@ -3,20 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <link rel="icon" href="{{ url_for('static', filename='css/tijeras.png') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/clientes.css')}}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/elegance.css') }}">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vista - clientes</title>
 </head>
 <body>
-    <div class="app-container">    
+    <div class="app-container">
         <header class="main-header">
             <div class="user-profile">
                 <div class="avatar">
-                    <span>PE</span> 
+                    <span>PE</span>
                 </div>
                 <div>
-                    <h1 class="salon-title">Peluquería Elegance</h1>
-                    <p class="welcome-text">Bienvenido, {{usuario['nombre']}}</p>
+                    <h1 class="salon-title">Peluqueria Elegance</h1>
+                    <p class="welcome-text">Bienvenido, {{ usuario['nombre'] }}</p>
                 </div>
             </div>
             <div class="logout-container">
@@ -26,82 +26,102 @@
 
         <nav class="nav-bar">
             <a href="{{ url_for('clientes_barberos', id_usuario=id_usuario) }}" class="nav-link">
-                <span>👤</span> Nuestros Peluqueros
+                Nuestros Peluqueros
             </a>
-            
+
             <a href="{{ url_for('clientes_servicios', id_usuario=id_usuario) }}" class="nav-link">
-                <span>&#9986;&#65039;</span> Servicios
+                Servicios
             </a>
 
             <a href="#" class="nav-link active">
-                <span>📅</span> Mis Reservas
+                Mis Turnos
                 {% if turnos | length > 0 %}
                     <span class="indicador-numero">{{ turnos|length }}</span>
-                {% else %}
-                    <span class="indicador-numero"></span>
                 {% endif %}
             </a>
-            
+
             <a href="{{ url_for('clientes_info', id_usuario=id_usuario) }}" class="nav-link">
-                <span>ℹ</span> Acerca de Nosotros
+                Acerca de Nosotros
             </a>
         </nav>
 
         {% if error %}
-            <div class="estado-vacio">
+            <div class="estado-vacio alert">
                 <p>{{ error }}</p>
             </div>
-        {% elif turnos %}
-            
-            <div class="section-header">
-                <div>
-                    <h2 class="section-title">Mis Reservas Activas</h2>
-                    <p class="section-subtitle">Gestione sus citas pendientes y deje reseñas de los servicios completados</p>
-                </div>
-                <button class="btn-history">
-                    <span>🕒</span> Ver Historial
-                </button>
-            </div>
+        {% endif %}
 
+        {% if exito %}
+            <div class="estado-vacio success">
+                <p>{{ exito }}</p>
+            </div>
+        {% endif %}
+
+        <div class="section-header">
+            <div>
+                <h2 class="section-title">Mis Turnos</h2>
+                <p class="section-subtitle">Gestiona tus citas pendientes, confirmadas y completadas.</p>
+            </div>
+            <a href="{{ url_for('clientes_barberos', id_usuario=id_usuario) }}" class="btn-history">
+                Nuevo Turno
+            </a>
+        </div>
+
+        {% if turnos %}
             {% for turno in turnos %}
                 <div class="reserva-card">
-                    
                     <div class="card-top">
                         <div>
                             <h3 class="card-title">{{ turno['barbero_nombre'] }}</h3>
-                            <p class="card-service">
-                                <span>✂️</span> {{ turno['servicio_nombre'] }}
-                            </p>
+                            <p class="card-service">{{ turno['servicio_nombre'] }}</p>
                         </div>
                         <div class="status-badge">
-                            <span>ℹ️</span> {{ turno['estado'].capitalize() }}
+                            {{ turno['estado'].capitalize() }}
                         </div>
                     </div>
 
                     <div class="card-meta">
-                        <div class="meta-item">
-                            <span>📅</span> {{ turno['fecha'] }}
-                        </div>
-                        <div class="meta-item">
-                            <span>🕒</span> {{ turno['hora_inicio'] }}
-                        </div>
+                        <div class="meta-item">{{ turno['fecha'] }}</div>
+                        <div class="meta-item">{{ turno['hora_inicio'] }}</div>
                     </div>
 
                     <hr class="card-divider">
 
                     <div class="card-bottom">
-                        <p class="card-note">Te esperamos en tu cita. Recuerda llegar 5 minutos antes.</p>
-                        <button class="btn-cancel">
-                            <span>🗑️</span> Cancelar Turno
-                        </button>
+                        {% if turno['estado'].lower() == 'completada' %}
+                            <p class="card-note">Esperamos que hayas disfrutado tu corte.</p>
+                            <a href="{{ url_for('dejar_resenia_form', id_usuario=id_usuario, id_cita=turno['id_cita'], id_barbero=turno['id_barbero']) }}" class="btn-resenia">
+                                Dejar Reseña
+                            </a>
+                        {% elif turno['estado'].lower() == 'pendiente' %}
+                            <p class="card-note">Tu turno queda pendiente hasta que confirmes desde el mail.</p>
+                            <form
+                                method="post"
+                                action="{{ url_for('cancelar_turno_front', id_usuario=id_usuario, id_cita=turno['id_cita']) }}"
+                                onsubmit="return confirm('¿Cancelar este turno?');"
+                            >
+                                <button class="btn-cancel" type="submit">
+                                    Cancelar Turno
+                                </button>
+                            </form>
+                        {% elif turno['estado'].lower() == 'confirmada' %}
+                            <p class="card-note">Te esperamos en tu cita. Recuerda llegar 5 minutos antes.</p>
+                            <form
+                                method="post"
+                                action="{{ url_for('cancelar_turno_front', id_usuario=id_usuario, id_cita=turno['id_cita']) }}"
+                                onsubmit="return confirm('¿Cancelar este turno?');"
+                            >
+                                <button class="btn-cancel" type="submit">
+                                    Cancelar Turno
+                                </button>
+                            </form>
+                        {% endif %}
                     </div>
-
                 </div>
             {% endfor %}
-
         {% else %}
             <div class="estado-vacio">
-                <p>No tienes reservas activas en este momento.</p>
+                <p>No tienes turnos en este momento.</p>
             </div>
         {% endif %}
     </div>
