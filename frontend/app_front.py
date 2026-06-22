@@ -971,9 +971,8 @@ def admin_panel():
     if error:
         return render_template(
             "admin/dashboard.html",
-            stats=STATS_ADMIN_DEFAULT,
-            ingresos_chart=[],
-            servicios_chart=[],
+            stats=stats_admin_vacias(),
+            citas=[],
             barberos=[],
             barberos_top=[],
             servicios=[],
@@ -982,18 +981,17 @@ def admin_panel():
             exito=None
         )
 
-        return render_template(
-            "admin/dashboard.html",
-            stats=data.get("stats", STATS_ADMIN_DEFAULT),
-            ingresos_chart=data.get("ingresos_chart", []),
-            servicios_chart=data.get("servicios_chart", []),
-            barberos=data.get("barberos", []),
-            barberos_top=data.get("barberos_top", []),
-            servicios=data.get("servicios", []),
-            servicios_top=data.get("servicios_top", []),
-            error=error_admin,
-            exito=exito_admin
-        )
+    return render_template(
+        "admin/dashboard.html",
+        stats=data.get("stats", stats_admin_vacias()),
+        citas=data.get("citas", []),
+        barberos=data.get("barberos", []),
+        barberos_top=data.get("barberos_top", []),
+        servicios=data.get("servicios", []),
+        servicios_top=data.get("servicios_top", []),
+        error=error_admin,
+        exito=exito_admin
+    )
 
 @app.route("/admin/servicios/crear", methods=["POST"])
 def crear_servicio_front():
