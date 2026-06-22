@@ -22,4 +22,8 @@ def cancelar_desde_mail(id_cita):
     conn.commit()
     conn.close()
 
-    return render_template('cancelacion_exitosa.html')
+    return render_template(
+        'cancelacion_exitosa.html',
+        ok=True,
+        mensaje="Tu reserva fue cancelada correctamente."
+    )
