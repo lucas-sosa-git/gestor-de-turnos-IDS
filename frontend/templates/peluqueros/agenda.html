@@ -3,7 +3,8 @@
 {% block title %}Mi Agenda · Salón Elegance{% endblock %}
 
 {% block head %}
-<link rel="stylesheet" href="{{ url_for('static', filename='styles.css', external=True) }}">
+<link rel="icon" href="{{ url_for('static', filename='css/tijeras.png') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='agenda.css', external=True) }}">
 {% endblock %}
 
 {% block content %}
@@ -15,7 +16,7 @@
     <div class="agenda-logo">✂️</div>
 
     <div>
-      <p class="agenda-brand-title">Salón Elegance</p>
+      <p class="agenda-brand-title">Peluquería Elegance</p>
       <p class="agenda-brand-sub">Bienvenido, {{ barbero_nombre }}</p>
     </div>
   </div>
@@ -29,7 +30,7 @@
   {# ── Hero Banner ─────────────────────────── #}
   <div class="agenda-hero">
     <h1 class="agenda-hero-title">Mi Agenda</h1>
-    <p class="agenda-hero-sub">Gestiona tus citas de forma eficiente</p>
+    <p class="agenda-hero-sub">Gestioná tus citas de forma eficiente</p>
   </div>
 
   {# ── Controles: tabs + navegación de fecha ─ #}

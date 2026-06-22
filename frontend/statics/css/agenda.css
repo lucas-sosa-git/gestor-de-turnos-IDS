@@ -1,0 +1,349 @@
+@font-face {
+    font-family: "Raleway";
+    src: url(fonts/Raleway-Italic.ttf);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Raleway, Georgia, serif;
+    background: #2c2447;
+    color: white;
+    min-height: 100vh;
+}
+
+.agenda-header {
+    background: #d8ccff;
+    padding: 20px 35px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.agenda-header-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.agenda-logo {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: #793df0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+}
+
+.agenda-brand-title {
+    margin: 0;
+    color: #5420c9;
+    font-weight: bold;
+    font-size: 22px;
+}
+
+.agenda-brand-sub {
+    margin: 4px 0 0;
+    color: #6422d8;
+}
+
+.btn-salir {
+    text-decoration: none;
+    background: #793df0;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-weight: bold;
+    transition: .3s;
+}
+
+.btn-salir:hover {
+    background: #6422d8;
+}
+
+.agenda-shell {
+    width: 92%;
+    max-width: 1200px;
+    margin: 35px auto;
+}
+
+.agenda-hero {
+    text-align: center;
+    margin-bottom: 35px;
+}
+
+.agenda-hero-title {
+    font-size: 48px;
+    margin-bottom: 10px;
+    text-shadow: 0 0 2px #ffffff;
+}
+
+.agenda-hero-sub {
+    color: #d8ccff;
+    font-size: 18px;
+}
+
+.agenda-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 35px;
+    flex-wrap: wrap;
+}
+
+.agenda-tabs {
+    display: flex;
+    gap: 10px;
+}
+
+.agenda-tab {
+    text-decoration: none;
+    color: white;
+    background: rgba(255,255,255,0.08);
+    padding: 12px 20px;
+    border-radius: 12px;
+    transition: .3s;
+}
+
+.agenda-tab:hover,
+.agenda-tab.active {
+    background: #793df0;
+}
+
+.agenda-nav {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.agenda-nav-btn {
+    text-decoration: none;
+    background: #793df0;
+    color: white;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 22px;
+}
+
+.agenda-fecha-label {
+    font-weight: bold;
+    color: #d8ccff;
+}
+
+.citas-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.cita-card {
+    background: linear-gradient(135deg, #ddd3ff, #c3b5ff);
+    border-radius: 18px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    box-shadow:
+        0 0 25px rgba(255,255,255,0.25),
+        0 10px 25px rgba(120,80,220,0.25);
+}
+
+.cita-avatar {
+    width: 65px;
+    height: 65px;
+    border-radius: 50%;
+    background: #793df0;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.cita-info {
+    flex: 1;
+}
+
+.cita-info-row {
+    margin-bottom: 8px;
+}
+
+.cita-nombre {
+    color: #6422d8;
+    font-weight: bold;
+}
+
+.cita-email {
+    color: #4d3c78;
+}
+
+.cita-right {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    text-align: right;
+}
+
+.cita-hora {
+    color: #5420c9;
+    font-weight: bold;
+}
+
+.badge-servicio {
+    background: #793df0;
+    color: white;
+    padding: 8px 14px;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.sin-citas {
+    background: linear-gradient(135deg, #ddd3ff, #c3b5ff);
+    color: #6422d8;
+    text-align: center;
+    padding: 40px;
+    border-radius: 18px;
+    font-weight: bold;
+    box-shadow:
+        0 0 25px rgba(255,255,255,0.25),
+        0 10px 25px rgba(120,80,220,0.25);
+}
+
+.sin-citas-icon {
+    display: block;
+    font-size: 40px;
+    margin-bottom: 10px;
+}
+
+.semana-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.semana-dia-header {
+    background: linear-gradient(135deg, #ddd3ff, #c3b5ff);
+    border-radius: 18px 18px 0 0;
+    padding: 18px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.semana-dia-body {
+    background: rgba(255,255,255,0.05);
+    border-radius: 0 0 18px 18px;
+    padding: 20px;
+}
+
+.semana-dia-nombre {
+    color: #6422d8;
+    font-weight: bold;
+    font-size: 20px;
+}
+
+.semana-dia-fecha {
+    color: #4d3c78;
+}
+
+.semana-citas-badge {
+    background: #793df0;
+    color: white;
+    padding: 8px 14px;
+    border-radius: 999px;
+    font-weight: bold;
+}
+
+.badge-vacio {
+    background: #999;
+}
+
+.semana-cita-row {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.semana-cita-row:last-child {
+    border-bottom: none;
+}
+
+.semana-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: #793df0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+}
+
+.semana-cita-info {
+    flex: 1;
+}
+
+.semana-cita-nombre {
+    font-weight: bold;
+}
+
+.semana-cita-email {
+    color: #d8ccff;
+    font-size: 14px;
+}
+
+.semana-cita-right {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    text-align: right;
+}
+
+.semana-hora {
+    font-weight: bold;
+}
+
+@media (max-width: 768px) {
+
+    .agenda-header {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+    }
+
+    .agenda-controls {
+        flex-direction: column;
+    }
+
+    .cita-card {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .cita-right {
+        text-align: center;
+    }
+
+    .semana-cita-row {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .semana-cita-right {
+        text-align: center;
+    }
+}
