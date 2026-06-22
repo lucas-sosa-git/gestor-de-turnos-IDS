@@ -1,3 +1,10 @@
+SET NAMES utf8mb4;
+SET CHARACTER SET utf8mb4;
+
+ALTER DATABASE `gestor_de_turnos`
+    CHARACTER SET utf8mb4
+    COLLATE utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS usuarios (
     id_usuario INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(255) NOT NULL,
