@@ -551,6 +551,8 @@
         </div>
       </section>
 
+      {% for b in barberos %}
+
         <h4>Editar barbero</h4>
 
         <form
@@ -591,7 +593,7 @@
             <button class="btn-danger" type="submit">
               Eliminar barbero
             </button>
-          </div>
+          
         </form>
       </div>
       {% endfor %}
@@ -604,7 +606,6 @@
       </div>
       {% endif %}
     </div>
-  </section>
 
 </div>
     <!-- Fin barberos -->
