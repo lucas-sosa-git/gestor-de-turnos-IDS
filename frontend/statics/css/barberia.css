@@ -1,21 +1,43 @@
+* {
+  box-sizing: border-box;
+}
+
 html, body {
     margin: 0;
     padding: 0;
     width: 100%;
+    overflow-x: hidden;
   }
 
   #panel-horarios{
-    width: 100vw;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    margin-top: 15px;
   }
   
+  .hidden {
+    display: none;
+  }
+
+  .service-form-group.service-form-full {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  #btn-horarios {
+    margin-bottom: 20px;
+    display: inline-block;
+  }
+
   .horarios-layout{
-    display: grid;
-    grid-template-columns: 2.3fr 1fr;
-    gap: 60px;
     width: 100%;
     max-width: 1400px;
     margin: 0 auto;
-    justify-content: start;
+    display: grid;
+    grid-template-columns: 2.3fr 1fr;
+    gap: 60px;
   }
   
   .calendar-box,
@@ -132,7 +154,15 @@ html, body {
   
   .hour-card:has(input:checked){
     background:#793df0;
+  }
+  
+  .hour-card:has(input:checked) span{
     color:white;
+  }
+
+  .hour-card span {
+    color: #2c2447;
+    font-size: 20px;
   }
   
   body {
@@ -148,9 +178,7 @@ html, body {
   /* RESPONSIVE */
   
   @media (max-width: 1000px){
-  
     .horarios-layout{
-        grid-template-columns:1fr;
+      grid-template-columns: 1fr;
     }
-  
   }
