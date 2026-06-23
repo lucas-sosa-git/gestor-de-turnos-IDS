@@ -642,43 +642,7 @@
       
           </form>
         </div>
-  <section class="service-section">
-    <div class="service-form-card mb-3">
-      <h3>Crear nuevo barbero</h3>
-
-      <form
-        class="service-form"
-        action="{{ url_for('crear_barbero_front') }}"
-        method="POST"
-        enctype="multipart/form-data"
-      >
-        <div class="service-form-group service-form-full">
-          <label>Nombre</label>
-          <input type="text" name="nombre" required placeholder="Ej: Juan Pérez">
-        </div>
-
-        <div class="service-form-row service-form-full">
-          <div class="service-form-group">
-            <label>Email</label>
-            <input type="email" name="email" required placeholder="barbero@mail.com">
-          </div>
-
-          <div class="service-form-group">
-            <label>Contraseña</label>
-            <input type="password" name="clave" required placeholder="********">
-          </div>
-        </div>
-
-        <div class="service-form-group service-form-full">
-          <label>Imagen</label>
-          <input type="file" name="imagen" accept="image/*">
-        </div>
-
-        <button class="btn-primary service-form-full" type="submit">
-          Guardar barbero
-        </button>
-      </form>
-    </div>
+  
 
     <div class="services-header">
       <h3>Barberos registrados</h3>
@@ -709,8 +673,6 @@
         </div>
 
         <hr>
-
-      {% for b in barberos %}
 
         <h4>Editar barbero</h4>
 
@@ -752,7 +714,7 @@
             <button class="btn-danger" type="submit">
               Eliminar barbero
             </button>
-          
+          </div>
         </form>
       </div>
       {% endfor %}
