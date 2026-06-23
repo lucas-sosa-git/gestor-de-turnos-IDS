@@ -487,67 +487,160 @@
             </div>
       
       
-            <!-- HORARIOS -->
             <div class="service-form-group service-form-full">
-      
-              <label>Días disponibles</label>
-      
-              <label>
-                <input type="checkbox" name="dias[]" value="lunes">
-                Lunes
-              </label>
-      
-              <label>
-                <input type="checkbox" name="dias[]" value="martes">
-                Martes
-              </label>
-      
-              <label>
-                <input type="checkbox" name="dias[]" value="miércoles">
-                Miércoles
-              </label>
-      
-              <label>
-                <input type="checkbox" name="dias[]" value="jueves">
-                Jueves
-              </label>
-      
-              <label>
-                <input type="checkbox" name="dias[]" value="viernes">
-                Viernes
-              </label>
-      
-              <label>
-                <input type="checkbox" name="dias[]" value="sábado">
-                Sábado
-              </label>
-      
+
+              <button
+                type="button"
+                class="btn-secondary"
+                onclick="abrirHorarios()"
+              >
+              <div id="panel-horarios">
+              <div class="horarios-layout">
+
+                <!-- CALENDARIO -->
+                <div class="calendar-box">
+            
+                    <div class="calendar-header">
+                        <h3>📅 Días Laborales</h3>
+                        <p>Selecciona los días en los que trabajará el barbero</p>
+                    </div>
+            
+                    <div class="calendar-week">
+                        <span>Lun</span>
+                        <span>Mar</span>
+                        <span>Mié</span>
+                        <span>Jue</span>
+                        <span>Vie</span>
+                        <span>Sáb</span>
+                        <span>Dom</span>
+                    </div>
+            
+                    <div class="calendar-grid">
+            
+                        {% for dia in range(1,32) %}
+                        <label class="day-card">
+                            <input type="checkbox" name="dias[]" value="{{ dia }}">
+                            <span>{{ dia }}</span>
+                        </label>
+                        {% endfor %}
+            
+                    </div>
+            
+                </div>
+            
+                <!-- HORARIOS -->
+                <div class="hours-box">
+            
+                    <div class="hours-header">
+                        <h3>🕒 Horarios</h3>
+                        <p>Selecciona los horarios disponibles</p>
+                    </div>
+            
+                    <div class="hours-grid">
+            
+                        <label class="hour-card">
+                          <input type="checkbox" name="horarios[]" value="09:00">
+                            <span>09:00</span>
+                        </label>
+            
+                        <label class="hour-card">
+                          <input type="checkbox" name="horarios[]" value="09:30">
+                            <span>09:30</span>
+                        </label>
+            
+                        <label class="hour-card">
+                          <input type="checkbox" name="horarios[]" value="10:00">
+                            <span>10:00</span>
+                        </label>
+            
+                        <label class="hour-card">
+                          <input type="checkbox" name="horarios[]" value="10:30">
+                            <span>10:30</span>
+                        </label>
+            
+                        <label class="hour-card">
+                          <input type="checkbox" name="horarios[]" value="11:00">
+                            <span>11:00</span>
+                        </label>
+            
+                        <label class="hour-card">
+                          <input type="checkbox" name="horarios[]" value="11:30">
+                            <span>11:30</span>
+                        </label>
+            
+                        <label class="hour-card">
+                          <input type="checkbox" name="horarios[]" value="12:00">
+                            <span>12:00</span>
+                        </label>
+            
+                        <label class="hour-card">
+                          <input type="checkbox" name="horarios[]" value="12:30">
+                            <span>12:30</span>
+                        </label>
+            
+                        <label class="hour-card">
+                          <input type="checkbox" name="horarios[]" value="13:00">
+                            <span>13:00</span>
+                        </label>
+            
+                        <label class="hour-card">
+                          <input type="checkbox" name="horarios[]" value="13:30">
+                            <span>13:30</span>
+                        </label>
+            
+                        <label class="hour-card">
+                          <input type="checkbox" name="horarios[]" value="14:00">
+                            <span>14:00</span>
+                        </label>
+            
+                        <label class="hour-card">
+                          <input type="checkbox" name="horarios[]" value="14:30">
+                            <span>14:30</span>
+                        </label>
+            
+                        <label class="hour-card">
+                          <input type="checkbox" name="horarios[]" value="15:00">
+                            <span>15:00</span>
+                        </label>
+            
+                        <label class="hour-card">
+                          <input type="checkbox" name="horarios[]" value="15:30">
+                            <span>15:30</span>
+                        </label>
+            
+                        <label class="hour-card">
+                          <input type="checkbox" name="horarios[]" value="16:00">
+                            <span>16:00</span>
+                        </label>
+            
+                        <label class="hour-card">
+                          <input type="checkbox" name="horarios[]" value="16:30">
+                            <span>16:30</span>
+                        </label>
+            
+                        <label class="hour-card">
+                          <input type="checkbox" name="horarios[]" value="17:00">
+                            <span>17:00</span>
+                        </label>
+
+                        <label class="hour-card">
+                          <input type="checkbox" name="horarios[]" value="17:30">
+                          <span>17:30</span>
+                      </label>
+            
+                    </div>
+            
+                </div>
+            
             </div>
-      
-      
-            <div class="service-form-row service-form-full">
-      
-              <div class="service-form-group">
-                <label>Hora inicio</label>
-                <input type="time" name="hora_inicio">
-              </div>
-      
-      
-              <div class="service-form-group">
-                <label>Hora fin</label>
-                <input type="time" name="hora_fin">
-              </div>
-      
-            </div>
-      
-      
+
             <button class="btn-primary service-form-full" type="submit">
               Guardar barbero
             </button>
       
       
           </form>
-      
+        </div>
         </div>
       </section>
 
@@ -855,5 +948,22 @@
 <script
   src="{{ url_for('static', filename='js/pdf_reportes.js') }}"
 ></script>
+
+<script>
+
+  function abrirHorarios(){
+  
+  let panel =
+  document.getElementById("panel-horarios");
+  
+  
+  panel.style.display =
+  panel.style.display=="none"
+  ? "block"
+  : "none";
+  
+  }
+  
+  </script>
 
 {% endblock %}
