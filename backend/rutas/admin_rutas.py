@@ -48,26 +48,6 @@ def crear_barbero():
     
     cursor.execute('INSERT INTO barberos (id_usuario, img_barbero) values (%s, %s)', (id_usuario, img_barbero))
     id_barbero = cursor.lastrowid
-    # guardar disponibilidad del barbero
-
-    dias = request.form.getlist("dias[]")
-    hora_inicio = request.form.get("hora_inicio")
-    hora_fin = request.form.get("hora_fin")
-
-    for dia in dias:
-        cursor.execute(
-            '''
-            INSERT INTO disponibilidad_barberos
-            (id_barbero, dia_semana, hora_inicio, hora_fin)
-            VALUES (%s, %s, %s, %s)
-            ''',
-            (
-                id_barbero,
-                dia,
-                hora_inicio,
-                hora_fin
-            )
-        )
     conn.commit()
 
     cursor.execute('''

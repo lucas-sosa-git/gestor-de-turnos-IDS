@@ -642,8 +642,73 @@
       
           </form>
         </div>
+  <section class="service-section">
+    <div class="service-form-card mb-3">
+      <h3>Crear nuevo barbero</h3>
+
+      <form
+        class="service-form"
+        action="{{ url_for('crear_barbero_front') }}"
+        method="POST"
+        enctype="multipart/form-data"
+      >
+        <div class="service-form-group service-form-full">
+          <label>Nombre</label>
+          <input type="text" name="nombre" required placeholder="Ej: Juan Pérez">
         </div>
-      </section>
+
+        <div class="service-form-row service-form-full">
+          <div class="service-form-group">
+            <label>Email</label>
+            <input type="email" name="email" required placeholder="barbero@mail.com">
+          </div>
+
+          <div class="service-form-group">
+            <label>Contraseña</label>
+            <input type="password" name="clave" required placeholder="********">
+          </div>
+        </div>
+
+        <div class="service-form-group service-form-full">
+          <label>Imagen</label>
+          <input type="file" name="imagen" accept="image/*">
+        </div>
+
+        <button class="btn-primary service-form-full" type="submit">
+          Guardar barbero
+        </button>
+      </form>
+    </div>
+
+    <div class="services-header">
+      <h3>Barberos registrados</h3>
+      <span>{{ barberos | length }} barbero(s)</span>
+    </div>
+
+    <div class="services-list">
+      {% for b in barberos %}
+      <div class="service-card">
+        <div>
+          {% if b.img_barbero %}
+          <img
+            class="service-image"
+            src="{{ b.img_barbero }}"
+            alt="Imagen de {{ b.nombre }}"
+          >
+          {% else %}
+          <p class="service-no-image">Sin imagen</p>
+          {% endif %}
+        </div>
+
+        <div class="service-info">
+          <h3>{{ b.nombre }}</h3>
+          <p>{{ b.citas }} citas este mes</p>
+          <p>⭐ {{ b.rating }}</p>
+          <p>${{ "{:,.0f}".format(b.ingresos) }} ingresos</p>
+          <p>{{ 'Activo' if b.activo else 'De descanso' }}</p>
+        </div>
+
+        <hr>
 
       {% for b in barberos %}
 
