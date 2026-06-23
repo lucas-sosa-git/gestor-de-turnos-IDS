@@ -1,14 +1,6 @@
 /*
  * Generación de reportes PDF del panel administrativo.
- *
- * Captura una copia temporal de la sección con html2canvas
- * y luego arma el PDF con jsPDF.
- *
- * Corrección importante:
- * Cuando la dashboard usa tablas, las celdas heredan el color
- * blanco del modo oscuro. En el PDF el fondo es blanco, entonces
- * el texto quedaba invisible. Por eso acá se fuerzan estilos claros
- * sobre la copia que se exporta al PDF.
+
  */
 
 (function () {
