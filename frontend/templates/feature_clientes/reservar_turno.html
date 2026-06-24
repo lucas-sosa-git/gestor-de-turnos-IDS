@@ -1,76 +1,63 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reservar Turno - Peluqueria Elegance</title>
-    <link rel="icon" href="{{ url_for('static', filename='css/tijeras.png') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/elegance.css') }}">
-</head>
-<body>
-    <nav class="navbar">
-        <div class="container navbar-row">
-            <a class="navbar-brand" href="{{ url_for('clientes_panel', id_usuario=id_usuario) }}">
-                Peluqueria Elegance
-            </a>
-        </div>
-    </nav>
+{% extends "feature_clientes/base_cliente.html" %}
 
-    <main class="reserve-page">
-        <section class="reserve-card" aria-labelledby="reserva-title">
-            <div class="brand-icon" aria-hidden="true">PE</div>
-            <div class="reserve-header">
-                <p class="eyebrow">Nueva reserva</p>
-                <h1 id="reserva-title">Reservar turno</h1>
-                <p class="subtitle">Elegi servicio, fecha y horario para confirmar tu cita.</p>
+{% set active_page = "barberos" %}
+
+{% block title %}Reservar Turno - Peluqueria Elegance{% endblock %}
+
+{% block main_class %}reserve-page{% endblock %}
+
+{% block cliente_content %}
+    <section class="reserve-card" aria-labelledby="reserva-title">
+        <div class="brand-icon" aria-hidden="true">PE</div>
+        <div class="reserve-header">
+            <p class="eyebrow">Nueva reserva</p>
+            <h1 id="reserva-title">Reservar turno</h1>
+            <p class="subtitle">Elegi servicio, fecha y horario para confirmar tu cita.</p>
+        </div>
+
+        {% if error %}
+            <p class="alert" role="alert">{{ error }}</p>
+        {% endif %}
+
+        <form method="post" class="login-form">
+            <div class="field">
+                <label for="id_servicio">Servicio</label>
+                <select id="id_servicio" name="id_servicio" required>
+                    <option value="">Selecciona un servicio</option>
+                    {% for servicio in servicios %}
+                        <option value="{{ servicio['id_servicio'] }}" data-duracion="{{ servicio['duracion'] }}">
+                            {{ servicio['nombre'] }} - {{ servicio['duracion'] }} min
+                        </option>
+                    {% endfor %}
+                </select>
             </div>
 
-            {% if error %}
-                <p class="alert" role="alert">{{ error }}</p>
-            {% endif %}
+            <div class="field">
+                <label for="fecha">Fecha</label>
+                <input type="date" id="fecha" name="fecha" min="{{ fecha_min }}" required>
+                <p class="field-hint" id="fecha-legible">Selecciona una fecha.</p>
+            </div>
 
-            <form method="post" class="login-form">
-                <div class="field">
-                    <label for="id_servicio">Servicio</label>
-                    <select id="id_servicio" name="id_servicio" required>
-                        <option value="">Selecciona un servicio</option>
-                        {% for servicio in servicios %}
-                            <option value="{{ servicio['id_servicio'] }}" data-duracion="{{ servicio['duracion'] }}">
-                                {{ servicio['nombre'] }} - {{ servicio['duracion'] }} min
-                            </option>
-                        {% endfor %}
-                    </select>
-                </div>
+            <div class="field">
+                <label for="hora_inicio">Hora</label>
+                <select id="hora_inicio" name="hora_inicio" required disabled>
+                    <option value="">Selecciona servicio y fecha</option>
+                </select>
+                <p class="field-hint" id="horario-ayuda">Los horarios se muestran segun la disponibilidad del barbero.</p>
+            </div>
 
-                <div class="field">
-                    <label for="fecha">Fecha</label>
-                    <input type="date" id="fecha" name="fecha" min="{{ fecha_min }}" required>
-                    <p class="field-hint" id="fecha-legible">Selecciona una fecha.</p>
-                </div>
+            <button type="submit" class="btn-primary">
+                Confirmar Reserva
+            </button>
+        </form>
 
-                <div class="field">
-                    <label for="hora_inicio">Hora</label>
-                    <select id="hora_inicio" name="hora_inicio" required disabled>
-                        <option value="">Selecciona servicio y fecha</option>
-                    </select>
-                    <p class="field-hint" id="horario-ayuda">Los horarios se muestran segun la disponibilidad del barbero.</p>
-                </div>
+        <p class="form-link">
+            <a href="{{ url_for('clientes_barberos', id_usuario=id_usuario) }}">Elegir otro peluquero</a>
+        </p>
+    </section>
+{% endblock %}
 
-                <button type="submit" class="btn-primary">
-                    Confirmar Reserva
-                </button>
-            </form>
-
-            <p class="form-link">
-                <a href="{{ url_for('clientes_barberos', id_usuario=id_usuario) }}">Elegir otro peluquero</a>
-            </p>
-        </section>
-    </main>
-
-    <footer>
-        <p>&copy; 2026 Peluqueria Elegance</p>
-    </footer>
-
+{% block scripts %}
     <script>
         const disponibilidad = {{ disponibilidad | tojson }};
         const citasOcupadas = {{ citas_ocupadas | tojson }};
@@ -184,5 +171,4 @@
         fechaInput.addEventListener("change", actualizarHorarios);
         actualizarHorarios();
     </script>
-</body>
-</html>
+{% endblock %}

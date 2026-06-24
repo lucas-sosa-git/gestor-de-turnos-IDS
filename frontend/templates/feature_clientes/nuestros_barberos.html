@@ -1,86 +1,45 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="{{ url_for('static', filename='css/tijeras.png') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/elegance.css') }}">
-    <title>Nuestros Peluqueros</title>
-</head>
-<body>
-    <div class="app-container">
-        <header class="main-header">
-            <div class="user-profile">
-                <div class="avatar">
-                    <span>PE</span>
-                </div>
-                <div>
-                    <h1 class="salon-title">Peluqueria Elegance</h1>
-                    <p class="welcome-text"></p>
-                </div>
-            </div>
-            <div class="logout-container">
-                <a href="{{ url_for('logout') }}" class="logout-btn">Salir</a>
-            </div>
-        </header>
+{% extends "feature_clientes/base_cliente.html" %}
 
-        <nav class="nav-bar">
-            <a href="#" class="nav-link active">
-                Nuestros Peluqueros
-            </a>
-            <a href="{{ url_for('clientes_servicios', id_usuario=id_usuario) }}" class="nav-link">
-                Servicios
-            </a>
-            <a href="{{ url_for('clientes_panel', id_usuario=id_usuario) }}" class="nav-link">
-                Mis Turnos
-                {% if turnos and turnos | length > 0 %}
-                    <span class="indicador-numero">{{ turnos | length }}</span>
-                {% endif %}
-            </a>
-            <a href="{{ url_for('clientes_info', id_usuario=id_usuario) }}" class="nav-link">
-                Acerca de Nosotros
-            </a>
-        </nav>
+{% set active_page = "barberos" %}
 
-        <div class="contenedor-principal">
-            <div class="section-header">
-                <div>
-                    <h2 class="section-title">Nuestros Peluqueros</h2>
-                    <p class="section-subtitle">Conoce a los expertos que transformaran tu estilo.</p>
-                </div>
-            </div>
+{% block title %}Nuestros Peluqueros - Peluqueria Elegance{% endblock %}
 
-            {% if error %}
-                <div class="estado-vacio">
-                    <p>{{ error }}</p>
-                </div>
-            {% endif %}
-
-            <div class="estilistas-grid">
-                {% for barbero in barberos %}
-                    <div class="estilista-card">
-                        {% if barbero['img_barbero'] %}
-                            <img
-                                class="barbero-card-image"
-                                src="{{ barbero['img_barbero'] }}"
-                                alt="Foto de {{ barbero['nombre'] }}"
-                            >
-                        {% else %}
-                            <div class="avatar-placeholder">
-                                <span>PE</span>
-                            </div>
-                        {% endif %}
-
-                        <h3 class="card-title">{{ barbero['nombre'] }}</h3>
-                        <p class="card-role">Peluquero Profesional</p>
-                        <div class="estrellas">★★★★★</div>
-                        <a href="{{ url_for('reservar_turno_form', id_usuario=id_usuario, id_barbero=barbero['id_barbero']) }}" class="btn-reservar">
-                            Reservar Turno
-                        </a>
-                    </div>
-                {% endfor %}
-            </div>
+{% block cliente_content %}
+    <div class="section-header">
+        <div>
+            <h2 class="section-title">Nuestros Peluqueros</h2>
+            <p class="section-subtitle">Conoce a los expertos que transformaran tu estilo.</p>
         </div>
     </div>
-</body>
-</html>
+
+    {% if error %}
+        <div class="estado-vacio">
+            <p>{{ error }}</p>
+        </div>
+    {% endif %}
+
+    <div class="estilistas-grid">
+        {% for barbero in barberos %}
+            <div class="estilista-card">
+                {% if barbero['img_barbero'] %}
+                    <img
+                        class="barbero-card-image"
+                        src="{{ barbero['img_barbero'] }}"
+                        alt="Foto de {{ barbero['nombre'] }}"
+                    >
+                {% else %}
+                    <div class="avatar-placeholder">
+                        <span>PE</span>
+                    </div>
+                {% endif %}
+
+                <h3 class="card-title">{{ barbero['nombre'] }}</h3>
+                <p class="card-role">Peluquero Profesional</p>
+                <div class="estrellas">★★★★★</div>
+                <a href="{{ url_for('reservar_turno_form', id_usuario=id_usuario, id_barbero=barbero['id_barbero']) }}" class="btn-reservar">
+                    Reservar Turno
+                </a>
+            </div>
+        {% endfor %}
+    </div>
+{% endblock %}

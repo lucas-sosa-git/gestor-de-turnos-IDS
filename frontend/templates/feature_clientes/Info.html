@@ -1,71 +1,37 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="{{ url_for('static', filename='css/tijeras.png') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/elegance.css') }}">
-    <title>Info</title>
-</head>
-<body>
-    <div class="app-container">    
-        <header class="main-header">
-            <div class="user-profile">
-                <div class="avatar">
-                    <span>L</span> 
-                </div>
-                <div>
-                    <h1 class="salon-title">Peluquería Elegance</h1>
-                    <p class="welcome-text">Bienvenido, {{usuario['nombre']}}</p>
-                </div>
-            </div>
-            <div class="logout-container">
-                <a href="{{ url_for('logout') }}" class="logout-btn">Salir</a>
-            </div>
-        </header>
+{% extends "feature_clientes/base_cliente.html" %}
 
-        <nav class="nav-bar">
-            <a href="{{ url_for('clientes_barberos', id_usuario=id_usuario) }}" class="nav-link">
-                <span>👤</span> Nuestros Peluqueros
-            </a>
-            <a href="{{ url_for('clientes_servicios', id_usuario=id_usuario) }}" class="nav-link">
-                <span>&#9986;&#65039;</span> Servicios
-            </a>
-            <a href="{{ url_for('clientes_panel', id_usuario=id_usuario) }}" class="nav-link">
-                <span>📅</span> Mis Turnos
-                {% if turnos and turnos | length > 0%}
-                <span class="indicador-numero">{{turnos | length}}</span>
-                {% endif %}
-            </a>
-            <a href="#" class="nav-link active">
-                <span>ℹ</span> Acerca de Nosotros
-            </a>
-        </nav>
-        <div class="info-container">
-            {% if error %}
-            <div class="estado-vacio">
-                <p>{{ error }}</p>
-            </div>
-            {% endif %}
-            <h1 class="info-titulo">Acerca Nuestra Peluquería</h1>
-            <div class="info-card">
-                <h2>Nuestra Historia</h2>
-                <p>Fundada en 2024, Peluquería Elegance nació con la visión de revolucionar la experiencia de la barbería tradicional. Nos enfocamos en combinar las técnicas clásicas con las tendencias más modernas para ofrecer cortes y arreglos de barba excepcionales.</p>
-            </div>
-            <div class="info-card">
-                <h2>Por qué elegirnos</h2>
-                <ul class="info-lista">
-                    <li><span>✔️</span> Profesionales altamente capacitados y apasionados.</li>
-                    <li><span>✔️</span> Un ambiente relajado, cómodo y moderno.</li>
-                    <li><span>✔️</span> Productos de primera calidad para el cuidado capilar y facial.</li>
-                    <li><span>✔️</span> Atención personalizada para cada cliente.</li>
-                </ul>
-            </div>
-            <div class="info-card">
-                <h2>Nuestra Misión</h2>
-                <p>Brindar un servicio de excelencia donde cada cliente salga sintiéndose y viéndose en su mejor versión. Queremos ser más que una barbería; queremos ser tu espacio de confianza.</p>
-            </div>
+{% set active_page = "info" %}
+
+{% block title %}Acerca de Nosotros - Peluqueria Elegance{% endblock %}
+
+{% block main_class %}info-container{% endblock %}
+
+{% block cliente_content %}
+    {% if error %}
+        <div class="estado-vacio">
+            <p>{{ error }}</p>
         </div>
+    {% endif %}
+
+    <h1 class="info-titulo">Acerca de Nuestra Peluqueria</h1>
+
+    <div class="info-card">
+        <h2>Nuestra Historia</h2>
+        <p>Fundada en 2024, Peluqueria Elegance nacio con la vision de revolucionar la experiencia de la barberia tradicional. Nos enfocamos en combinar las tecnicas clasicas con las tendencias mas modernas para ofrecer cortes y arreglos de barba excepcionales.</p>
     </div>
-</body>
-</html>
+
+    <div class="info-card">
+        <h2>Por que elegirnos</h2>
+        <ul class="info-lista">
+            <li>Profesionales altamente capacitados y apasionados.</li>
+            <li>Un ambiente relajado, comodo y moderno.</li>
+            <li>Productos de primera calidad para el cuidado capilar y facial.</li>
+            <li>Atencion personalizada para cada cliente.</li>
+        </ul>
+    </div>
+
+    <div class="info-card">
+        <h2>Nuestra Mision</h2>
+        <p>Brindar un servicio de excelencia donde cada cliente salga sintiendose y viendose en su mejor version. Queremos ser mas que una barberia; queremos ser tu espacio de confianza.</p>
+    </div>
+{% endblock %}

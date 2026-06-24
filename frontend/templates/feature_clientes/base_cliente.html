@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="{{ url_for('static', filename='css/tijeras.png') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <title>{% block title %}Peluqueria Elegance{% endblock %}</title>
+</head>
+<body class="cliente-body">
+    <div class="app-container">
+        <header class="main-header">
+            <div class="user-profile">
+                <div class="avatar" aria-hidden="true">
+                    <span>PE</span>
+                </div>
+                <div>
+                    <h1 class="salon-title">Peluqueria Elegance</h1>
+                    <p class="welcome-text">
+                        {% if usuario and usuario.get('nombre') %}
+                            Bienvenido, {{ usuario['nombre'] }}
+                        {% else %}
+                            Bienvenido
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+            <div class="logout-container">
+                <a href="{{ url_for('logout') }}" class="logout-btn">Salir</a>
+            </div>
+        </header>
+
+        <nav class="nav-bar">
+            <a
+                href="{{ url_for('clientes_barberos', id_usuario=id_usuario) }}"
+                class="nav-link {% if active_page == 'barberos' %}active{% endif %}"
+            >
+                Nuestros Peluqueros
+            </a>
+            <a
+                href="{{ url_for('clientes_servicios', id_usuario=id_usuario) }}"
+                class="nav-link {% if active_page == 'servicios' %}active{% endif %}"
+            >
+                Servicios
+            </a>
+            <a
+                href="{{ url_for('clientes_panel', id_usuario=id_usuario) }}"
+                class="nav-link {% if active_page == 'turnos' %}active{% endif %}"
+            >
+                Mis Turnos
+                {% if turnos and turnos | length > 0 %}
+                    <span class="indicador-numero">{{ turnos | length }}</span>
+                {% endif %}
+            </a>
+            <a
+                href="{{ url_for('clientes_info', id_usuario=id_usuario) }}"
+                class="nav-link {% if active_page == 'info' %}active{% endif %}"
+            >
+                Acerca de Nosotros
+            </a>
+        </nav>
+
+        <main class="{% block main_class %}cliente-main{% endblock %}">
+            {% block cliente_content %}{% endblock %}
+        </main>
+    </div>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -442,6 +442,7 @@ def reservar_turno_form(id_usuario, id_barbero):
             id_usuario=id_usuario,
             id_barbero=id_barbero,
             servicios=servicios,
+            turnos=data.get("turnos", []) if data else [],
             disponibilidad=horarios_data.get("disponibilidad", []) if horarios_data else [],
             citas_ocupadas=horarios_data.get("citas_ocupadas", []) if horarios_data else [],
             fecha_min=datetime.now().strftime("%Y-%m-%d"),
@@ -473,6 +474,7 @@ def reservar_turno_form(id_usuario, id_barbero):
             id_usuario=id_usuario,
             id_barbero=id_barbero,
             servicios=servicios_data.get("servicios", []) if servicios_data else [],
+            turnos=servicios_data.get("turnos", []) if servicios_data else [],
             disponibilidad=horarios_data.get("disponibilidad", []) if horarios_data else [],
             citas_ocupadas=horarios_data.get("citas_ocupadas", []) if horarios_data else [],
             fecha_min=datetime.now().strftime("%Y-%m-%d"),
@@ -487,6 +489,7 @@ def reservar_turno_form(id_usuario, id_barbero):
             id_usuario=id_usuario,
             id_barbero=id_barbero,
             servicios=servicios_data.get("servicios", []) if servicios_data else [],
+            turnos=servicios_data.get("turnos", []) if servicios_data else [],
             disponibilidad=horarios_data.get("disponibilidad", []) if horarios_data else [],
             citas_ocupadas=horarios_data.get("citas_ocupadas", []) if horarios_data else [],
             fecha_min=datetime.now().strftime("%Y-%m-%d"),
@@ -502,16 +505,20 @@ def reservar_turno_form(id_usuario, id_barbero):
             id_usuario=id_usuario,
             id_barbero=id_barbero,
             servicios=servicios_data.get("servicios", []) if servicios_data else [],
+            turnos=servicios_data.get("turnos", []) if servicios_data else [],
             disponibilidad=horarios_data.get("disponibilidad", []) if horarios_data else [],
             citas_ocupadas=horarios_data.get("citas_ocupadas", []) if horarios_data else [],
             fecha_min=datetime.now().strftime("%Y-%m-%d"),
             error=data.get("error") or "No se pudo reservar el turno."
         )
 
+    panel_data, _ = obtener_panel_cliente(id_usuario)
+
     return render_template(
         "feature_clientes/reserva_confirmada.html",
         usuario=usuario,
         id_usuario=id_usuario,
+        turnos=panel_data.get("turnos", []) if panel_data else [],
         reserva=data,
         mail_enviado=data.get("mail_enviado")
     )
@@ -548,8 +555,15 @@ def crear_reserva_proxy():
 # ─── RUTA PARA MOSTRAR LA PANTALLA DE RESEÑA ───
 @app.route("/clientes/<int:id_usuario>/resenia/<int:id_cita>/<int:id_barbero>")
 def dejar_resenia_form(id_usuario, id_cita, id_barbero):
+    usuario = session.get("usuario")
+    data, _ = obtener_panel_cliente(id_usuario)
+    if data:
+        usuario = data.get("usuario", usuario)
+
     return render_template(
         "feature_clientes/dejar_resenia.html",
+        usuario=usuario,
+        turnos=data.get("turnos", []) if data else [],
         id_usuario=id_usuario,
         id_cita=id_cita,
         id_barbero=id_barbero

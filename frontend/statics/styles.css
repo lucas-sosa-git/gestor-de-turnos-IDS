@@ -1624,3 +1624,664 @@ body.pdf-modo-captura .pdf-contenedor-temporal * {
   color: var(--accent-gold);
   display: block;
 }
+
+/* ==========================================================
+   VISTAS CLIENTE
+   ========================================================== */
+
+.cliente-body {
+    --cliente-bg: #2b2545;
+    --cliente-surface: #d8ccff;
+    --cliente-surface-strong: #c4b5fd;
+    --cliente-card-bg: linear-gradient(135deg, #ddd6fe, #c4b5fd);
+    --cliente-primary: #7c3aed;
+    --cliente-primary-dark: #5b21b6;
+    --cliente-primary-soft: #8b5cf6;
+    --cliente-text: #2b2545;
+    --cliente-muted: #4b3d7a;
+    --cliente-on-dark: #ffffff;
+    --cliente-danger-bg: #ffe5e5;
+    --cliente-danger-text: #b00020;
+    --cliente-success-bg: #e8f8e8;
+    --cliente-success-text: #2e7d32;
+    --cliente-border: rgba(91, 33, 182, 0.22);
+    --cliente-radius-card: 14px;
+    --cliente-radius-control: 10px;
+    --cliente-shadow-card: 0 0 55px rgba(255, 255, 255, 0.22);
+    --cliente-shadow-soft: 0 10px 25px rgba(120, 80, 220, 0.25);
+
+    min-height: 100vh;
+    margin: 0;
+    color: var(--cliente-on-dark);
+    background: var(--cliente-bg);
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.cliente-body *,
+.cliente-body *::before,
+.cliente-body *::after {
+    box-sizing: border-box;
+}
+
+.cliente-body a {
+    color: inherit;
+}
+
+.cliente-body .app-container {
+    max-width: none;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 0;
+}
+
+.cliente-body .main-header {
+    min-height: 72px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 18px;
+    margin: 0;
+    padding: 12px 25px;
+    background: var(--cliente-surface);
+    color: var(--cliente-primary-dark);
+}
+
+.cliente-body .user-profile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.cliente-body .avatar,
+.cliente-body .avatar-placeholder,
+.cliente-body .brand-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    color: #ffffff;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--cliente-primary-soft), var(--cliente-primary));
+    box-shadow: 0 0 15px rgba(139, 92, 246, 0.4);
+}
+
+.cliente-body .avatar {
+    width: 48px;
+    height: 48px;
+    flex: 0 0 auto;
+    font-size: 18px;
+}
+
+.cliente-body .brand-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 20px;
+    font-size: 28px;
+}
+
+.cliente-body .salon-title {
+    margin: 0;
+    color: var(--cliente-primary-dark);
+    font-size: 18px;
+    font-weight: 800;
+}
+
+.cliente-body .welcome-text {
+    margin: 3px 0 0;
+    color: var(--cliente-muted);
+    font-size: 13px;
+}
+
+.cliente-body .logout-container {
+    display: flex;
+    align-items: center;
+    background: transparent;
+}
+
+.cliente-body .nav-bar {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin: 0;
+    padding: 15px 20px;
+    border: 0;
+    background: var(--cliente-bg);
+}
+
+.cliente-body .nav-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    padding: 8px 12px;
+    border: 0;
+    border-radius: var(--cliente-radius-control);
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.cliente-body .nav-link:hover,
+.cliente-body .nav-link.active {
+    color: #ffffff;
+    background: var(--cliente-primary);
+}
+
+.cliente-body .indicador-numero {
+    min-width: 22px;
+    min-height: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 5px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    color: #ffffff;
+    background: var(--cliente-primary);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.cliente-body .cliente-main {
+    width: min(1120px, calc(100% - 40px));
+    margin: 0 auto;
+    padding: 20px 0 42px;
+}
+
+.cliente-body .section-header {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    margin: 0;
+    padding: 22px 0;
+}
+
+.cliente-body .section-title {
+    margin: 0;
+    color: #ffffff;
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.cliente-body .section-subtitle {
+    margin: 5px 0 0;
+    color: #e7defe;
+    font-size: 14px;
+}
+
+.cliente-body .reserva-card,
+.cliente-body .estilista-card,
+.cliente-body .servicio-cliente-card,
+.cliente-body .info-card,
+.cliente-body .reserve-card {
+    color: var(--cliente-text);
+    background: var(--cliente-card-bg);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: var(--cliente-radius-card);
+    box-shadow: var(--cliente-shadow-card);
+}
+
+.cliente-body .reserva-card {
+    width: min(840px, 100%);
+    margin: 20px auto;
+    padding: 22px;
+    box-shadow: 0 0 25px rgba(255, 255, 255, 0.22), var(--cliente-shadow-soft);
+}
+
+.cliente-body .resenia-card,
+.cliente-body .form-card {
+    margin-top: 20px;
+    padding: 25px;
+}
+
+.cliente-body .card-top,
+.cliente-body .card-bottom,
+.cliente-body .card-meta,
+.cliente-body .servicio-cliente-meta {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.cliente-body .card-top,
+.cliente-body .card-bottom,
+.cliente-body .servicio-cliente-meta {
+    justify-content: space-between;
+}
+
+.cliente-body .card-meta {
+    flex-wrap: wrap;
+    margin-top: 15px;
+}
+
+.cliente-body .meta-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--cliente-muted);
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.cliente-body .card-title {
+    margin: 0;
+    color: var(--cliente-text);
+    font-size: 18px;
+    font-weight: 800;
+}
+
+.cliente-body .card-service,
+.cliente-body .card-role,
+.cliente-body .card-description,
+.cliente-body .card-note {
+    margin: 6px 0 0;
+    color: var(--cliente-muted);
+}
+
+.cliente-body .card-role {
+    color: var(--cliente-primary-dark);
+    font-weight: 700;
+}
+
+.cliente-body .card-description {
+    line-height: 1.45;
+}
+
+.cliente-body .status-badge {
+    padding: 7px 12px;
+    border-radius: var(--cliente-radius-control);
+    color: #ffffff;
+    background: var(--cliente-primary);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.cliente-body .card-divider {
+    height: 1px;
+    margin: 16px 0;
+    border: 0;
+    background: var(--cliente-border);
+}
+
+.cliente-body .estado-vacio,
+.cliente-body .alert,
+.cliente-body .success,
+.cliente-body .message {
+    padding: 12px 14px;
+    border-radius: 10px;
+    text-align: center;
+}
+
+.cliente-body .estado-vacio {
+    width: min(720px, 100%);
+    margin: 34px auto;
+    color: #ffffff;
+    background: rgba(216, 204, 255, 0.16);
+}
+
+.cliente-body .alert {
+    color: var(--cliente-danger-text);
+    background: var(--cliente-danger-bg);
+}
+
+.cliente-body .success {
+    color: var(--cliente-success-text);
+    background: var(--cliente-success-bg);
+}
+
+.cliente-body .field,
+.cliente-body .form_input,
+.cliente-body .form-group,
+.cliente-body .form-group-last,
+.cliente-body .form-group-textarea {
+    margin-bottom: 18px;
+}
+
+.cliente-body .field label,
+.cliente-body .form_input label,
+.cliente-body .form-label {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--cliente-primary);
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.cliente-body .field input,
+.cliente-body .field select,
+.cliente-body .form_input input,
+.cliente-body .form_input textarea,
+.cliente-body .form-control,
+.cliente-body .form-select,
+.cliente-body .form-textarea {
+    width: 100%;
+    min-height: 44px;
+    padding: 10px 14px;
+    border: 0;
+    border-left: 4px solid var(--cliente-primary);
+    border-radius: 8px;
+    color: var(--cliente-primary);
+    background: #ffffff;
+    box-shadow: 0 0 15px #0001;
+    font: inherit;
+}
+
+.cliente-body .form_input textarea,
+.cliente-body .form-textarea {
+    min-height: 105px;
+    resize: vertical;
+}
+
+.cliente-body .field input:focus,
+.cliente-body .field select:focus,
+.cliente-body .form_input input:focus,
+.cliente-body .form_input textarea:focus,
+.cliente-body .form-control:focus,
+.cliente-body .form-select:focus,
+.cliente-body .form-textarea:focus {
+    outline: none;
+    border: 2px solid var(--cliente-primary);
+    box-shadow: 0 0 10px rgba(124, 58, 237, 0.3);
+}
+
+.cliente-body .field-hint {
+    margin: 8px 0 0;
+    color: var(--cliente-muted);
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.cliente-body .field select:disabled {
+    cursor: not-allowed;
+    opacity: 0.72;
+}
+
+.cliente-body .login-form {
+    display: grid;
+    gap: 16px;
+}
+
+.cliente-body .btn-primary,
+.cliente-body .btn-history,
+.cliente-body .btn-cancel,
+.cliente-body .btn-reservar,
+.cliente-body .btn-resenia,
+.cliente-body .btn-enviar,
+.cliente-body .btn-submit,
+.cliente-body .logout-btn {
+    width: auto;
+    min-height: 0;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    padding: 12px 18px;
+    border: 0;
+    border-radius: var(--cliente-radius-control);
+    color: #ffffff;
+    background: linear-gradient(135deg, var(--cliente-primary-soft), var(--cliente-primary));
+    font: inherit;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.cliente-body .btn-primary:hover,
+.cliente-body .btn-history:hover,
+.cliente-body .btn-cancel:hover,
+.cliente-body .btn-reservar:hover,
+.cliente-body .btn-resenia:hover,
+.cliente-body .btn-enviar:hover,
+.cliente-body .btn-submit:hover,
+.cliente-body .logout-btn:hover {
+    color: #ffffff;
+    background: var(--cliente-primary-dark);
+}
+
+.cliente-body .btn-cancel {
+    color: var(--cliente-danger-text);
+    background: var(--cliente-danger-bg);
+}
+
+.cliente-body .btn-cancel:hover {
+    color: #ffffff;
+    background: var(--cliente-danger-text);
+}
+
+.cliente-body .btn-reservar,
+.cliente-body .btn-enviar,
+.cliente-body .btn-submit,
+.cliente-body .reserve-card .btn-primary,
+.cliente-body .login-form .btn-primary {
+    width: 100%;
+}
+
+.cliente-body .btn-resenia {
+    white-space: nowrap;
+}
+
+.cliente-body .form-link {
+    margin: 25px 0 0;
+    color: var(--cliente-muted);
+    font-size: 14px;
+    text-align: center;
+}
+
+.cliente-body .form-link a:not(.btn-primary) {
+    color: var(--cliente-primary);
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.cliente-body .form-link a:not(.btn-primary):hover {
+    text-decoration: underline;
+}
+
+.cliente-body .form-mensaje {
+    margin-top: 15px;
+    font-weight: 700;
+    text-align: center;
+}
+
+.cliente-body .reserve-page {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: min(100%, calc(100% - 40px));
+    margin: 0 auto;
+    padding: 28px 0 42px;
+}
+
+.cliente-body .reserve-card {
+    width: 100%;
+    max-width: 450px;
+    padding: 35px;
+}
+
+.cliente-body .reserve-header {
+    text-align: center;
+}
+
+.cliente-body .eyebrow {
+    margin: 0 0 15px;
+    color: var(--cliente-primary-dark);
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.cliente-body .reserve-header h1,
+.cliente-body .info-titulo {
+    margin: 0 0 10px;
+    color: var(--cliente-primary);
+    font-weight: 500;
+    letter-spacing: 0;
+    text-transform: uppercase;
+}
+
+.cliente-body .subtitle {
+    margin: 0 0 30px;
+    color: var(--cliente-muted);
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+.cliente-body .reserva-summary {
+    margin-top: 18px;
+    color: var(--cliente-muted);
+    line-height: 1.5;
+}
+
+.cliente-body .reserva-summary p {
+    margin: 8px 0;
+}
+
+.cliente-body .estilistas-grid,
+.cliente-body .servicios-cliente-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 20px;
+}
+
+.cliente-body .estilista-card {
+    padding: 22px;
+    text-align: center;
+    box-shadow: 0 0 25px rgba(255, 255, 255, 0.2), var(--cliente-shadow-soft);
+}
+
+.cliente-body .barbero-card-image {
+    width: 96px;
+    height: 96px;
+    display: block;
+    margin: 0 auto 16px;
+    border: 4px solid rgba(255, 255, 255, 0.55);
+    border-radius: 50%;
+    object-fit: cover;
+    background: var(--cliente-surface);
+}
+
+.cliente-body .estilista-card .avatar-placeholder {
+    width: 96px;
+    height: 96px;
+    margin: 0 auto 16px;
+    font-size: 22px;
+}
+
+.cliente-body .estrellas {
+    margin: 12px 0 16px;
+    color: var(--cliente-primary-dark);
+    font-weight: 700;
+}
+
+.cliente-body .servicio-cliente-card {
+    overflow: hidden;
+    box-shadow: 0 0 25px rgba(255, 255, 255, 0.18), var(--cliente-shadow-soft);
+}
+
+.cliente-body .servicio-cliente-img,
+.cliente-body .servicio-cliente-placeholder {
+    width: 100%;
+    aspect-ratio: 16 / 10;
+}
+
+.cliente-body .servicio-cliente-img {
+    display: block;
+    object-fit: cover;
+}
+
+.cliente-body .servicio-cliente-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--cliente-primary-dark);
+    background: rgba(91, 33, 182, 0.18);
+    font-size: 32px;
+    font-weight: 800;
+}
+
+.cliente-body .servicio-cliente-info {
+    padding: 18px;
+}
+
+.cliente-body .servicio-cliente-meta {
+    color: var(--cliente-primary-dark);
+    font-weight: 800;
+}
+
+.cliente-body .info-container {
+    width: min(860px, calc(100% - 40px));
+    margin: 0 auto;
+    padding: 24px 0 42px;
+}
+
+.cliente-body .info-titulo {
+    color: #ffffff;
+    text-align: center;
+    margin: 10px 0 26px;
+}
+
+.cliente-body .info-card {
+    padding: 26px;
+    margin-bottom: 22px;
+}
+
+.cliente-body .info-card h2 {
+    margin: 0 0 12px;
+    color: var(--cliente-primary);
+}
+
+.cliente-body .info-card p,
+.cliente-body .info-lista {
+    color: var(--cliente-muted);
+    line-height: 1.6;
+}
+
+.cliente-body .info-lista {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.cliente-body .info-lista li {
+    margin-bottom: 10px;
+}
+
+@media (max-width: 720px) {
+    .cliente-body .main-header,
+    .cliente-body .section-header,
+    .cliente-body .card-top,
+    .cliente-body .card-bottom {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .cliente-body .nav-bar {
+        justify-content: flex-start;
+    }
+
+    .cliente-body .reserve-card {
+        padding: 28px 22px;
+    }
+
+    .cliente-body .cliente-main,
+    .cliente-body .info-container {
+        width: min(100% - 28px, 1120px);
+    }
+
+    .cliente-body .reserve-page {
+        width: min(100% - 28px, 450px);
+    }
+
+    .cliente-body .reserva-card,
+    .cliente-body .estado-vacio {
+        width: min(100%, 840px);
+    }
+}

@@ -1,129 +1,87 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <link rel="icon" href="{{ url_for('static', filename='css/tijeras.png') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/elegance.css') }}">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vista - clientes</title>
-</head>
-<body>
-    <div class="app-container">
-        <header class="main-header">
-            <div class="user-profile">
-                <div class="avatar">
-                    <span>PE</span>
-                </div>
-                <div>
-                    <h1 class="salon-title">Peluqueria Elegance</h1>
-                    <p class="welcome-text">Bienvenido, {{ usuario['nombre'] }}</p>
-                </div>
-            </div>
-            <div class="logout-container">
-                <a href="{{ url_for('logout') }}" class="logout-btn">Salir</a>
-            </div>
-        </header>
+{% extends "feature_clientes/base_cliente.html" %}
 
-        <nav class="nav-bar">
-            <a href="{{ url_for('clientes_barberos', id_usuario=id_usuario) }}" class="nav-link">
-                Nuestros Peluqueros
-            </a>
+{% set active_page = "turnos" %}
 
-            <a href="{{ url_for('clientes_servicios', id_usuario=id_usuario) }}" class="nav-link">
-                Servicios
-            </a>
+{% block title %}Mis Turnos - Peluqueria Elegance{% endblock %}
 
-            <a href="#" class="nav-link active">
-                Mis Turnos
-                {% if turnos | length > 0 %}
-                    <span class="indicador-numero">{{ turnos|length }}</span>
-                {% endif %}
-            </a>
-
-            <a href="{{ url_for('clientes_info', id_usuario=id_usuario) }}" class="nav-link">
-                Acerca de Nosotros
-            </a>
-        </nav>
-
-        {% if error %}
-            <div class="estado-vacio alert">
-                <p>{{ error }}</p>
-            </div>
-        {% endif %}
-
-        {% if exito %}
-            <div class="estado-vacio success">
-                <p>{{ exito }}</p>
-            </div>
-        {% endif %}
-
-        <div class="section-header">
-            <div>
-                <h2 class="section-title">Mis Turnos</h2>
-                <p class="section-subtitle">Gestiona tus citas pendientes, confirmadas y completadas.</p>
-            </div>
-            <a href="{{ url_for('clientes_barberos', id_usuario=id_usuario) }}" class="btn-history">
-                Nuevo Turno
-            </a>
+{% block cliente_content %}
+    {% if error %}
+        <div class="estado-vacio alert">
+            <p>{{ error }}</p>
         </div>
+    {% endif %}
 
-        {% if turnos %}
-            {% for turno in turnos %}
-                <div class="reserva-card">
-                    <div class="card-top">
-                        <div>
-                            <h3 class="card-title">{{ turno['barbero_nombre'] }}</h3>
-                            <p class="card-service">{{ turno['servicio_nombre'] }}</p>
-                        </div>
-                        <div class="status-badge">
-                            {{ turno['estado'].capitalize() }}
-                        </div>
+    {% if exito %}
+        <div class="estado-vacio success">
+            <p>{{ exito }}</p>
+        </div>
+    {% endif %}
+
+    <div class="section-header">
+        <div>
+            <h2 class="section-title">Mis Turnos</h2>
+            <p class="section-subtitle">Gestiona tus citas pendientes, confirmadas y completadas.</p>
+        </div>
+        <a href="{{ url_for('clientes_barberos', id_usuario=id_usuario) }}" class="btn-history">
+            Nuevo Turno
+        </a>
+    </div>
+
+    {% if turnos %}
+        {% for turno in turnos %}
+            <div class="reserva-card">
+                <div class="card-top">
+                    <div>
+                        <h3 class="card-title">{{ turno['barbero_nombre'] }}</h3>
+                        <p class="card-service">{{ turno['servicio_nombre'] }}</p>
                     </div>
-
-                    <div class="card-meta">
-                        <div class="meta-item">{{ turno['fecha'] }}</div>
-                        <div class="meta-item">{{ turno['hora_inicio'] }}</div>
-                    </div>
-
-                    <hr class="card-divider">
-
-                    <div class="card-bottom">
-                        {% if turno['estado'].lower() == 'completada' %}
-                            <p class="card-note">Esperamos que hayas disfrutado tu corte.</p>
-                            <a href="{{ url_for('dejar_resenia_form', id_usuario=id_usuario, id_cita=turno['id_cita'], id_barbero=turno['id_barbero']) }}" class="btn-resenia">
-                                Dejar Reseña
-                            </a>
-                        {% elif turno['estado'].lower() == 'pendiente' %}
-                            <p class="card-note">Tu turno queda pendiente hasta que confirmes desde el mail.</p>
-                            <form
-                                method="post"
-                                action="{{ url_for('cancelar_turno_front', id_usuario=id_usuario, id_cita=turno['id_cita']) }}"
-                                onsubmit="return confirm('¿Cancelar este turno?');"
-                            >
-                                <button class="btn-cancel" type="submit">
-                                    Cancelar Turno
-                                </button>
-                            </form>
-                        {% elif turno['estado'].lower() == 'confirmada' %}
-                            <p class="card-note">Te esperamos en tu cita. Recuerda llegar 5 minutos antes.</p>
-                            <form
-                                method="post"
-                                action="{{ url_for('cancelar_turno_front', id_usuario=id_usuario, id_cita=turno['id_cita']) }}"
-                                onsubmit="return confirm('¿Cancelar este turno?');"
-                            >
-                                <button class="btn-cancel" type="submit">
-                                    Cancelar Turno
-                                </button>
-                            </form>
-                        {% endif %}
+                    <div class="status-badge">
+                        {{ turno['estado'].capitalize() }}
                     </div>
                 </div>
-            {% endfor %}
-        {% else %}
-            <div class="estado-vacio">
-                <p>No tienes turnos en este momento.</p>
+
+                <div class="card-meta">
+                    <div class="meta-item">{{ turno['fecha'] }}</div>
+                    <div class="meta-item">{{ turno['hora_inicio'] }}</div>
+                </div>
+
+                <hr class="card-divider">
+
+                <div class="card-bottom">
+                    {% if turno['estado'].lower() == 'completada' %}
+                        <p class="card-note">Esperamos que hayas disfrutado tu corte.</p>
+                        <a href="{{ url_for('dejar_resenia_form', id_usuario=id_usuario, id_cita=turno['id_cita'], id_barbero=turno['id_barbero']) }}" class="btn-resenia">
+                            Dejar Resena
+                        </a>
+                    {% elif turno['estado'].lower() == 'pendiente' %}
+                        <p class="card-note">Tu turno queda pendiente hasta que confirmes desde el mail.</p>
+                        <form
+                            method="post"
+                            action="{{ url_for('cancelar_turno_front', id_usuario=id_usuario, id_cita=turno['id_cita']) }}"
+                            onsubmit="return confirm('Cancelar este turno?');"
+                        >
+                            <button class="btn-cancel" type="submit">
+                                Cancelar Turno
+                            </button>
+                        </form>
+                    {% elif turno['estado'].lower() == 'confirmada' %}
+                        <p class="card-note">Te esperamos en tu cita. Recuerda llegar 5 minutos antes.</p>
+                        <form
+                            method="post"
+                            action="{{ url_for('cancelar_turno_front', id_usuario=id_usuario, id_cita=turno['id_cita']) }}"
+                            onsubmit="return confirm('Cancelar este turno?');"
+                        >
+                            <button class="btn-cancel" type="submit">
+                                Cancelar Turno
+                            </button>
+                        </form>
+                    {% endif %}
+                </div>
             </div>
-        {% endif %}
-    </div>
-</body>
-</html>
+        {% endfor %}
+    {% else %}
+        <div class="estado-vacio">
+            <p>No tienes turnos en este momento.</p>
+        </div>
+    {% endif %}
+{% endblock %}

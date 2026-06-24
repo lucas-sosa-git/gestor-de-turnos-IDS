@@ -1,17 +1,18 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="{{ url_for('static', filename='css/tijeras.png') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/resenias.css') }}">
-    <title>Dejar Reseña</title>
-</head>
-<body>
-<div class="app-container">
-    <header class="main-header">
-        <h1 class="salon-title">Calificá tu turno</h1>
-    </header>
+{% extends "feature_clientes/base_cliente.html" %}
+
+{% set active_page = "turnos" %}
+{% set usuario = usuario | default(none) %}
+{% set turnos = turnos | default([]) %}
+
+{% block title %}Dejar Resena - Peluqueria Elegance{% endblock %}
+
+{% block cliente_content %}
+    <div class="section-header">
+        <div>
+            <h2 class="section-title">Califica tu turno</h2>
+            <p class="section-subtitle">Contanos como fue tu experiencia.</p>
+        </div>
+    </div>
 
     <div class="reserva-card resenia-card">
         <form id="formResenia">
@@ -20,75 +21,75 @@
             <input type="hidden" id="id_barbero" value="{{ id_barbero }}">
 
             <div class="form-group">
-                <label class="form-label">Calificación (1 a 5 estrellas):</label>
+                <label class="form-label" for="calificacion">Calificacion (1 a 5 estrellas):</label>
                 <select id="calificacion" class="form-select" required>
-                    <option value="" disabled selected>Elegí un puntaje...</option>
-                    <option value="5">⭐⭐⭐⭐⭐ - Excelente</option>
-                    <option value="4">⭐⭐⭐⭐ - Muy Bueno</option>
-                    <option value="3">⭐⭐⭐ - Bueno</option>
-                    <option value="2">⭐⭐ - Regular</option>
-                    <option value="1">⭐ - Malo</option>
+                    <option value="" disabled selected>Elegi un puntaje...</option>
+                    <option value="5">5 estrellas - Excelente</option>
+                    <option value="4">4 estrellas - Muy bueno</option>
+                    <option value="3">3 estrellas - Bueno</option>
+                    <option value="2">2 estrellas - Regular</option>
+                    <option value="1">1 estrella - Malo</option>
                 </select>
             </div>
 
             <div class="form-group-textarea">
-                <label class="form-label">Comentario (Opcional):</label>
-                <textarea id="comentario" class="form-textarea" rows="4" placeholder="¿Cómo fue tu experiencia?"></textarea>
+                <label class="form-label" for="comentario">Comentario (opcional):</label>
+                <textarea id="comentario" class="form-textarea" rows="4" placeholder="Como fue tu experiencia?"></textarea>
             </div>
 
             <button type="submit" class="btn-enviar">
-                Enviar Reseña
+                Enviar Resena
             </button>
         </form>
 
         <p id="mensaje" class="form-mensaje"></p>
     </div>
-</div>
-<script>
-document.getElementById("formResenia").addEventListener("submit", async function(e){
-    e.preventDefault();
-    
-    const mensajeEl = document.getElementById("mensaje");
-    mensajeEl.innerText = "Enviando reseña...";
-    mensajeEl.style.color = "#1f2937";
+{% endblock %}
 
-    const payload = {
-        id_usuario: parseInt(document.getElementById("id_usuario").value),
-        id_cita: parseInt(document.getElementById("id_cita").value),
-        id_barbero: parseInt(document.getElementById("id_barbero").value),
-        calificacion: parseInt(document.getElementById("calificacion").value),
-        comentario: document.getElementById("comentario").value.trim()
-    };
+{% block scripts %}
+    <script>
+        document.getElementById("formResenia").addEventListener("submit", async function(e) {
+            e.preventDefault();
 
-    try {
-        const respuesta = await fetch("{{ url_for('crear_resenia_proxy') }}", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(payload)
+            const mensajeEl = document.getElementById("mensaje");
+            mensajeEl.innerText = "Enviando resena...";
+            mensajeEl.style.color = "#1f2937";
+
+            const payload = {
+                id_usuario: parseInt(document.getElementById("id_usuario").value),
+                id_cita: parseInt(document.getElementById("id_cita").value),
+                id_barbero: parseInt(document.getElementById("id_barbero").value),
+                calificacion: parseInt(document.getElementById("calificacion").value),
+                comentario: document.getElementById("comentario").value.trim()
+            };
+
+            try {
+                const respuesta = await fetch("{{ url_for('crear_resenia_proxy') }}", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await respuesta.json();
+
+                if (respuesta.ok) {
+                    mensajeEl.innerText = "Gracias por tu opinion. Redireccionando...";
+                    mensajeEl.style.color = "#16a34a";
+
+                    setTimeout(() => {
+                        window.location.href = `/clientes/${payload.id_usuario}`;
+                    }, 2000);
+                } else {
+                    mensajeEl.innerText = "Error: " + (data.error || "No se pudo enviar la resena.");
+                    mensajeEl.style.color = "#dc2626";
+                }
+            } catch (error) {
+                mensajeEl.innerText = "Error de red o servidor no disponible.";
+                mensajeEl.style.color = "#dc2626";
+                console.error(error);
+            }
         });
-
-        const data = await respuesta.json();
-
-        if (respuesta.ok) {
-            mensajeEl.innerText = "¡Gracias por tu opinión! Redireccionando...";
-            mensajeEl.style.color = "#16a34a";
-            
-            // Redirige al perfil del cliente o al historial de turnos
-            setTimeout(() => {
-                window.location.href = `/clientes/${payload.id_usuario}`; 
-            }, 2000);
-        } else {
-            mensajeEl.innerText = "Error: " + (data.error || "No se pudo enviar la reseña.");
-            mensajeEl.style.color = "#dc2626";
-        }
-    } catch (error) {
-        mensajeEl.innerText = "Error de red o servidor no disponible.";
-        mensajeEl.style.color = "#dc2626";
-        console.error(error);
-    }
-});
-</script>
-</body>
-</html>
+    </script>
+{% endblock %}
