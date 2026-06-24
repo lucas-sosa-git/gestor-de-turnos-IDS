@@ -19,6 +19,9 @@ def crear_barbero():
     clave   = request.form.get('clave')
     archivo  = request.files.get('imagen')
 
+    dias = request.form.getlist("dias[]")
+    horarios = request.form.getlist("horarios[]")
+
     if not nombre or not email or not clave:
         return jsonify({"error": "Faltan campos obligatorios"}), 400
     
@@ -48,6 +51,31 @@ def crear_barbero():
     
     cursor.execute('INSERT INTO barberos (id_usuario, img_barbero) values (%s, %s)', (id_usuario, img_barbero))
     id_barbero = cursor.lastrowid
+    for dia in dias:
+        for horario in horarios:
+            cursor.execute('''
+            INSERT INTO disponibilidad_barberos
+            (id_barbero, dia_semana, hora_inicio, hora_fin)
+            VALUES (%s, %s, %s, %s)
+        ''', (
+            id_barbero,
+            dia,
+            horario + ":00",
+            "20:00:00"
+        ))
+    conn.commit()
+    dias = request.form.getlist("dias[]")
+    horarios = request.form.getlist("horarios[]")
+    for dia in dias:
+        for h in horarios:
+            hora_inicio = f"{h}:00"
+
+        hora_fin = f"{int(h.split(':')[0]) + 1:02d}:{h.split(':')[1]}:00"
+
+        cursor.execute('''
+            INSERT INTO disponibilidad_barberos (id_barbero, dia_semana, hora_inicio, hora_fin)
+            VALUES (%s, %s, %s, %s)
+        ''', (id_barbero, dia, hora_inicio, hora_fin))
     conn.commit()
 
     cursor.execute('''

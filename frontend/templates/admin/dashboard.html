@@ -507,32 +507,49 @@
         <p>Selecciona los días en los que trabajará el barbero</p>
       </div>
 
-      <div class="calendar-week">
-        <span>Lun</span>
-        <span>Mar</span>
-        <span>Mié</span>
-        <span>Jue</span>
-        <span>Vie</span>
-        <span>Sáb</span>
-        <span>Dom</span>
-      </div>
+      <div class="dias-semana-grid">
 
-      <div class="calendar-grid">
-        {% for dia in range(1,32) %}
         <label class="day-card">
-          <input type="checkbox" name="dias[]" value="{{ dia }}">
-          <span>{{ dia }}</span>
+          <input type="checkbox" name="dias[]" value="1">
+          <span>Lunes</span>
         </label>
-        {% endfor %}
+      
+        <label class="day-card">
+          <input type="checkbox" name="dias[]" value="2">
+          <span>Martes</span>
+        </label>
+      
+        <label class="day-card">
+          <input type="checkbox" name="dias[]" value="3">
+          <span>Miércoles</span>
+        </label>
+      
+        <label class="day-card">
+          <input type="checkbox" name="dias[]" value="4">
+          <span>Jueves</span>
+        </label>
+      
+        <label class="day-card">
+          <input type="checkbox" name="dias[]" value="5">
+          <span>Viernes</span>
+        </label>
+      
+        <label class="day-card">
+          <input type="checkbox" name="dias[]" value="6">
+          <span>Sábado</span>
+        </label>
+      
+        <label class="day-card">
+          <input type="checkbox" name="dias[]" value="0">
+          <span>Domingo</span>
+        </label>
       </div>
-
     </div>
-
     <!-- HORARIOS -->
     <div class="hours-box">
 
       <div class="hours-header">
-        <h3>🕒 Horarios</h3>
+        <h3>🕒 Horarios disponibles</h3>
         <p>Selecciona los horarios disponibles</p>
       </div>
 
@@ -626,6 +643,31 @@
         <label class="hour-card">
           <input type="checkbox" name="horarios[]" value="17:30">
           <span>17:30</span>
+        </label>
+
+        <label class="hour-card">
+          <input type="checkbox" name="horarios[]" value="18:00">
+          <span>18:00</span>
+        </label>
+
+        <label class="hour-card">
+          <input type="checkbox" name="horarios[]" value="18:30">
+          <span>18:30</span>
+        </label>
+
+        <label class="hour-card">
+          <input type="checkbox" name="horarios[]" value="19:00">
+          <span>19:00</span>
+        </label>
+
+        <label class="hour-card">
+          <input type="checkbox" name="horarios[]" value="19:30">
+          <span>19:30</span>
+        </label>
+
+        <label class="hour-card">
+          <input type="checkbox" name="horarios[]" value="20:00">
+          <span>20:00</span>
         </label>
 
       </div>
@@ -978,14 +1020,14 @@
 ></script>
 
 <script>
-  const btn = document.getElementById("btn-horarios");
-  const panel = document.getElementById("panel-horarios");
-
-  if (btn && panel) {
-    btn.addEventListener("click", () => {
+  document.addEventListener("DOMContentLoaded", function(){
+    const btn = document.getElementById("btn-horarios");
+    const panel = document.getElementById("panel-horarios");
+    if (!btn || !panel) return;
+    btn.onclick = function(){
       panel.classList.toggle("hidden");
-    });
-  }
-</script>
+    };
+  });
+  </script>
 
 {% endblock %}
