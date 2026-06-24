@@ -444,51 +444,11 @@
       </div>
 
       <!-- formulario para crear barbero -->
-      <section class="service-section">
-        <div class="service-form-card mb-3">
-      
-          <h3>Crear nuevo barbero</h3>
-      
-          <form
-            class="service-form"
-            action="{{ url_for('crear_barbero_front') }}"
-            method="POST"
-            enctype="multipart/form-data"
-          >
-      
-            <!-- NOMBRE -->
-            <div class="service-form-group service-form-full">
-              <label>Nombre</label>
-              <input type="text" name="nombre" required placeholder="Ej: Juan Pérez">
-            </div>
-      
-      
-            <!-- EMAIL + CLAVE -->
-            <div class="service-form-row service-form-full">
-      
-              <div class="service-form-group">
-                <label>Email</label>
-                <input type="email" name="email" required placeholder="barbero@mail.com">
-              </div>
-      
-      
-              <div class="service-form-group">
-                <label>Contraseña</label>
-                <input type="password" name="clave" required placeholder="********">
-              </div>
-      
-            </div>
-      
-      
-            <!-- IMAGEN -->
-            <div class="service-form-group service-form-full">
-              <label>Imagen</label>
-              <input type="file" name="imagen" accept="image/*">
-            </div>
-      
-      
-            <div class="service-form-group service-form-full">
+  <section class="service-section">
+    <div class="service-form-card mb-3">
+      <h3>Crear nuevo barbero</h3>
 
+<<<<<<< HEAD
               <!-- BOTÓN PARA MOSTRAR HORARIOS -->
 <button type="button" class="btn-secondary" id="btn-horarios">
   📅 Ver horarios
@@ -683,8 +643,99 @@
       
       
           </form>
+=======
+      <form
+        class="service-form"
+        action="{{ url_for('crear_barbero_front') }}"
+        method="POST"
+        enctype="multipart/form-data"
+      >
+        <div class="service-form-group service-form-full">
+          <label>Nombre</label>
+          <input type="text" name="nombre" required placeholder="Ej: Juan Pérez">
+>>>>>>> 02b7dcbd6b7b5c430f1517f91b83404fd7fb06cb
         </div>
-  
+
+        <div class="service-form-row service-form-full">
+          <div class="service-form-group">
+            <label>Email</label>
+            <input type="email" name="email" required placeholder="barbero@mail.com">
+          </div>
+
+          <div class="service-form-group">
+            <label>Contraseña</label>
+            <input type="password" name="clave" required placeholder="********">
+          </div>
+        </div>
+
+        <div class="service-form-group service-form-full">
+          <label>Imagen</label>
+          <input type="file" name="imagen" accept="image/*">
+        </div>
+
+        <div class="service-form-group service-form-full">
+          <button type="button" class="btn-secondary" id="btn-horarios">
+            Ver horarios
+          </button>
+
+          <div id="panel-horarios" class="hidden">
+            <div class="horarios-layout">
+              <div class="calendar-box">
+                <div class="calendar-header">
+                  <h3>Dias Laborales</h3>
+                  <p>Selecciona los dias en los que trabajara el barbero</p>
+                </div>
+
+                <div class="calendar-week">
+                  <span>Lun</span>
+                  <span>Mar</span>
+                  <span>Mie</span>
+                  <span>Jue</span>
+                  <span>Vie</span>
+                  <span>Sab</span>
+                  <span>Dom</span>
+                </div>
+
+                <div class="calendar-grid">
+                  {% for dia in range(1,32) %}
+                  <label class="day-card">
+                    <input type="checkbox" name="dias[]" value="{{ dia }}">
+                    <span>{{ dia }}</span>
+                  </label>
+                  {% endfor %}
+                </div>
+              </div>
+
+              <div class="hours-box">
+                <div class="hours-header">
+                  <h3>Horarios</h3>
+                  <p>Selecciona los horarios disponibles</p>
+                </div>
+
+                <div class="hours-grid">
+                  {% for horario in [
+                    "09:00", "09:30", "10:00", "10:30",
+                    "11:00", "11:30", "12:00", "12:30",
+                    "13:00", "13:30", "14:00", "14:30",
+                    "15:00", "15:30", "16:00", "16:30",
+                    "17:00", "17:30"
+                  ] %}
+                  <label class="hour-card">
+                    <input type="checkbox" name="horarios[]" value="{{ horario }}">
+                    <span>{{ horario }}</span>
+                  </label>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn-primary service-form-full" type="submit">
+          Guardar barbero
+        </button>
+      </form>
+    </div>
 
     <div class="services-header">
       <h3>Barberos registrados</h3>
@@ -769,6 +820,7 @@
       </div>
       {% endif %}
     </div>
+  </section>
 
 </div>
     <!-- Fin barberos -->
