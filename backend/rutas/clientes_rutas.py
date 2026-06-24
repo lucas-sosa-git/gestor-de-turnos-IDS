@@ -7,6 +7,7 @@ from flask import Blueprint, jsonify, request
 
 from db import get_db_connection
 from mail_service import enviar_mail
+from rutas.cancelacion_rutas import cancelar_cita
 
 clientes_bp = Blueprint('clientes', __name__)
 
@@ -260,31 +261,18 @@ def cancelar_turno(id_cita):
     data = request.get_json() or {}
     id_usuario = data.get('id_usuario')
 
+    if id_usuario is None:
+        return jsonify({"error": "Falta id_usuario"}), 400
+
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    cursor.execute(
-        'SELECT estado FROM citas WHERE id_cita = %s AND id_usuario = %s',
-        (id_cita, id_usuario)
-    )
-    cita = cursor.fetchone()
-    if not cita:
-        conn.close()
-        return jsonify({"error": "Turno no encontrado o no pertenece al cliente"}), 404
+    respuesta, status = cancelar_cita(cursor, id_cita, id_usuario)
+    if status < 400:
+        conn.commit()
 
-    if cita['estado'] in ('cancelada', 'completada'):
-        conn.close()
-        return jsonify({"error": "Este turno no se puede cancelar"}), 409
-
-    cursor.execute('''
-        UPDATE citas
-        SET estado = 'cancelada', fecha_cancelacion = CURRENT_TIMESTAMP
-        WHERE id_cita = %s AND id_usuario = %s
-    ''', (id_cita, id_usuario))
-    conn.commit()
     conn.close()
-
-    return jsonify({"mensaje": "Turno cancelado correctamente"}), 200
+    return jsonify(respuesta), status
 
 
 @clientes_bp.route('/turnos', methods=['POST'])

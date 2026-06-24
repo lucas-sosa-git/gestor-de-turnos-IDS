@@ -839,24 +839,31 @@ def cancelar_turno_mail(id_cita):
             f"{get_backend_url()}/cancelar/{id_cita}",
             timeout=10
         )
+        data = respuesta.json()
     except requests.RequestException:
         return render_template(
             "cancelacion_exitosa.html",
             ok=False,
             mensaje="No se pudo conectar con el backend."
         )
+    except ValueError:
+        return render_template(
+            "cancelacion_exitosa.html",
+            ok=False,
+            mensaje="El backend devolvio una respuesta invalida."
+        )
 
     if respuesta.status_code >= 400:
         return render_template(
             "cancelacion_exitosa.html",
             ok=False,
-            mensaje="No se pudo cancelar el turno."
+            mensaje=data.get("error") or "No se pudo cancelar el turno."
         )
 
     return render_template(
         "cancelacion_exitosa.html",
         ok=True,
-        mensaje="Turno cancelado correctamente."
+        mensaje=data.get("mensaje") or "Turno cancelado correctamente."
     )
 
 @app.route("/register", methods=["GET", "POST"])
