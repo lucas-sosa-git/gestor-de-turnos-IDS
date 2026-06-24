@@ -435,7 +435,8 @@
 }
 
 .service-section .service-form-group input,
-.service-section .service-form-group textarea {
+.service-section .service-form-group textarea,
+.service-section .service-form-group select {
   width: 100%;
   box-sizing: border-box;
   border-radius: 10px;
@@ -625,6 +626,7 @@
     width: 100%;
     height: 180px;
   }
+
 }
 
 :root {

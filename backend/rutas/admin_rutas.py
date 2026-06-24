@@ -10,6 +10,149 @@ import calendar
 
 admin_bp = Blueprint('admin', __name__)
 
+DIAS_DISPONIBLES = {0, 1, 2, 3, 4, 5, 6}
+
+
+def minutos_a_hora(minutos):
+    horas = minutos // 60
+    mins = minutos % 60
+    return f"{horas:02d}:{mins:02d}:00"
+
+
+def hora_a_minutos(hora):
+    partes = str(hora).split(":")
+    return int(partes[0]) * 60 + int(partes[1])
+
+
+def validar_rango_horario(hora_inicio, hora_fin):
+    inicio = hora_a_minutos(hora_inicio)
+    fin = hora_a_minutos(hora_fin)
+
+    if fin <= inicio:
+        raise ValueError("hora_fin debe ser mayor que hora_inicio")
+
+    return inicio, fin
+
+
+def parsear_disponibilidad_form(form):
+    dias_raw = form.getlist("dias[]")
+    hora_inicio = (form.get("hora_inicio") or "").strip()
+    hora_fin = (form.get("hora_fin") or "").strip()
+
+    try:
+        dias = sorted({int(dia) for dia in dias_raw})
+    except ValueError:
+        raise ValueError("Los dias seleccionados no son validos")
+
+    if not dias:
+        raise ValueError("Selecciona al menos un dia de trabajo")
+
+    if any(dia not in DIAS_DISPONIBLES for dia in dias):
+        raise ValueError("Los dias seleccionados deben estar entre 0 y 6")
+
+    if not hora_inicio or not hora_fin:
+        raise ValueError("hora_inicio y hora_fin son obligatorios")
+
+    inicio, fin = validar_rango_horario(hora_inicio, hora_fin)
+
+    return dias, minutos_a_hora(inicio), minutos_a_hora(fin)
+
+
+def rango_cubre_turno(dias, hora_inicio_disp, hora_fin_disp, fecha_turno, hora_inicio, hora_fin):
+    dia = (fecha_turno.weekday() + 1) % 7
+    inicio = hora_a_minutos(hora_inicio)
+    fin = hora_a_minutos(hora_fin)
+    disp_inicio = hora_a_minutos(hora_inicio_disp)
+    disp_fin = hora_a_minutos(hora_fin_disp)
+
+    return dia in dias and disp_inicio <= inicio and fin <= disp_fin
+
+
+def citas_fuera_de_disponibilidad(cursor, id_barbero, dias, hora_inicio, hora_fin):
+    cursor.execute('''
+        SELECT c.id_cita, c.fecha, c.hora_inicio, c.hora_fin, c.estado,
+               u.nombre AS cliente
+        FROM citas c
+        JOIN usuarios u ON c.id_usuario = u.id_usuario
+        WHERE c.id_barbero = %s
+          AND DATE(c.fecha) >= CURRENT_DATE
+          AND c.estado IN ('confirmada', 'pendiente')
+        ORDER BY c.fecha, c.hora_inicio
+    ''', (id_barbero,))
+    citas = cursor.fetchall()
+
+    fuera = []
+    for cita in citas:
+        fecha_turno = cita["fecha"]
+        if not hasattr(fecha_turno, "weekday"):
+            fecha_turno = date.fromisoformat(str(fecha_turno))
+
+        if not rango_cubre_turno(
+            dias,
+            hora_inicio,
+            hora_fin,
+            fecha_turno,
+            cita["hora_inicio"],
+            cita["hora_fin"],
+        ):
+            fuera.append(dict(cita))
+
+    return fuera
+
+
+def mensaje_citas_fuera(citas_fuera):
+    detalle = [
+        f"#{cita['id_cita']} {cita['fecha']} {str(cita['hora_inicio'])[:5]}-{str(cita['hora_fin'])[:5]}"
+        for cita in citas_fuera[:5]
+    ]
+    return (
+        "No se puede actualizar la disponibilidad porque hay citas futuras "
+        "confirmadas o pendientes fuera del nuevo horario: " + ", ".join(detalle)
+    )
+
+
+def reemplazar_disponibilidad(cursor, id_barbero, dias, hora_inicio, hora_fin, validar_citas=False):
+    validar_rango_horario(hora_inicio, hora_fin)
+
+    if validar_citas:
+        citas_fuera = citas_fuera_de_disponibilidad(cursor, id_barbero, dias, hora_inicio, hora_fin)
+        if citas_fuera:
+            raise ValueError(mensaje_citas_fuera(citas_fuera))
+
+    cursor.execute(
+        'DELETE FROM disponibilidad_barberos WHERE id_barbero = %s',
+        (id_barbero,)
+    )
+
+    valores = []
+    for dia in dias:
+        valores.append((id_barbero, dia, hora_inicio, hora_fin))
+
+    cursor.executemany('''
+        INSERT INTO disponibilidad_barberos (id_barbero, dia_semana, hora_inicio, hora_fin)
+        VALUES (%s, %s, %s, %s)
+    ''', valores)
+
+
+def disponibilidad_barbero(cursor, id_barbero):
+    cursor.execute('''
+        SELECT dia_semana, hora_inicio, hora_fin
+        FROM disponibilidad_barberos
+        WHERE id_barbero = %s
+        ORDER BY dia_semana, hora_inicio
+    ''', (id_barbero,))
+    filas = cursor.fetchall()
+
+    dias = sorted({fila["dia_semana"] for fila in filas})
+    inicios = [hora_a_minutos(fila["hora_inicio"]) for fila in filas]
+    fines = [hora_a_minutos(fila["hora_fin"]) for fila in filas]
+
+    return {
+        "dias": dias,
+        "hora_inicio": minutos_a_hora(min(inicios))[:5] if inicios else "",
+        "hora_fin": minutos_a_hora(max(fines))[:5] if fines else "",
+    }
+
 # --- CRUD BARBEROS ---
 
 @admin_bp.route('/barberos', methods=['POST'])
@@ -19,8 +162,10 @@ def crear_barbero():
     clave   = request.form.get('clave')
     archivo  = request.files.get('imagen')
 
-    dias = request.form.getlist("dias[]")
-    horarios = request.form.getlist("horarios[]")
+    try:
+        dias, hora_inicio, hora_fin = parsear_disponibilidad_form(request.form)
+    except ValueError as error:
+        return jsonify({"error": str(error)}), 400
 
     if not nombre or not email or not clave:
         return jsonify({"error": "Faltan campos obligatorios"}), 400
@@ -51,31 +196,7 @@ def crear_barbero():
     
     cursor.execute('INSERT INTO barberos (id_usuario, img_barbero) values (%s, %s)', (id_usuario, img_barbero))
     id_barbero = cursor.lastrowid
-    for dia in dias:
-        for horario in horarios:
-            cursor.execute('''
-            INSERT INTO disponibilidad_barberos
-            (id_barbero, dia_semana, hora_inicio, hora_fin)
-            VALUES (%s, %s, %s, %s)
-        ''', (
-            id_barbero,
-            dia,
-            horario + ":00",
-            "20:00:00"
-        ))
-    conn.commit()
-    dias = request.form.getlist("dias[]")
-    horarios = request.form.getlist("horarios[]")
-    for dia in dias:
-        for h in horarios:
-            hora_inicio = f"{h}:00"
-
-        hora_fin = f"{int(h.split(':')[0]) + 1:02d}:{h.split(':')[1]}:00"
-
-        cursor.execute('''
-            INSERT INTO disponibilidad_barberos (id_barbero, dia_semana, hora_inicio, hora_fin)
-            VALUES (%s, %s, %s, %s)
-        ''', (id_barbero, dia, hora_inicio, hora_fin))
+    reemplazar_disponibilidad(cursor, id_barbero, dias, hora_inicio, hora_fin)
     conn.commit()
 
     cursor.execute('''
@@ -85,13 +206,20 @@ def crear_barbero():
         WHERE b.id_barbero = %s
     ''', (id_barbero,))
     barbero = cursor.fetchone()
+    barbero = dict(barbero)
+    barbero["disponibilidad"] = disponibilidad_barbero(cursor, id_barbero)
     conn.close()
-    return jsonify({"mensaje": "Barbero creado", "barbero": dict(barbero)}), 201
+    return jsonify({"mensaje": "Barbero creado", "barbero": barbero}), 201
 
 @admin_bp.route('/barberos/<int:id_barbero>', methods=['PATCH'])
 def editar_barbero(id_barbero):
     nombre = request.form.get('nombre', '').strip()
     archivo = request.files.get('imagen')
+
+    try:
+        dias, hora_inicio, hora_fin = parsear_disponibilidad_form(request.form)
+    except ValueError as error:
+        return jsonify({"error": str(error)}), 400
 
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -133,6 +261,11 @@ def editar_barbero(id_barbero):
         WHERE id_barbero = %s
     ''', (img_barbero, id_barbero))
 
+    try:
+        reemplazar_disponibilidad(cursor, id_barbero, dias, hora_inicio, hora_fin, validar_citas=True)
+    except ValueError as error:
+        conn.close()
+        return jsonify({"error": str(error)}), 409
     conn.commit()
 
     cursor.execute('''
@@ -142,8 +275,10 @@ def editar_barbero(id_barbero):
         WHERE b.id_barbero = %s
     ''', (id_barbero,))
     actualizado = cursor.fetchone()
+    actualizado = dict(actualizado)
+    actualizado["disponibilidad"] = disponibilidad_barbero(cursor, id_barbero)
     conn.close()
-    return jsonify({"mensaje": "Barbero actualizado", "barbero": dict(actualizado)}), 200
+    return jsonify({"mensaje": "Barbero actualizado", "barbero": actualizado}), 200
 
 @admin_bp.route('/barberos/<int:id_barbero>', methods=['DELETE'])
 def eliminar_barbero(id_barbero):
@@ -161,6 +296,7 @@ def eliminar_barbero(id_barbero):
         return jsonify({
             "error": "Barbero no encontrado"
         }), 404
+    cursor.execute('DELETE FROM disponibilidad_barberos WHERE id_barbero = %s', (id_barbero,))
     # Eliminar barbero
     cursor.execute('DELETE FROM barberos WHERE id_barbero = %s', (id_barbero,))
     # Eliminar usuario
@@ -292,14 +428,57 @@ def eliminar_servicio(id_servicio):
 # CONFIGURAR HORARIOS (Update de un barbero especifico)
 @admin_bp.route('/barberos/<int:id_barbero>/horarios', methods=['PATCH'])
 def configurar_horario(id_barbero):
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
 
-    dia_semana = data.get('dia_semana')
-    hora_inicio = data.get('hora_inicio')
-    hora_fin = data.get('hora_fin')
+    if "dias" in data:
+        try:
+            dias = sorted({int(dia) for dia in data.get("dias", [])})
+        except (TypeError, ValueError):
+            return jsonify({"error": "Los dias seleccionados no son validos"}), 400
 
-    if dia_semana is None or not hora_inicio or not hora_fin:
-        return jsonify({"error": "Faltan campos obligatorios"}), 400
+        hora_inicio = data.get("hora_inicio")
+        hora_fin = data.get("hora_fin")
+
+        if not dias:
+            return jsonify({"error": "Selecciona al menos un dia de trabajo"}), 400
+
+        if any(dia not in DIAS_DISPONIBLES for dia in dias):
+            return jsonify({"error": "Los dias seleccionados deben estar entre 0 y 6"}), 400
+
+        if not hora_inicio or not hora_fin:
+            return jsonify({"error": "hora_inicio y hora_fin son obligatorios"}), 400
+
+        try:
+            inicio, fin = validar_rango_horario(hora_inicio, hora_fin)
+        except ValueError as error:
+            return jsonify({"error": str(error)}), 400
+
+        hora_inicio = minutos_a_hora(inicio)
+        hora_fin = minutos_a_hora(fin)
+    else:
+        dia_semana = data.get('dia_semana')
+        hora_inicio = data.get('hora_inicio')
+        hora_fin = data.get('hora_fin')
+
+        if dia_semana is None or not hora_inicio or not hora_fin:
+            return jsonify({"error": "Faltan campos obligatorios"}), 400
+
+        try:
+            dia = int(dia_semana)
+        except ValueError:
+            return jsonify({"error": "El dia seleccionado no es valido"}), 400
+
+        if dia not in DIAS_DISPONIBLES:
+            return jsonify({"error": "El dia seleccionado debe estar entre 0 y 6"}), 400
+
+        try:
+            validar_rango_horario(hora_inicio, hora_fin)
+        except ValueError as error:
+            return jsonify({"error": str(error)}), 400
+
+        dias = [dia]
+        hora_inicio = minutos_a_hora(hora_a_minutos(hora_inicio))
+        hora_fin = minutos_a_hora(hora_a_minutos(hora_fin))
     
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -311,17 +490,17 @@ def configurar_horario(id_barbero):
     if not barbero:
         conn.close()
         return jsonify({"error": "Barbero no encontrado"}), 404
-    
-    cursor.execute('''INSERT INTO disponibilidad_barberos (id_barbero, dia_semana, hora_inicio, hora_fin) VALUES (%s, %s, %s, %s)''', (id_barbero, dia_semana, hora_inicio, hora_fin))
-    id_disp = cursor.lastrowid
+
+    try:
+        reemplazar_disponibilidad(cursor, id_barbero, dias, hora_inicio, hora_fin, validar_citas=True)
+    except ValueError as error:
+        conn.close()
+        return jsonify({"error": str(error)}), 409
     conn.commit()
-    cursor.execute(
-        'SELECT * FROM disponibilidad_barberos WHERE id_disp = %s', (id_disp,)
-    )
-    horario = cursor.fetchone()
+    disponibilidad = disponibilidad_barbero(cursor, id_barbero)
 
     conn.close()
-    return jsonify({"mensaje": "Horario actualizado", "horario": dict(horario)})
+    return jsonify({"mensaje": "Horario actualizado", "disponibilidad": disponibilidad})
 
 
 
@@ -479,16 +658,19 @@ def estadisticas():
     filas_barberos = cursor.fetchall()
 
     max_ingresos = max((fila["ingresos"] for fila in filas_barberos), default=1) or 1
-    barberos_top = [{
-        "id_barbero": fila["id_barbero"],
-        "nombre": fila["nombre"],
-        "citas": fila["citas"] or 0,
-        "rating": fila["rating"] or 0,
-        "ingresos": int(fila["ingresos"] or 0),
-        "pct": round((fila["ingresos"] or 0) / max_ingresos * 100),
-        "activo": bool(fila["activo"]),
-        "img_barbero": fila["img_barbero"],
-    } for fila in filas_barberos]
+    barberos_top = []
+    for fila in filas_barberos:
+        barberos_top.append({
+            "id_barbero": fila["id_barbero"],
+            "nombre": fila["nombre"],
+            "citas": fila["citas"] or 0,
+            "rating": fila["rating"] or 0,
+            "ingresos": int(fila["ingresos"] or 0),
+            "pct": round((fila["ingresos"] or 0) / max_ingresos * 100),
+            "activo": bool(fila["activo"]),
+            "img_barbero": fila["img_barbero"],
+            "disponibilidad": disponibilidad_barbero(cursor, fila["id_barbero"]),
+        })
 
     barberos = barberos_top
 

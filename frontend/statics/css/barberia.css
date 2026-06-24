@@ -6,25 +6,24 @@
   display:none !important;
 }
 
-#panel-horarios{
-  margin-top:20px;
-  padding:20px;
-  background:#080d1b;
-  border:1px solid #27205c;
-  border-radius:18px;
+.panel-horarios {
+  width: 100%;
+  margin-top: 10px;
 }
 
-#panel-horarios label{
-
-  margin-bottom:0 !important;
-
+.btn-horarios {
+  align-self: flex-start;
+  display: inline-block;
+  margin-bottom: 0;
 }
 
-.horarios-layout{
-  display:grid !important;
-  grid-template-columns: 1.1fr 0.9fr !important;
-  gap:20px;
-  align-items:stretch;
+.horarios-layout {
+  width: 100%;
+  margin: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(260px, .75fr);
+  gap: 14px;
+  justify-content: start;
 }
 
 
@@ -32,228 +31,116 @@
 /* CAJAS PRINCIPALES */
 
 .calendar-box,
-.hours-box{
-
-  background:#111827 !important;
-  border:1px solid #34405f !important;
-  border-radius:18px !important;
-
-  padding:20px !important;
-
-  min-height:480px !important;
-
-}
-
-
-
-/* TITULOS */
-
-
-.calendar-header h3,
-.hours-header h3{
-
-  color:#f8fafc;
-  font-size:24px;
-  margin:0 0 5px;
-
-}
-
-
-.calendar-header p,
-.hours-header p{
-
-  color:#94a3b8;
-  margin-bottom:25px;
-
+.hours-box {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid #2a2f3d;
+  border-radius: 10px;
+  box-sizing: border-box;
+  background: #0f1117;
 }
 
 .calendar-header,
-.hours-header{
-
-    margin-bottom:10px;
-
+.hours-header {
+  margin-bottom: 12px;
+  text-align: left;
 }
 
-/* ======================
-     DIAS
-====================== */
-
-
-.dias-semana-grid{
-
-  display:grid !important;
-
-  grid-template-columns:repeat(7,1fr);
-
-  gap:12px;
-
+.calendar-header h3,
+.hours-header h3 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 16px;
 }
 
-
-
-.day-card{
-
-  height:200px !important;
-
-  background:#111827 !important;
-
-  border:1px solid #34405f !important;
-
-  border-radius:15px !important;
-
-  position:relative;
-
-  display:flex !important;
-
-  flex-direction:column;
-
-  justify-content:flex-start;
-
-  align-items:center;
-
-  overflow:hidden;
-
+.calendar-header p,
+.hours-header p {
+  margin: 4px 0 0;
+  color: #94a3b8;
+  font-size: 13px;
 }
 
-.day-card::before{
-  content:"☀";
-  margin-top:30px !important;
-  font-size:48px !important;
-  color:#a855f7 !important; /* violeta */
+.calendar-week {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  margin-bottom: 8px;
 }
 
-
-/* colores individuales por día */
-
-.day-card:nth-child(2)::before{
-  color:#22c55e !important; /* verde */
+.calendar-week span {
+  padding: 7px 4px;
+  border-radius: 8px;
+  background: #1f2937;
+  color: #cbd5e1;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
 }
 
-.day-card:nth-child(3)::before{
-  color:#06b6d4 !important; /* celeste */
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
 }
 
-.day-card:nth-child(4)::before{
-  color:#f59e0b !important; /* naranja */
+.day-card {
+  cursor: pointer;
+  transition: 0.2s;
 }
 
-.day-card:nth-child(5)::before{
-  color:#eab308 !important; /* amarillo */
+.day-card input {
+  display: none;
 }
 
-.day-card:nth-child(6)::before{
-  color:#ef4444 !important; /* rojo */
+.day-card span {
+  display: block;
+  padding: 11px 8px;
+  border: 1px solid #343a4a;
+  border-radius: 10px;
+  background: #171a23;
+  color: #e2e8f0;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
 }
 
-.day-card:nth-child(7)::before{
-  color:#a855f7 !important; /* violeta */
+.day-card:hover span {
+  border-color: #7c3aed;
+  transform: translateY(-1px);
 }
 
-.day-card span{
-
-  order:-1;
-
-  width:100%;
-
-  padding:16px 0;
-
-  background:linear-gradient(
-    90deg,
-    #4f21d7,
-    #7c3cff
-  );
-
-  color:white;
-
-  font-weight:bold;
-
-  text-align:center;
-
+.day-card input:checked + span {
+  background: #7c3aed;
+  border-color: #a78bfa;
+  color: white;
 }
 
-.day-card input,
-.hour-card input{
-
-    appearance:none !important;
-    -webkit-appearance:none !important;
-
-    width:20px !important;
-    height:20px !important;
-
-    min-width:20px !important;
-    min-height:20px !important;
-
-    padding:0 !important;
-    margin:0 !important;
-
-    background:transparent !important;
-
-    border:2px solid #94a3b8 !important;
-
-    border-radius:5px !important;
-
-    box-sizing:border-box !important;
-
+.time-range-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
 }
 
-.day-card input{
-  width: 26px !important;
-  height: 26px !important;
-  margin-top:auto !important;
-  margin-bottom:15px !important;
-
+.time-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.day-card input:checked{
-
-  background:#7c3cff !important;
-
-  box-shadow:0 0 10px #7c3cff;
-
+.time-field span {
+  color: #cbd5e1;
+  font-size: 14px;
+  font-weight: 700;
 }
 
-
-
-
-/* ======================
-     HORARIOS
-====================== */
-
-
-.hours-grid{
-
-  display:grid !important;
-
-  grid-template-columns:repeat(4,1fr);
-
-  gap:10px;
-
-}
-
-
-
-.hour-card{
-
-  height:42px !important;
-
-  background:#111827 !important;
-
-  border:1px solid #34405f !important;
-
-  border-radius:10px !important;
-
-  display:flex !important;
-
-  align-items:center !important;
-
-  justify-content:space-between;
-  gap: 15px !important;
-  padding:0 15px;
-
-  color:white;
-  position:relative !important;
-
-  overflow:hidden !important;
+.time-field select {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #343a4a;
+  border-radius: 10px;
+  background: white;
+  color: #111827;
+  font-size: 15px;
 }
 
 
@@ -301,22 +188,6 @@
 
 
 
-/* BOTON */
-
-.btn-primary{
-
-  margin-top:20px !important;
-
-  height:70px !important;
-
-  width:100% !important;
-
-  border-radius:12px !important;
-
-}
-
-
-
 /* RESPONSIVE */
 
 @media(max-width:900px){
@@ -325,9 +196,13 @@
       grid-template-columns:1fr !important;
   }
 
+  .calendar-grid,
+  .calendar-week {
+      grid-template-columns:repeat(4,1fr);
+  }
 
-  .dias-semana-grid{
-      grid-template-columns:repeat(3,1fr);
+  .time-range-grid {
+    grid-template-columns: 1fr;
   }
 
 

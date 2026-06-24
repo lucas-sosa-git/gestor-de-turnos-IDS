@@ -2,6 +2,102 @@
 
 {% block content %}
 
+{% set dias_laborales = [
+  {"value": 1, "label": "Lun"},
+  {"value": 2, "label": "Mar"},
+  {"value": 3, "label": "Mie"},
+  {"value": 4, "label": "Jue"},
+  {"value": 5, "label": "Vie"},
+  {"value": 6, "label": "Sab"},
+  {"value": 0, "label": "Dom"}
+] %}
+
+{% set opciones_horarias = [
+  "07:00", "07:30", "08:00", "08:30",
+  "09:00", "09:30", "10:00", "10:30",
+  "11:00", "11:30", "12:00", "12:30",
+  "13:00", "13:30", "14:00", "14:30",
+  "15:00", "15:30", "16:00", "16:30",
+  "17:00", "17:30", "18:00", "18:30",
+  "19:00", "19:30", "20:00", "20:30",
+  "21:00", "21:30", "22:00", "22:30",
+  "23:00", "23:30"
+] %}
+
+{% macro selector_horarios(panel_id, btn_id, disponibilidad=None) %}
+{% set disponibilidad = disponibilidad or {} %}
+{% set dias_seleccionados = disponibilidad.get("dias", []) %}
+{% set hora_inicio = disponibilidad.get("hora_inicio") or "09:00" %}
+{% set hora_fin = disponibilidad.get("hora_fin") or "18:00" %}
+<div class="service-form-group service-form-full">
+  <button type="button" class="btn-secondary btn-horarios" data-target="{{ panel_id }}" id="{{ btn_id }}">
+    Ver horarios
+  </button>
+
+  <div id="{{ panel_id }}" class="panel-horarios hidden">
+    <div class="horarios-layout">
+      <div class="calendar-box">
+        <div class="calendar-header">
+          <h3>Dias Laborales</h3>
+          <p>Selecciona los dias en los que trabajara el barbero</p>
+        </div>
+
+        <div class="calendar-week">
+          {% for dia in dias_laborales %}
+          <span>{{ dia.label }}</span>
+          {% endfor %}
+        </div>
+
+        <div class="calendar-grid calendar-grid-week">
+          {% for dia in dias_laborales %}
+          <label class="day-card">
+            <input
+              type="checkbox"
+              name="dias[]"
+              value="{{ dia.value }}"
+              {% if dia.value in dias_seleccionados %}checked{% endif %}
+            >
+            <span>{{ dia.label }}</span>
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="hours-box">
+        <div class="hours-header">
+          <h3>Rango horario</h3>
+          <p>Usa el mismo horario para todos los dias seleccionados</p>
+        </div>
+
+        <div class="time-range-grid">
+          <label class="time-field">
+            <span>Desde</span>
+            <select name="hora_inicio" required>
+              {% for hora in opciones_horarias %}
+              <option value="{{ hora }}" {% if hora == hora_inicio %}selected{% endif %}>
+                {{ hora }} hs
+              </option>
+              {% endfor %}
+            </select>
+          </label>
+
+          <label class="time-field">
+            <span>Hasta</span>
+            <select name="hora_fin" required>
+              {% for hora in opciones_horarias %}
+              <option value="{{ hora }}" {% if hora == hora_fin %}selected{% endif %}>
+                {{ hora }} hs
+              </option>
+              {% endfor %}
+            </select>
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endmacro %}
+
 <div class="admin-shell">
 
   <!-- Header -->
@@ -444,298 +540,48 @@
       </div>
 
       <!-- formulario para crear barbero -->
-  <section class="service-section">
-    <div class="service-form-card mb-3">
-      <h3>Crear nuevo barbero</h3>
+      <section class="service-section">
+        <div class="service-form-card mb-3">
+          <h3>Crear nuevo barbero</h3>
 
-<<<<<<< HEAD
-              <!-- BOTÓN PARA MOSTRAR HORARIOS -->
-<button type="button" class="btn-secondary" id="btn-horarios">
-  📅 Ver horarios
-</button>
+          <form
+            class="service-form"
+            action="{{ url_for('crear_barbero_front') }}"
+            method="POST"
+            enctype="multipart/form-data"
+          >
+            <div class="service-form-group service-form-full">
+              <label>Nombre</label>
+              <input type="text" name="nombre" required placeholder="Ej: Juan Perez">
+            </div>
 
-<!-- PANEL HORARIOS (OCULTO POR DEFECTO) -->
-<div id="panel-horarios" class="hidden">
+            <div class="service-form-row service-form-full">
+              <div class="service-form-group">
+                <label>Email</label>
+                <input type="email" name="email" required placeholder="barbero@mail.com">
+              </div>
 
-  <div class="horarios-layout">
+              <div class="service-form-group">
+                <label>Contrasena</label>
+                <input type="password" name="clave" required placeholder="********">
+              </div>
+            </div>
 
-    <!-- CALENDARIO -->
-    <div class="calendar-box">
+            <div class="service-form-group service-form-full">
+              <label>Imagen</label>
+              <input type="file" name="imagen" accept="image/*">
+            </div>
 
-      <div class="calendar-header">
-        <h3>📅 Días Laborales</h3>
-        <p>Selecciona los días en los que trabajará el barbero</p>
-      </div>
-
-      <div class="dias-semana-grid">
-
-        <label class="day-card">
-          <input type="checkbox" name="dias[]" value="1">
-          <span>Lunes</span>
-        </label>
-      
-        <label class="day-card">
-          <input type="checkbox" name="dias[]" value="2">
-          <span>Martes</span>
-        </label>
-      
-        <label class="day-card">
-          <input type="checkbox" name="dias[]" value="3">
-          <span>Miércoles</span>
-        </label>
-      
-        <label class="day-card">
-          <input type="checkbox" name="dias[]" value="4">
-          <span>Jueves</span>
-        </label>
-      
-        <label class="day-card">
-          <input type="checkbox" name="dias[]" value="5">
-          <span>Viernes</span>
-        </label>
-      
-        <label class="day-card">
-          <input type="checkbox" name="dias[]" value="6">
-          <span>Sábado</span>
-        </label>
-      
-        <label class="day-card">
-          <input type="checkbox" name="dias[]" value="0">
-          <span>Domingo</span>
-        </label>
-      </div>
-    </div>
-    <!-- HORARIOS -->
-    <div class="hours-box">
-
-      <div class="hours-header">
-        <h3>🕒 Horarios disponibles</h3>
-        <p>Selecciona los horarios disponibles</p>
-      </div>
-
-      <div class="hours-grid">
-
-        <label class="hour-card">
-          <input type="checkbox" name="horarios[]" value="09:00">
-          <span>09:00</span>
-        </label>
-
-        <label class="hour-card">
-          <input type="checkbox" name="horarios[]" value="09:30">
-          <span>09:30</span>
-        </label>
-
-        <label class="hour-card">
-          <input type="checkbox" name="horarios[]" value="10:00">
-          <span>10:00</span>
-        </label>
-
-        <label class="hour-card">
-          <input type="checkbox" name="horarios[]" value="10:30">
-          <span>10:30</span>
-        </label>
-
-        <label class="hour-card">
-          <input type="checkbox" name="horarios[]" value="11:00">
-          <span>11:00</span>
-        </label>
-
-        <label class="hour-card">
-          <input type="checkbox" name="horarios[]" value="11:30">
-          <span>11:30</span>
-        </label>
-
-        <label class="hour-card">
-          <input type="checkbox" name="horarios[]" value="12:00">
-          <span>12:00</span>
-        </label>
-
-        <label class="hour-card">
-          <input type="checkbox" name="horarios[]" value="12:30">
-          <span>12:30</span>
-        </label>
-
-        <label class="hour-card">
-          <input type="checkbox" name="horarios[]" value="13:00">
-          <span>13:00</span>
-        </label>
-
-        <label class="hour-card">
-          <input type="checkbox" name="horarios[]" value="13:30">
-          <span>13:30</span>
-        </label>
-
-        <label class="hour-card">
-          <input type="checkbox" name="horarios[]" value="14:00">
-          <span>14:00</span>
-        </label>
-
-        <label class="hour-card">
-          <input type="checkbox" name="horarios[]" value="14:30">
-          <span>14:30</span>
-        </label>
-
-        <label class="hour-card">
-          <input type="checkbox" name="horarios[]" value="15:00">
-          <span>15:00</span>
-        </label>
-
-        <label class="hour-card">
-          <input type="checkbox" name="horarios[]" value="15:30">
-          <span>15:30</span>
-        </label>
-
-        <label class="hour-card">
-          <input type="checkbox" name="horarios[]" value="16:00">
-          <span>16:00</span>
-        </label>
-
-        <label class="hour-card">
-          <input type="checkbox" name="horarios[]" value="16:30">
-          <span>16:30</span>
-        </label>
-
-        <label class="hour-card">
-          <input type="checkbox" name="horarios[]" value="17:00">
-          <span>17:00</span>
-        </label>
-
-        <label class="hour-card">
-          <input type="checkbox" name="horarios[]" value="17:30">
-          <span>17:30</span>
-        </label>
-
-        <label class="hour-card">
-          <input type="checkbox" name="horarios[]" value="18:00">
-          <span>18:00</span>
-        </label>
-
-        <label class="hour-card">
-          <input type="checkbox" name="horarios[]" value="18:30">
-          <span>18:30</span>
-        </label>
-
-        <label class="hour-card">
-          <input type="checkbox" name="horarios[]" value="19:00">
-          <span>19:00</span>
-        </label>
-
-        <label class="hour-card">
-          <input type="checkbox" name="horarios[]" value="19:30">
-          <span>19:30</span>
-        </label>
-
-        <label class="hour-card">
-          <input type="checkbox" name="horarios[]" value="20:00">
-          <span>20:00</span>
-        </label>
-
-      </div>
-
-    </div>
-
-  </div>
-</div>
+            <div class="service-form-group service-form-full">
+              <label>Disponibilidad</label>
+              {{ selector_horarios("panel-horarios-crear", "btn-horarios-crear") }}
+            </div>
 
             <button class="btn-primary service-form-full" type="submit">
               Guardar barbero
             </button>
-      
-      
           </form>
-=======
-      <form
-        class="service-form"
-        action="{{ url_for('crear_barbero_front') }}"
-        method="POST"
-        enctype="multipart/form-data"
-      >
-        <div class="service-form-group service-form-full">
-          <label>Nombre</label>
-          <input type="text" name="nombre" required placeholder="Ej: Juan Pérez">
->>>>>>> 02b7dcbd6b7b5c430f1517f91b83404fd7fb06cb
         </div>
-
-        <div class="service-form-row service-form-full">
-          <div class="service-form-group">
-            <label>Email</label>
-            <input type="email" name="email" required placeholder="barbero@mail.com">
-          </div>
-
-          <div class="service-form-group">
-            <label>Contraseña</label>
-            <input type="password" name="clave" required placeholder="********">
-          </div>
-        </div>
-
-        <div class="service-form-group service-form-full">
-          <label>Imagen</label>
-          <input type="file" name="imagen" accept="image/*">
-        </div>
-
-        <div class="service-form-group service-form-full">
-          <button type="button" class="btn-secondary" id="btn-horarios">
-            Ver horarios
-          </button>
-
-          <div id="panel-horarios" class="hidden">
-            <div class="horarios-layout">
-              <div class="calendar-box">
-                <div class="calendar-header">
-                  <h3>Dias Laborales</h3>
-                  <p>Selecciona los dias en los que trabajara el barbero</p>
-                </div>
-
-                <div class="calendar-week">
-                  <span>Lun</span>
-                  <span>Mar</span>
-                  <span>Mie</span>
-                  <span>Jue</span>
-                  <span>Vie</span>
-                  <span>Sab</span>
-                  <span>Dom</span>
-                </div>
-
-                <div class="calendar-grid">
-                  {% for dia in range(1,32) %}
-                  <label class="day-card">
-                    <input type="checkbox" name="dias[]" value="{{ dia }}">
-                    <span>{{ dia }}</span>
-                  </label>
-                  {% endfor %}
-                </div>
-              </div>
-
-              <div class="hours-box">
-                <div class="hours-header">
-                  <h3>Horarios</h3>
-                  <p>Selecciona los horarios disponibles</p>
-                </div>
-
-                <div class="hours-grid">
-                  {% for horario in [
-                    "09:00", "09:30", "10:00", "10:30",
-                    "11:00", "11:30", "12:00", "12:30",
-                    "13:00", "13:30", "14:00", "14:30",
-                    "15:00", "15:30", "16:00", "16:30",
-                    "17:00", "17:30"
-                  ] %}
-                  <label class="hour-card">
-                    <input type="checkbox" name="horarios[]" value="{{ horario }}">
-                    <span>{{ horario }}</span>
-                  </label>
-                  {% endfor %}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <button class="btn-primary service-form-full" type="submit">
-          Guardar barbero
-        </button>
-      </form>
-    </div>
 
     <div class="services-header">
       <h3>Barberos registrados</h3>
@@ -788,6 +634,12 @@
             <label>Cambiar imagen</label>
             <input type="file" name="imagen" accept="image/*">
           </div>
+
+          {{ selector_horarios(
+            "panel-horarios-editar-" ~ b.id_barbero,
+            "btn-horarios-editar-" ~ b.id_barbero,
+            b.disponibilidad
+          ) }}
 
           <div class="service-actions">
             <button class="btn-secondary" type="submit">
@@ -1072,14 +924,14 @@
 ></script>
 
 <script>
-  document.addEventListener("DOMContentLoaded", function(){
-    const btn = document.getElementById("btn-horarios");
-    const panel = document.getElementById("panel-horarios");
-    if (!btn || !panel) return;
-    btn.onclick = function(){
-      panel.classList.toggle("hidden");
-    };
+  document.querySelectorAll(".btn-horarios").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const panelHorarios = document.getElementById(btn.dataset.target);
+      if (panelHorarios) {
+        panelHorarios.classList.toggle("hidden");
+      }
+    });
   });
-  </script>
+</script>
 
 {% endblock %}

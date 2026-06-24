@@ -1,4 +1,4 @@
-﻿import json
+import json
 import os
 import requests
 import jwt
@@ -962,6 +962,18 @@ def redirect_admin_success(mensaje):
     return redirect("/admin?" + urlencode({"exito": mensaje}))
 
 
+def datos_horarios_barbero():
+    data = []
+
+    for dia in request.form.getlist("dias[]"):
+        data.append(("dias[]", dia))
+
+    data.append(("hora_inicio", request.form.get("hora_inicio", "").strip()))
+    data.append(("hora_fin", request.form.get("hora_fin", "").strip()))
+
+    return data
+
+
 @app.route("/admin")
 def admin_panel():
     data, error = obtener_dashboard_admin()
@@ -1098,11 +1110,12 @@ def crear_barbero_front():
     clave  = request.form.get("clave", "").strip()
     imagen = request.files.get("imagen")
 
-    data = {
-        "nombre": nombre,
-        "email":  email,
-        "clave":  clave
-    }
+    data = [
+        ("nombre", nombre),
+        ("email", email),
+        ("clave", clave),
+        *datos_horarios_barbero(),
+    ]
 
     files = None
     if imagen and imagen.filename:
@@ -1133,7 +1146,10 @@ def editar_barbero_front(id_barbero):
     nombre = request.form.get("nombre", "").strip()
     imagen = request.files.get("imagen")
 
-    data = {"nombre": nombre}
+    data = [
+        ("nombre", nombre),
+        *datos_horarios_barbero(),
+    ]
 
     files = None
     if imagen and imagen.filename:
