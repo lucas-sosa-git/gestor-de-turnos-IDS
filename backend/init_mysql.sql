@@ -168,8 +168,8 @@ VALUES
 (7, 3, 2, 2, '2026-06-04', '11:00:00', '11:45:00', 'confirmada', 'qr_junio_2'),
 (8, 4, 1, 3, '2026-06-05', '12:00:00', '12:25:00', 'cancelada', 'qr_junio_3'),
 (9, 5, 3, 1, '2026-06-10', '15:00:00', '15:30:00', 'confirmada', 'qr_junio_4'),
-(10, 6, 2, 5, '2026-06-12', '16:00:00', '17:30:00', 'pendiente', 'qr_junio_5'),
-(11, 6, 2, 5, '2026-06-20', '16:00:00', '17:30:00', 'pendiente', 'qr_junio_6');
+(10, 6, 2, 5, '2026-06-12', '16:00:00', '17:30:00', 'confirmada', 'qr_junio_5'),
+(11, 6, 2, 5, '2026-06-20', '16:00:00', '17:30:00', 'confirmada', 'qr_junio_6');
 
 INSERT INTO resenias (id_usuario, id_cita, calificacion, comentario)
 VALUES
@@ -184,7 +184,81 @@ INSERT INTO citas (id_cita, id_usuario, id_barbero, id_servicio, fecha, hora_ini
 VALUES
 (12, 2, 1, 1, '2026-05-20', '10:00:00', '10:30:00', 'completada'),
 (13, 1, 1, 5, '2026-05-22', '10:00:00', '11:30:00', 'confirmada'),
-(14, 2, 2, 2, '2026-05-20', '11:00:00', '11:45:00', 'pendiente'),
+(14, 2, 2, 2, '2026-05-20', '11:00:00', '11:45:00', 'confirmada'),
 (15, 3, 1, 3, '2026-05-21', '12:00:00', '12:25:00', 'confirmada'),
-(16, 4, 2, 4, '2026-05-21', '12:30:00', '12:45:00', 'pendiente'),
+(16, 4, 2, 4, '2026-05-21', '12:30:00', '12:45:00', 'confirmada'),
 (17, 5, 3, 5, '2026-05-22', '13:00:00', '14:30:00', 'confirmada');
+
+-- Clientes extra para poblar agendas y resenias
+INSERT INTO usuarios (id_usuario, nombre, email, clave, rol)
+VALUES
+(20, 'Agustina Rojas', 'agustina.rojas@mail.com', '5ac0852e770506dcd80f1a36d20ba7878bf82244b836d9324593bd14bc56dcb5', 'cliente'),
+(21, 'Mateo Cabrera', 'mateo.cabrera@mail.com', '5ac0852e770506dcd80f1a36d20ba7878bf82244b836d9324593bd14bc56dcb5', 'cliente'),
+(22, 'Julieta Molina', 'julieta.molina@mail.com', '5ac0852e770506dcd80f1a36d20ba7878bf82244b836d9324593bd14bc56dcb5', 'cliente'),
+(23, 'Bruno Arias', 'bruno.arias@mail.com', '5ac0852e770506dcd80f1a36d20ba7878bf82244b836d9324593bd14bc56dcb5', 'cliente'),
+(24, 'Florencia Vega', 'florencia.vega@mail.com', '5ac0852e770506dcd80f1a36d20ba7878bf82244b836d9324593bd14bc56dcb5', 'cliente'),
+(25, 'Tomas Medina', 'tomas.medina@mail.com', '5ac0852e770506dcd80f1a36d20ba7878bf82244b836d9324593bd14bc56dcb5', 'cliente');
+
+-- Turnos completados para enriquecer resenias
+INSERT INTO citas (id_cita, id_usuario, id_barbero, id_servicio, fecha, hora_inicio, hora_fin, estado, qr_token)
+VALUES
+(80, 20, 1, 1, '2026-06-08', '09:30:00', '10:00:00', 'completada', 'qr_resenia_80'),
+(81, 21, 1, 3, '2026-06-09', '11:00:00', '11:25:00', 'completada', 'qr_resenia_81'),
+(82, 22, 1, 2, '2026-06-11', '14:00:00', '14:45:00', 'completada', 'qr_resenia_82'),
+(83, 23, 1, 4, '2026-06-12', '16:30:00', '16:45:00', 'completada', 'qr_resenia_83'),
+(84, 24, 2, 2, '2026-06-09', '10:30:00', '11:15:00', 'completada', 'qr_resenia_84'),
+(85, 25, 2, 5, '2026-06-10', '12:00:00', '13:30:00', 'completada', 'qr_resenia_85'),
+(86, 20, 2, 1, '2026-06-12', '15:00:00', '15:30:00', 'completada', 'qr_resenia_86'),
+(87, 21, 2, 3, '2026-06-13', '17:00:00', '17:25:00', 'completada', 'qr_resenia_87'),
+(88, 22, 3, 5, '2026-06-08', '12:00:00', '13:30:00', 'completada', 'qr_resenia_88'),
+(89, 23, 3, 1, '2026-06-10', '14:00:00', '14:30:00', 'completada', 'qr_resenia_89'),
+(90, 24, 3, 3, '2026-06-12', '16:00:00', '16:25:00', 'completada', 'qr_resenia_90'),
+(91, 25, 3, 2, '2026-06-13', '18:00:00', '18:45:00', 'completada', 'qr_resenia_91');
+
+INSERT INTO resenias (id_usuario, id_cita, calificacion, comentario)
+VALUES
+(20, 80, 5, 'Muy prolijo y puntual. Me gusto mucho el resultado.'),
+(21, 81, 4, 'Buena atencion y el perfilado quedo perfecto.'),
+(22, 82, 5, 'Excelente trato, sali muy conforme.'),
+(23, 83, 4, 'Servicio rapido y cuidado.'),
+(24, 84, 5, 'Ana fue muy clara con las recomendaciones.'),
+(25, 85, 5, 'La tintura quedo pareja y con muy buen color.'),
+(20, 86, 4, 'Corte moderno, justo lo que pedi.'),
+(21, 87, 5, 'Ambiente comodo y muy buena atencion.'),
+(22, 88, 4, 'Buen trabajo y muy buena onda.'),
+(23, 89, 5, 'Martin entendio perfecto el estilo que queria.'),
+(24, 90, 4, 'Barba muy bien perfilada.'),
+(25, 91, 5, 'Excelente servicio, volveria sin dudas.');
+
+-- Turnos confirmados para mostrar en paneles de peluqueros
+-- Semana del 22 de junio de 2026
+INSERT INTO citas (id_cita, id_usuario, id_barbero, id_servicio, fecha, hora_inicio, hora_fin, estado, qr_token)
+VALUES
+(100, 20, 1, 1, '2026-06-22', '09:00:00', '09:30:00', 'confirmada', 'qr_sem22_pedro_100'),
+(101, 21, 1, 3, '2026-06-23', '11:30:00', '11:55:00', 'confirmada', 'qr_sem22_pedro_101'),
+(102, 22, 1, 2, '2026-06-24', '14:00:00', '14:45:00', 'confirmada', 'qr_sem22_pedro_102'),
+(103, 23, 1, 4, '2026-06-26', '16:15:00', '16:30:00', 'confirmada', 'qr_sem22_pedro_103'),
+(104, 24, 2, 2, '2026-06-23', '10:00:00', '10:45:00', 'confirmada', 'qr_sem22_ana_104'),
+(105, 25, 2, 5, '2026-06-24', '12:00:00', '13:30:00', 'confirmada', 'qr_sem22_ana_105'),
+(106, 20, 2, 1, '2026-06-25', '15:30:00', '16:00:00', 'confirmada', 'qr_sem22_ana_106'),
+(107, 21, 2, 3, '2026-06-27', '17:00:00', '17:25:00', 'confirmada', 'qr_sem22_ana_107'),
+(108, 22, 3, 5, '2026-06-22', '11:00:00', '12:30:00', 'confirmada', 'qr_sem22_martin_108'),
+(109, 23, 3, 1, '2026-06-24', '13:30:00', '14:00:00', 'confirmada', 'qr_sem22_martin_109'),
+(110, 24, 3, 3, '2026-06-26', '16:00:00', '16:25:00', 'confirmada', 'qr_sem22_martin_110'),
+(111, 25, 3, 2, '2026-06-27', '18:00:00', '18:45:00', 'confirmada', 'qr_sem22_martin_111');
+
+-- Semana del 29 de junio de 2026
+INSERT INTO citas (id_cita, id_usuario, id_barbero, id_servicio, fecha, hora_inicio, hora_fin, estado, qr_token)
+VALUES
+(112, 24, 1, 1, '2026-06-29', '10:00:00', '10:30:00', 'confirmada', 'qr_sem29_pedro_112'),
+(113, 25, 1, 5, '2026-06-30', '12:00:00', '13:30:00', 'confirmada', 'qr_sem29_pedro_113'),
+(114, 20, 1, 3, '2026-07-01', '15:00:00', '15:25:00', 'confirmada', 'qr_sem29_pedro_114'),
+(115, 21, 1, 2, '2026-07-02', '16:30:00', '17:15:00', 'confirmada', 'qr_sem29_pedro_115'),
+(116, 22, 2, 1, '2026-06-30', '10:30:00', '11:00:00', 'confirmada', 'qr_sem29_ana_116'),
+(117, 23, 2, 4, '2026-07-01', '12:15:00', '12:30:00', 'confirmada', 'qr_sem29_ana_117'),
+(118, 24, 2, 2, '2026-07-03', '14:00:00', '14:45:00', 'confirmada', 'qr_sem29_ana_118'),
+(119, 25, 2, 5, '2026-07-04', '16:00:00', '17:30:00', 'confirmada', 'qr_sem29_ana_119'),
+(120, 20, 3, 3, '2026-06-29', '11:30:00', '11:55:00', 'confirmada', 'qr_sem29_martin_120'),
+(121, 21, 3, 1, '2026-07-01', '13:00:00', '13:30:00', 'confirmada', 'qr_sem29_martin_121'),
+(122, 22, 3, 5, '2026-07-02', '15:30:00', '17:00:00', 'confirmada', 'qr_sem29_martin_122'),
+(123, 23, 3, 2, '2026-07-04', '18:00:00', '18:45:00', 'confirmada', 'qr_sem29_martin_123');
