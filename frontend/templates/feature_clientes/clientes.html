@@ -49,10 +49,14 @@
 
                 <div class="card-bottom">
                     {% if turno['estado'].lower() == 'completada' %}
-                        <p class="card-note">Esperamos que hayas disfrutado tu corte.</p>
-                        <a href="{{ url_for('dejar_resenia_form', id_usuario=id_usuario, id_cita=turno['id_cita'], id_barbero=turno['id_barbero']) }}" class="btn-resenia">
-                            Dejar Resena
-                        </a>
+                        {% if turno['id_resenia'] %}
+                            <p class="card-note">Ya dejaste una reseña para este turno.</p>
+                        {% else %}
+                            <p class="card-note">Esperamos que hayas disfrutado tu corte.</p>
+                            <a href="{{ url_for('dejar_resenia_form', id_usuario=id_usuario, id_cita=turno['id_cita'], id_barbero=turno['id_barbero']) }}" class="btn-resenia">
+                                Dejar Reseña
+                            </a>
+                        {% endif %}
                     {% elif turno['estado'].lower() == 'pendiente' %}
                         <p class="card-note">Tu turno queda pendiente hasta que confirmes desde el mail.</p>
                         <form

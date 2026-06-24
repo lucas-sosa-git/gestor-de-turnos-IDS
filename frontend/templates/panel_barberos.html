@@ -99,15 +99,19 @@
 
                         <div class="card-bottom">
                             <p class="card-note">Contacto: {{ turno['cliente_email'] }}</p>
-                            <form
-                                method="post"
-                                action="{{ url_for('finalizar_turno_front', id_usuario=id_usuario, id_cita=turno['id_cita']) }}"
-                                onsubmit="return confirm('Finalizar este turno?');"
-                            >
-                                <button class="btn-cancel btn-success-action" type="submit">
-                                    Finalizar Turno
-                                </button>
-                            </form>
+                            {% if turno['estado'] == 'confirmada' %}
+                                <form
+                                    method="post"
+                                    action="{{ url_for('finalizar_turno_front', id_usuario=id_usuario, id_cita=turno['id_cita']) }}"
+                                    onsubmit="return confirm('Finalizar este turno?');"
+                                >
+                                    <button class="btn-cancel btn-success-action" type="submit">
+                                        Finalizar Turno
+                                    </button>
+                                </form>
+                            {% elif turno['estado'] == 'completada' %}
+                                <p class="card-note">Turno completado.</p>
+                            {% endif %}
                         </div>
                     </div>
                 {% endfor %}
@@ -132,8 +136,14 @@
                                         {{ turno['servicio_nombre'] }}
                                     </p>
                                 </div>
-                                <div class="meta-item" style="font-size: 15px; font-weight: 600; color: var(--primary);">
-                                    {{ turno['hora_inicio_label'] }} hs
+                                <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
+                                    <div class="status-badge">
+                                        {{ turno['estado'].capitalize() }}
+                                    </div>
+
+                                    <div class="meta-item" style="font-size: 15px; font-weight: 600; color: var(--primary);">
+                                        {{ turno['hora_inicio_label'] }} hs
+                                    </div>
                                 </div>
                             </div>
                         </div>

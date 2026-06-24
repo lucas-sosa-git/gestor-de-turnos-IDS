@@ -167,12 +167,14 @@ def panel_cliente(id_usuario):
 
     cursor.execute('''
         SELECT c.id_cita, c.id_barbero, c.fecha, c.hora_inicio, c.estado,
+               r.id_resenia,
                ub.nombre AS barbero_nombre,
                s.nombre AS servicio_nombre
         FROM citas c
         JOIN barberos b ON c.id_barbero = b.id_barbero
         JOIN usuarios ub ON b.id_usuario = ub.id_usuario
         JOIN servicios s ON c.id_servicio = s.id_servicio
+        LEFT JOIN resenias r ON r.id_cita = c.id_cita
         WHERE c.id_usuario = %s
           AND c.estado != 'cancelada'
         ORDER BY

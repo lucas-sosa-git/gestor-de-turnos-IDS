@@ -60,7 +60,7 @@ def agenda_peluquero(id_usuario):
         JOIN usuarios uc ON c.id_usuario = uc.id_usuario
         JOIN servicios s ON c.id_servicio = s.id_servicio
         WHERE c.id_barbero = %s
-          AND c.estado = 'confirmada'
+          AND c.estado IN ('confirmada', 'completada')
         ORDER BY c.fecha ASC, c.hora_inicio ASC
     ''', (id_barbero_destino,))
     turnos = cursor.fetchall()

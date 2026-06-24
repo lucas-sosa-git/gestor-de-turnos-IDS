@@ -148,9 +148,9 @@ VALUES
 
 INSERT INTO citas (id_cita, id_usuario, id_barbero, id_servicio, fecha, hora_inicio, hora_fin, estado, qr_token)
 VALUES
-(1, 2, 1, 1, '2026-05-20', '10:00:00', '10:30:00', 'confirmada', 'qr_token_demo_1'),
-(2, 3, 2, 2, '2026-05-20', '11:00:00', '11:45:00', 'confirmada', 'qr_token_demo_2'),
-(3, 4, 1, 3, '2026-05-21', '12:00:00', '12:25:00', 'confirmada', 'qr_token_demo_3'),
+(1, 2, 1, 1, '2026-05-20', '10:00:00', '10:30:00', 'completada', 'qr_token_demo_1'),
+(2, 3, 2, 2, '2026-05-20', '11:00:00', '11:45:00', 'completada', 'qr_token_demo_2'),
+(3, 4, 1, 3, '2026-05-21', '12:00:00', '12:25:00', 'completada', 'qr_token_demo_3'),
 (4, 5, 2, 4, '2026-05-21', '15:00:00', '15:15:00', 'confirmada', 'qr_token_demo_4'),
 (5, 6, 3, 5, '2026-05-22', '16:00:00', '17:30:00', 'confirmada', 'qr_token_demo_5');
 
@@ -164,10 +164,10 @@ VALUES
 -- Datos de prueba para estadísticas de junio
 INSERT INTO citas (id_cita, id_usuario, id_barbero, id_servicio, fecha, hora_inicio, hora_fin, estado, qr_token)
 VALUES
-(6, 2, 1, 1, '2026-06-03', '10:00:00', '10:30:00', 'confirmada', 'qr_junio_1'),
-(7, 3, 2, 2, '2026-06-04', '11:00:00', '11:45:00', 'confirmada', 'qr_junio_2'),
+(6, 2, 1, 1, '2026-06-03', '10:00:00', '10:30:00', 'completada', 'qr_junio_1'),
+(7, 3, 2, 2, '2026-06-04', '11:00:00', '11:45:00', 'completada', 'qr_junio_2'),
 (8, 4, 1, 3, '2026-06-05', '12:00:00', '12:25:00', 'cancelada', 'qr_junio_3'),
-(9, 5, 3, 1, '2026-06-10', '15:00:00', '15:30:00', 'confirmada', 'qr_junio_4'),
+(9, 5, 3, 1, '2026-06-10', '15:00:00', '15:30:00', 'completada', 'qr_junio_4'),
 (10, 6, 2, 5, '2026-06-12', '16:00:00', '17:30:00', 'confirmada', 'qr_junio_5'),
 (11, 6, 2, 5, '2026-06-20', '16:00:00', '17:30:00', 'confirmada', 'qr_junio_6');
 
